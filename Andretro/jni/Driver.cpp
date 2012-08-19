@@ -377,6 +377,57 @@ JNIFUNC(jint, getRegion)(JNIARGS)
     return retro_get_region_ptr();
 }
 
+// Note: aFileBase contains complete path to file without extension, the trailing dot is included.
+JNIFUNC(void, loadSavedData)(JNIARGS, jstring aFileBase)
+{
+	char buffer[1024];
+	JavaChars fileBase(aEnv, aFileBase);
+
+	size_t size = retro_get_memory_size_ptr(RETRO_MEMORY_SAVE_RAM);
+	if(size)
+	{
+		snprintf(buffer, 1024, "%s.srm", (const char*)fileBase);
+		FileReader data(buffer);
+
+		if(data.size() == size)
+		{
+			memcpy(retro_get_memory_data_ptr(RETRO_MEMORY_SAVE_RAM), data.base(), size);
+		}
+	}
+
+	size = retro_get_memory_size_ptr(RETRO_MEMORY_RTC);
+	if(size)
+	{
+		snprintf(buffer, 1024, "%s.rtc", (const char*)fileBase);
+		FileReader data(buffer);
+
+		if(data.size() == size)
+		{
+			memcpy(retro_get_memory_data_ptr(RETRO_MEMORY_RTC), data.base(), size);
+		}
+	}
+}
+
+JNIFUNC(void, writeSavedData)(JNIARGS, jstring aFileBase)
+{
+	char buffer[1024];
+	JavaChars fileBase(aEnv, aFileBase);
+
+	int size = retro_get_memory_size_ptr(RETRO_MEMORY_SAVE_RAM);
+	if(size)
+	{
+		snprintf(buffer, 1024, "%s.srm", (const char*)fileBase);
+		DumpFile(buffer, retro_get_memory_data_ptr(RETRO_MEMORY_SAVE_RAM), size);
+	}
+
+	size = retro_get_memory_size_ptr(RETRO_MEMORY_RTC);
+	if(size)
+	{
+		snprintf(buffer, 1024, "%s.rtc", (const char*)fileBase);
+		DumpFile(buffer, retro_get_memory_data_ptr(RETRO_MEMORY_RTC), size);
+	}
+}
+
 // Gets region of memory.
 //void *retro_get_memory_data(unsigned id);
 //size_t retro_get_memory_size(unsigned id);

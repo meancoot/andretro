@@ -42,6 +42,20 @@ class FileReader
         }
 };
 
+bool DumpFile(const char* aPath, const void* aData, size_t aLength)
+{
+	FILE* file = fopen(aPath, "wb");
+
+	if(file)
+	{
+		bool result = 1 == fwrite(aData, aLength, 1, file);
+		fclose(file);
+		return result;
+	}
+
+	return false;
+}
+
 struct JavaClass
 {
 	jclass classID;

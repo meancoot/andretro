@@ -172,6 +172,8 @@ public final class Game extends Thread
         // Load
         if(LibRetro.loadGame(aFile))
         {	
+        	LibRetro.loadSavedData(getGameDataName(""));
+        	
         	avInfo = new LibRetro.AVInfo();
             LibRetro.getSystemAVInfo(avInfo);
 
@@ -191,6 +193,8 @@ public final class Game extends Thread
     	
     	if(loaded)
     	{
+        	LibRetro.writeSavedData(getGameDataName(""));
+    		
     		// TODO: Write save data
 			LibRetro.unloadGame();
 			

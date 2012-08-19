@@ -130,6 +130,8 @@ public final class LibRetro
 	public static native boolean loadGame(String aPath);
 	public static native void unloadGame();
 	public static native int getRegion();
+	public static native void loadSavedData(String aFileBase);
+	public static native void writeSavedData(String aFileBase);
 
 	// Gets region of memory.
 	//void *retro_get_memory_data(unsigned id);
