@@ -78,8 +78,8 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
         String path = getIntent().getStringExtra("path");
         path = (path == null) ? Environment.getExternalStorageDirectory().getPath() : path;
 
+        setTitle(path);
         wrapFiles(new File(path));
-    	((TextView)findViewById(R.id.title)).setText(path);
     }
     
 	@Override public void onItemClick(AdapterView<?> aListView, View aView, int aPosition, long aID)
