@@ -20,17 +20,18 @@ public final class Game extends Thread
     }
  
     // Game Info
-    final LibRetro.SystemInfo systemInfo = new LibRetro.SystemInfo();
-    final LibRetro.AVInfo avInfo = new LibRetro.AVInfo();
     private final BlockingQueue<Commands.BaseCommand> eventQueue = new ArrayBlockingQueue<Commands.BaseCommand>(8);    
     
+    private LibRetro.SystemInfo systemInfo;
+    private LibRetro.AVInfo avInfo;    
+    
     int pauseDepth;
-    volatile boolean isAlive;
     Runnable prePresent;
-    File moduleDirectory;
-    Doodads.Set inputs;
+    private File moduleDirectory;
+    private Doodads.Set inputs;
     
     private boolean initialized = false;
+    private boolean loaded = false;
     
     public void queueCommand(final Commands.BaseCommand aCommand)
     {
@@ -60,39 +61,48 @@ public final class Game extends Thread
 			Thread.currentThread().interrupt();
 		}
     }
-    
-    
-    public String getModuleName()
+
+    // Functions to retrieve game data, careful as the data may be null, or outdated!
+    public boolean isInitiailized()
     {
-    	return systemInfo.libraryName;
+    	return initialized;
     }
     
-    public String getGameDataName(String aExtension)
+    public boolean isRunning()
     {
-        return moduleDirectory.getAbsolutePath() + "/test." + aExtension;
+        return loaded;
     }
-    
-    // Input
+
     public Doodads.Set getInputs()
     {
     	return inputs;
     }
     
-    public boolean isValid()
+    public String getModuleName()
     {
-        return isAlive;
+    	return (null == systemInfo) ? null : systemInfo.libraryName;
     }
     
-    
-    // Data
-    boolean loadLibrary(Context aContext, String aLibrary)
+    public String getGameDataName(String aExtension)
     {
-    	// Sanity
+        return (null == moduleDirectory) ? null : moduleDirectory.getAbsolutePath() + "/test." + aExtension;
+    }
+            
+    /*
+     * PRIVATE INTERFACE; ONLY CALL LOCALLY OR FROM Cammands.*
+     */
+    private void assertThread()
+    {
     	if(Thread.currentThread() != I)
     	{
-    		throw new RuntimeException("loadLibrary must be called from the game thread.");
+    		throw new RuntimeException("Parent function must only be called on the Game thread.");
     	}
-    	
+    }
+    
+    boolean loadLibrary(Context aContext, String aLibrary)
+    {
+    	assertThread();
+    	// Sanity
     	if(initialized)
     	{
     		throw new RuntimeException("Game module is already loaded");
@@ -101,6 +111,8 @@ public final class Game extends Thread
 		if(LibRetro.loadLibrary(aLibrary))
 		{
 			LibRetro.init();
+			
+			systemInfo = new LibRetro.SystemInfo();
 			LibRetro.getSystemInfo(systemInfo);
 			
 			moduleDirectory = new File(Environment.getExternalStorageDirectory().getPath() + "/andretro/" + systemInfo.libraryName);
@@ -116,32 +128,84 @@ public final class Game extends Thread
     
     void closeLibrary()
     {
-    	if(Thread.currentThread() != I)
-    	{
-    		throw new RuntimeException("closeLibrary must be called from the game thread.");
-    	}
+    	assertThread();
     	
     	if(initialized)
     	{
+    		closeFile();
+    		
     		LibRetro.unloadGame();
     		LibRetro.deinit();
     		LibRetro.unloadLibrary();
     		
+    		pauseDepth = 0;
+    		systemInfo = null;
     		moduleDirectory = null;
     		inputs = null;
-    		
     		initialized = false;
     	}    	
     }
+	    
+    void loadFile(String aFile)
+    {
+    	assertThread();
+    	
+        // Check file
+        if(null == aFile || !new File(aFile).isFile())
+        {
+            throw new IllegalArgumentException("File not found.");
+        }
+
+        // Unload
+        if(loaded)
+        {
+        	closeFile();
+        }
+        
+        // Load
+        if(LibRetro.loadGame(aFile))
+        {	
+        	avInfo = new LibRetro.AVInfo();
+            LibRetro.getSystemAVInfo(avInfo);
+
+            new Commands.RefreshInput(null).run();            
+            
+            loaded = true;
+        }
+        else
+        {
+            throw new RuntimeException("Failed to load game.");
+        }
+    }
     
-    // Main thread function
+    void closeFile()
+    {
+    	assertThread();
+    	
+    	if(loaded)
+    	{
+    		// TODO: Write save data
+			LibRetro.unloadGame();
+			
+			avInfo = null;
+    		loaded = false;
+    	}
+    }
+        
+    private void pumpEventQueue()
+    {
+    	assertThread();    	
+
+    	// Run all events
+    	for(Commands.BaseCommand i = eventQueue.poll(); null != i; i = eventQueue.poll())
+    	{
+    		i.run();
+    	}
+    }
+
     @Override public void run()
     {
-    	// Sanity
-    	if(Thread.currentThread() != I)
-    	{
-    		throw new RuntimeException("Game's run method must only be invoked by its thread.");
-    	}
+    	assertThread();
     	
     	// Buffer for audio samples
     	final short[] audioSamples = new short[48000];
@@ -154,7 +218,7 @@ public final class Game extends Thread
 	    		pumpEventQueue();
 	    		
 	    		// Execute any commands
-	    		if(isAlive && 0 == pauseDepth && null != prePresent)
+	    		if(loaded && 0 == pauseDepth && null != prePresent)
 	    		{
 	    			prePresent.run();
 	
@@ -177,21 +241,6 @@ public final class Game extends Thread
     	catch(InterruptedException e)
     	{
 
-    	}
-    }
-	    
-    private void pumpEventQueue()
-    {
-    	// Sanity
-    	if(Thread.currentThread() != I)
-    	{
-    		throw new RuntimeException("pumpEventQueue must be called only by the Game thread.");
-    	}
-
-    	// Run all events
-    	for(Commands.BaseCommand i = eventQueue.poll(); null != i; i = eventQueue.poll())
-    	{
-    		i.run();
     	}
     }
 }

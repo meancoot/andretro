@@ -105,24 +105,7 @@ public final class Commands
 		
 		@Override protected void perform()
 		{
-            // Check file
-            if(null == path || !new File(path).isFile())
-            {
-                throw new IllegalArgumentException("File not found.");
-            }
-
-            // Load
-            if(LibRetro.loadGame(path))
-            {	
-                LibRetro.getSystemAVInfo(Game.I.avInfo);
-                Game.I.isAlive = true;
-                
-                new RefreshInput(null).run();
-            }
-            else
-            {
-                throw new RuntimeException("Failed to load game.");
-            }			
+			Game.I.loadFile(path);
 		}
 	}
 	
@@ -135,8 +118,7 @@ public final class Commands
 		
 		@Override protected void perform()
 		{
-			LibRetro.unloadGame();
-			Game.I.isAlive = false;
+			Game.I.closeFile();
 		}
 	}
 	

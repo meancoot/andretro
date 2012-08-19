@@ -119,7 +119,7 @@ public class RetroDisplay extends Activity implements QuestionDialog.QuestionHan
         
     @Override public void onBackPressed()
     {	
-        if(Game.I.isValid())
+        if(Game.I.isRunning())
         {
         	Game.I.queueCommand(new Commands.Pause(true, null));
         	QuestionDialog.newInstance(CLOSE_GAME_QUESTION, "Really Close Game?", "All unsaved data will be lost.", "Yes", "No", null).show(getFragmentManager(), "mainfragment");
@@ -147,7 +147,7 @@ public class RetroDisplay extends Activity implements QuestionDialog.QuestionHan
         	return true;
         }*/
 
-    	if(Game.I.isValid())
+    	if(Game.I.isRunning())
     	{
 /*	        if(aItem.getItemId() == R.id.settings)
             {
