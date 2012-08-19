@@ -111,6 +111,7 @@ public final class LibRetro
 	}
 	
 	public static native boolean loadLibrary(String aPath);
+	public static native void unloadLibrary();
 	public static native void init();
 	public static native void deinit();
 	public static native int apiVersion();

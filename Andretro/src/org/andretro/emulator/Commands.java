@@ -2,6 +2,7 @@ package org.andretro.emulator;
 
 import java.io.*;
 import android.app.*;
+import android.content.*;
 import org.libretro.LibRetro;
 
 public final class Commands
@@ -55,6 +56,29 @@ public final class Commands
 		abstract protected void perform();
 	}
 	
+	public static final class Initialize extends BaseCommand
+	{
+		private final Context context;
+		private final String library;
+		
+		public Initialize(Context aContext, String aLibrary, Callback aCallback)
+		{
+			super(aCallback);
+			context = aContext;
+			library = aLibrary;
+			
+			if(null == context || null == library)
+			{
+				throw new NullPointerException("Neither aContext nor aLibrary may be null");
+			}
+		}
+		
+		@Override protected void perform()
+		{
+			Game.I.loadLibrary(context, library);
+		}
+	}
+	
 	public static final class ShutDown extends BaseCommand
 	{
 		public ShutDown(Callback aCallback)
@@ -64,7 +88,7 @@ public final class Commands
 		
 		@Override protected void perform()
 		{
-			LibRetro.deinit();
+			Game.I.closeLibrary();
 		}
 	}
 	

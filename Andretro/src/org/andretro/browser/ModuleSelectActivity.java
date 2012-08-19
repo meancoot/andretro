@@ -100,17 +100,18 @@ public class ModuleSelectActivity extends Activity implements AdapterView.OnItem
         list.setOnItemClickListener(this);
     }
     
+    @Override public void onResume()
+    {
+    	super.onResume();
+    	
+    	Game.I.queueCommand(new Commands.ShutDown(null));
+    }
+    
 	@Override public void onItemClick(AdapterView<?> aListView, View aView, int aPosition, long aID)
 	{
 		String file = adapter.getItem(aPosition).getFile();
 		
-		if(false != Game.initialize(this, modulePath + file))
-		{
-			startActivity(new Intent(this, DirectoryActivity.class));			
-		}
-		else
-		{
-			finish();
-		}
+		Game.I.queueCommand(new Commands.Initialize(this,  modulePath + file,  null));
+		startActivity(new Intent(this, DirectoryActivity.class));			
 	}
 }

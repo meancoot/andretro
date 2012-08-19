@@ -162,6 +162,41 @@ JNIFUNC(jboolean, loadLibrary)(JNIARGS, jstring path)
     return true;
 }
 
+JNIFUNC(void, unloadLibrary)(JNIARGS)
+{
+	if(0 != handle)
+	{
+		dlclose(handle);
+		handle = 0;
+
+	    retro_set_environment_ptr = 0;
+	    retro_set_video_refresh_ptr = 0;
+	    retro_set_audio_sample_ptr = 0;
+	    retro_set_audio_sample_batch_ptr = 0;
+	    retro_set_input_poll_ptr = 0;
+	    retro_set_input_state_ptr = 0;
+	    retro_init_ptr = 0;
+	    retro_deinit_ptr = 0;
+	    retro_api_version_ptr = 0;
+	    retro_get_system_info_ptr = 0;
+	    retro_get_system_av_info_ptr = 0;
+	    retro_set_controller_port_device_ptr = 0;
+	    retro_reset_ptr = 0;
+	    retro_run_ptr = 0;
+	    retro_serialize_size_ptr = 0;
+	    retro_serialize_ptr = 0;
+	    retro_unserialize_ptr = 0;
+	    retro_cheat_reset_ptr = 0;
+	    retro_cheat_set_ptr = 0;
+	    retro_load_game_ptr = 0;
+	    retro_load_game_special_ptr = 0;
+	    retro_unload_game_ptr = 0;
+	    retro_get_region_ptr = 0;
+	    retro_get_memory_data_ptr = 0;
+	    retro_get_memory_size_ptr = 0;
+	}
+}
+
 JNIFUNC(void, init)(JNIARGS)
 {
     retro_set_environment_ptr(retro_environment_imp);
