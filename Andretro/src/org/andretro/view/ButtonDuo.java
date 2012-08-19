@@ -1,6 +1,8 @@
 package org.andretro.view;
 
 
+import org.andretro.*;
+
 import android.content.*;
 import android.widget.*;
 import android.view.*;
@@ -11,11 +13,14 @@ public class ButtonDuo extends ImageView implements InputHandler
     int currentBits = 0;
     int bits[] = new int[2];
 
-    public ButtonDuo(Context aContext, AttributeSet aAttributes)
+    public ButtonDuo(Context aContext, int aLeftBits, int aRightBits)
     {
-        super(aContext, aAttributes);
-        bits[0] = aAttributes.getAttributeIntValue(null, "bitsleft", 0);
-        bits[1] = aAttributes.getAttributeIntValue(null, "bitsright", 0);
+        super(aContext);
+        
+        setImageResource(R.drawable.buttonduo);
+
+        bits[0] = aLeftBits;
+        bits[1] = aRightBits;
     }
         
     @Override public int getBits()

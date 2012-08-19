@@ -125,7 +125,7 @@ public final class Game extends Thread
 			
 			new File(moduleDirectory.getAbsolutePath() + "/Games").mkdirs();
 			
-			inputs = new Doodads.Set(aContext.getSharedPreferences(systemInfo.libraryName, 0));
+			inputs = new Doodads.Set(aContext.getSharedPreferences("retropad", 0));
 			
 			initialized = true;
 		}

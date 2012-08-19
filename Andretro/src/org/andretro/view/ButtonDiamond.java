@@ -1,25 +1,26 @@
 package org.andretro.view;
-
+import org.andretro.*;
 
 import android.content.*;
 import android.widget.*;
 import android.view.*;
-import android.util.*;
 
 public class ButtonDiamond extends ImageView implements InputHandler
 {
-    int currentBits = 0;
-    int bits[] = new int[4];
+    private final int bits[] = new int[4];
+    private int currentBits;   
 
-    public ButtonDiamond(Context aContext, AttributeSet aAttributes)
+    public ButtonDiamond(Context aContext, int aUpBits, int aDownBits, int aLeftBits, int aRightBits)
     {
-        super(aContext, aAttributes);
-        bits[0] = aAttributes.getAttributeIntValue(null, "bitsleft", 0);
-        bits[1] = aAttributes.getAttributeIntValue(null, "bitsright", 0);
-        bits[2] = aAttributes.getAttributeIntValue(null, "bitsup", 0);
-        bits[3] = aAttributes.getAttributeIntValue(null, "bitsdown", 0);
+    	super(aContext);
+    	setImageResource(R.drawable.dpad);
+    	
+    	bits[0] = aUpBits;
+    	bits[1] = aDownBits;
+    	bits[2] = aLeftBits;
+    	bits[3] = aRightBits;
     }
-        
+
     @Override public int getBits()
     {
         return currentBits;
@@ -27,27 +28,26 @@ public class ButtonDiamond extends ImageView implements InputHandler
     
     @Override public boolean onTouchEvent(MotionEvent aEvent)
     {
-        int action = aEvent.getAction();
-    
-        if(action == MotionEvent.ACTION_UP)
+        if(aEvent.getAction() == MotionEvent.ACTION_DOWN || aEvent.getAction() == MotionEvent.ACTION_MOVE)
+        {
+        	// TODO: Cache these!
+        	final int w = getWidth() / 3;
+        	final int h = getHeight() / 3;
+        	
+        	final int x = (int)aEvent.getX();
+        	final int y = (int)aEvent.getY();
+        	
+        	currentBits = 0;
+        	currentBits |= (x < w) ? bits[2] : 0;
+        	currentBits |= (x > w * 2) ? bits[3] : 0;
+        	currentBits |= (y < h) ? bits[0] : 0;
+        	currentBits |= (y > h * 2) ? bits[1] : 0;
+
+        	return true;
+        }
+        else if(aEvent.getAction() == MotionEvent.ACTION_UP)
         {
             currentBits = 0;
-            return true;
-        }
-        else if(action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_MOVE)
-        {
-            int x = (int)aEvent.getX();
-            int y = (int)aEvent.getY();
-            
-            int width = getWidth() / 3;
-            int height = getHeight() / 3;
-            
-            currentBits |= (x < width * 2) ? bits[0] : 0;
-            currentBits |= (x > width) ? bits[1] : 0;
-
-            currentBits |= (y < height * 2) ? bits[2] : 0;
-            currentBits |= (y > height) ? bits[3] : 0;
-            
             return true;
         }
         

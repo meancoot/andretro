@@ -67,21 +67,30 @@ public class RetroDisplay extends Activity implements QuestionDialog.QuestionHan
 		// HACK: add controls
 		InputGroup inputBase = (InputGroup)findViewById(R.id.base);
 
-		DirectionalPad buttonSet = new DirectionalPad(this, 16, 32, 64, 128);
-		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(400, 400);
+		//nbDips * getResources().getDisplayMetrics().density
+		
+		ButtonDiamond buttonSet = new ButtonDiamond(this, 16, 32, 64, 128);
+		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(200, 200);
 		params.leftMargin = 20;
 		params.bottomMargin = 20;
 		params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
 		params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-		inputBase.addView(buttonSet , params);
+		inputBase.addView(buttonSet, params);
 		
-		buttonSet  = new DirectionalPad(this, 1 << 9, 1, 2, 1 << 8);
-		params = new RelativeLayout.LayoutParams(400, 400);
+		buttonSet  = new ButtonDiamond(this, 1 << 9, 1, 2, 1 << 8);
+		params = new RelativeLayout.LayoutParams(200, 200);
 		params.rightMargin = 20;
 		params.bottomMargin = 20;
 		params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
 		params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-		inputBase.addView(buttonSet , params);
+		inputBase.addView(buttonSet, params);
+		
+		ButtonDuo buttonSet2 = new ButtonDuo(this, 4, 8);
+		params = new RelativeLayout.LayoutParams(200, 60);
+		params.bottomMargin = 20;
+		params.addRule(RelativeLayout.CENTER_HORIZONTAL);
+		params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+		inputBase.addView(buttonSet2, params);
 		
 		Input.setOnScreenInput(inputBase);
     }
@@ -158,12 +167,12 @@ public class RetroDisplay extends Activity implements QuestionDialog.QuestionHan
         
     @Override public boolean onOptionsItemSelected(MenuItem aItem)
     {
-/*        if(aItem.getItemId() == R.id.input_method_select)
+        if(aItem.getItemId() == R.id.input_method_select)
         {
         	InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
         	imm.showInputMethodPicker();
         	return true;
-        }*/
+        }
 
     	if(Game.I.isRunning())
     	{
@@ -185,11 +194,11 @@ public class RetroDisplay extends Activity implements QuestionDialog.QuestionHan
 	            })));
 	            return true;
 	        }
-/*	        else if(aItem.getItemId() == R.id.input_settings)
+	        else if(aItem.getItemId() == R.id.input_settings)
 	        {
 	        	startActivity(new Intent(this, InputActivity.class));
         		return true;
-	        }*/
+	        }
 	        else if(aItem.getItemId() == R.id.reset)
 	        {
 	        	Game.I.queueCommand(new Commands.Reset(null));

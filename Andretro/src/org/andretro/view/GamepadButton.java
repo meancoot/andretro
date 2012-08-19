@@ -12,17 +12,6 @@ public class GamepadButton extends ImageView implements InputHandler
     int touchCount = 0;
     int bits;
 
-    public GamepadButton(Context aContext, AttributeSet aAttributes)
-    {
-        super(aContext, aAttributes);
-
-        TypedArray a = aContext.obtainStyledAttributes(aAttributes, R.styleable.GamepadButton);
-
-        bits = a.getInt(R.styleable.GamepadButton_bits, 0);
-
-        a.recycle();
-    }
-
     public GamepadButton(Context aContext, int aBits)
     {
         super(aContext);

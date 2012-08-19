@@ -110,9 +110,12 @@ public final class Doodads
 		public final int bitOffset;
 	    private int keyCode;
 
+	    public static final String[] names = {"UP", "DOWN", "LEFT", "RIGHT", "A", "B", "X", "Y", "SELECT", "START", "L", "R", "L2", "R2", "L3", "R3"}; 
+	    public static final int[] offsets = {4, 5, 6, 7, 8, 0, 9, 1, 2, 3, 10, 11, 12, 13, 14, 15};
+	    
 	    Button(SharedPreferences aPreferences, final Port aPort, final Device aDevice, int aButton)
 	    {
-	    	super("button" + aButton, "Button " + aButton);
+	    	super("button" + aButton, names[aButton]);
 
 	    	// Get configKey
 	    	configKey = aPort.name + "_" + aDevice.name + "_" + name;
@@ -123,7 +126,7 @@ public final class Doodads
 	    	// Grab native data
 	    	order = aButton;
 	    	type = 0;
-	    	bitOffset = aButton;
+	    	bitOffset = offsets[aButton];
 	    }
 	    
 	    public int getKeyCode()

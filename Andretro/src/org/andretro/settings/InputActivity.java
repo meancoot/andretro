@@ -14,26 +14,29 @@ import android.os.*;
  */
 public class InputActivity extends PreferenceActivity
 {
+	@Override public void onCreate(Bundle aState)
+	{
+		super.onCreate(aState);
+		
+		getPreferenceManager().setSharedPreferencesName("retropad");
+
+		// Setup the preference list
+		PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(this);
+		
+		// Add port 1's pad
+		Doodads.Device device = Game.I.getInputs().getDevice(0,  0);
+		for(Doodads.Button i: device.getAll())
+		{
+			screen.addPreference(new Settings.Button(this, i));
+		}
+		
+		setPreferenceScreen(screen);
+	}
+	
 	@Override public void onPause()
 	{
 		super.onPause();
 
 		Game.I.queueCommand(new Commands.RefreshInput(null));
-	}
-	
-	@Override public void onBuildHeaders(List<Header> aHeaders)
-	{
-		for(final Doodads.Port i: Game.I.getInputs().getAll())
-		{
-			Bundle arguments = new Bundle();
-			arguments.putInt("port", i.index);
-			
-			Header header = new Header();
-			header.title = i.fullName;
-			header.fragment = "org.andretro.settings.InputFragment";
-			header.fragmentArguments = arguments;
-			
-			aHeaders.add(header);
-		}
 	}
 }
