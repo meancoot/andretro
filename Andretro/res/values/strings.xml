@@ -8,5 +8,6 @@
     <string name="save_state">Save State</string>
     <string name="reset">Reset</string>
     <string name="empty_string"></string>
+    <string name="root_directory">SD Card Root</string>
 
 </resources>

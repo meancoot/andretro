@@ -83,6 +83,11 @@ public final class Game extends Thread
     	return (null == systemInfo) ? null : systemInfo.libraryName;
     }
     
+    public String getModuleSystemDirectory()
+    {
+    	return (null == moduleDirectory) ? null : moduleDirectory.getAbsolutePath();
+    }
+    
     public String getGameDataName(String aExtension)
     {
         return (null == moduleDirectory) ? null : moduleDirectory.getAbsolutePath() + "/test." + aExtension;
@@ -117,6 +122,8 @@ public final class Game extends Thread
 			
 			moduleDirectory = new File(Environment.getExternalStorageDirectory().getPath() + "/andretro/" + systemInfo.libraryName);
 			moduleDirectory.mkdirs();
+			
+			new File(moduleDirectory.getAbsolutePath() + "/Games").mkdirs();
 			
 			inputs = new Doodads.Set(aContext.getSharedPreferences(systemInfo.libraryName, 0));
 			

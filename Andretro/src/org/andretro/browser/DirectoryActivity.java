@@ -1,6 +1,7 @@
 package org.andretro.browser;
 
 import org.andretro.*;
+import org.andretro.emulator.*;
 
 import java.util.*;
 import java.io.*;
@@ -57,13 +58,15 @@ final class FileWrapper implements IconAdapterItem
 public class DirectoryActivity extends Activity implements AdapterView.OnItemClickListener
 {
     private IconAdapter<FileWrapper> adapter;
+    private boolean inRoot;
     
     @Override public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         
         setContentView(R.layout.directory_list);
-
+        inRoot = getIntent().getBooleanExtra("inroot", false);
+        
         adapter = new IconAdapter<FileWrapper>(this, R.layout.directory_list_item);
         
         // Setup the list
@@ -87,6 +90,30 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
 		startActivity(new Intent(this, startType).putExtra("path", selected.getAbsolutePath()));
 	}
 	
+    @Override public boolean onCreateOptionsMenu(Menu aMenu)
+    {
+    	super.onCreateOptionsMenu(aMenu);
+    	
+    	if(!inRoot)
+    	{
+    		getMenuInflater().inflate(R.menu.directory_list, aMenu);
+    		return true;
+    	}
+    	
+    	return false;
+    }
+
+    @Override public boolean onOptionsItemSelected(MenuItem aItem)
+    {
+    	if(R.id.goto_root == aItem.getItemId())
+    	{
+    		startActivity(new Intent(this, DirectoryActivity.class).putExtra("inroot", true).putExtra("path", Environment.getExternalStorageDirectory().getPath()));
+    		return true;
+    	}
+    	
+        return super.onOptionsItemSelected(aItem);
+    }
+        
     private void wrapFiles(File aDirectory)
     {
     	if(null == aDirectory || !aDirectory.isDirectory())

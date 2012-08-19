@@ -76,7 +76,7 @@ final class ModuleWrapper implements IconAdapterItem
 public class ModuleSelectActivity extends Activity implements AdapterView.OnItemClickListener
 {
 	// HACK: Hard path
-	private static final String modulePath = "/data/data/org.andretro/lib/";
+	static final String modulePath = "/data/data/org.andretro/lib/";
 	
     private IconAdapter<ModuleWrapper> adapter;
     
@@ -90,7 +90,7 @@ public class ModuleSelectActivity extends Activity implements AdapterView.OnItem
         adapter = new IconAdapter<ModuleWrapper>(this, R.layout.module_select_item);
         
         for(final File lib: new File(modulePath).listFiles())
-        {
+        {	
         	adapter.add(new ModuleWrapper(lib.getName()));
         }
         
@@ -111,7 +111,13 @@ public class ModuleSelectActivity extends Activity implements AdapterView.OnItem
 	{
 		String file = adapter.getItem(aPosition).getFile();
 		
-		Game.I.queueCommand(new Commands.Initialize(this,  modulePath + file,  null));
-		startActivity(new Intent(this, DirectoryActivity.class));			
+		Game.I.queueCommand(new Commands.Initialize(this,  modulePath + file, new Commands.Callback(this, new Runnable()
+		{
+			@Override public void run()
+			{
+				startActivity(new Intent(ModuleSelectActivity.this, DirectoryActivity.class)
+					.putExtra("path", Game.I.getModuleSystemDirectory() + "/Games"));
+			}
+		})));			
 	}
 }
