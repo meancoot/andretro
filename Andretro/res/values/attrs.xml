@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="GamepadButton">
+        <attr name="bits">
+	        <flag name="B" value="0x0001" />
+			<flag name="Y" value="0x0002" />
+			<flag name="SELECT" value="0x0004" />
+			<flag name="START" value="0x0008" />
+			<flag name="UP" value="0x0010" />
+			<flag name="DOWN" value="0x0020" />
+			<flag name="LEFT" value="0x0040" />
+			<flag name="RIGHT" value="0x0080" />
+	        <flag name="A" value="0x0100" />
+			<flag name="X" value="0x0200" />
+			<flag name="L" value="0x0400" />
+			<flag name="R" value="0x0800" />
+			<flag name="L2" value="0x1000" />
+			<flag name="R2" value="0x2000" />
+			<flag name="L3" value="0x4000" />
+			<flag name="R3" value="0x8000" />			
+        </attr>
+    </declare-styleable>
+</resources>

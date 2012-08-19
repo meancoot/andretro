@@ -1,0 +1,115 @@
+package org.andretro.browser;
+
+import org.andretro.*;
+
+import java.util.*;
+import java.io.*;
+
+import android.content.*;
+import android.app.*;
+import android.os.*;
+import android.widget.*;
+import android.view.*;
+
+final class FileWrapper implements IconAdapterItem
+{
+    private final File file;
+    private final int typeIndex;
+
+    public FileWrapper(File aFile)
+    {
+    	if(null == aFile)
+    	{
+    		throw new IllegalArgumentException("File object may not be null");
+    	}
+
+        file = aFile;
+        typeIndex = (file.isDirectory() ? 1 : 0) + (file.isFile() ? 2 : 0);
+    }
+    
+    public File getFile()
+    {
+    	return file;
+    }
+    
+    @Override public String getText()
+    {
+    	return file.getName();
+    }
+    
+    @Override public int getIconResourceId()
+    {
+    	return file.isFile() ? R.drawable.file : R.drawable.folder;
+    }
+    
+    public int compareTo(FileWrapper aOther)
+    {	
+    	if(null != aOther)
+    	{
+    		// Who says ternary is hard to follow
+    		return (typeIndex == aOther.typeIndex) ? file.compareTo(aOther.file) : ((typeIndex < aOther.typeIndex) ? -1 : 1);
+    	}
+    	
+    	return -1;
+    }
+}
+
+public class DirectoryActivity extends Activity implements AdapterView.OnItemClickListener
+{
+    private IconAdapter<FileWrapper> adapter;
+    
+    @Override public void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        
+        setContentView(R.layout.directory_list);
+
+        adapter = new IconAdapter<FileWrapper>(this, R.layout.directory_list_item);
+        
+        // Setup the list
+        ListView list = (ListView)findViewById(R.id.list);
+        list.setAdapter(adapter);
+        list.setOnItemClickListener(this);
+        
+        // Load Directory
+        String path = getIntent().getStringExtra("path");
+        path = (path == null) ? Environment.getExternalStorageDirectory().getPath() : path;
+
+        wrapFiles(new File(path));
+    	((TextView)findViewById(R.id.title)).setText(path);
+    }
+    
+	@Override public void onItemClick(AdapterView<?> aListView, View aView, int aPosition, long aID)
+	{
+		final File selected = adapter.getItem(aPosition).getFile();
+
+		Class<? extends Activity> startType = selected.isDirectory() ? DirectoryActivity.class : RetroDisplay.class; 
+		startActivity(new Intent(this, startType).putExtra("path", selected.getAbsolutePath()));
+	}
+	
+    private void wrapFiles(File aDirectory)
+    {
+    	if(null == aDirectory || !aDirectory.isDirectory())
+    	{
+    		throw new IllegalArgumentException("Directory is not valid.");
+    	}
+    	        
+        // Copy new items
+        for(File file: aDirectory.listFiles())
+        {
+        	adapter.add(new FileWrapper(file));
+        }
+        
+        // Sort items
+        adapter.sort(new Comparator<FileWrapper>()
+        {
+            @Override public int compare(FileWrapper aLeft, FileWrapper aRight)
+            {
+                return aLeft.compareTo(aRight);
+            };
+        });
+
+        // Update
+        adapter.notifyDataSetChanged();    	
+    }
+}
