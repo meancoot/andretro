@@ -19,3 +19,4 @@ include $(FOCAL_PATH)/stella/Android.mk
 include $(FOCAL_PATH)/snes9x-next/Android.mk
 include $(FOCAL_PATH)/Genesis-Plus-GX/Android.mk
 include $(FOCAL_PATH)/fceu-next/Android.mk
+include $(FOCAL_PATH)/prboom/Android.mk

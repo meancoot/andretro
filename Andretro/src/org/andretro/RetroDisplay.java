@@ -64,8 +64,26 @@ public class RetroDisplay extends Activity implements QuestionDialog.QuestionHan
 		view.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 		view.setKeepScreenOn(true);
 		
-		getLayoutInflater().inflate(R.layout.retro_pad, (ViewGroup)findViewById(R.id.base), true);
-		Input.setOnScreenInput((InputGroup)findViewById(R.id.inputbase));
+		// HACK: add controls
+		InputGroup inputBase = (InputGroup)findViewById(R.id.base);
+
+		DirectionalPad buttonSet = new DirectionalPad(this, 16, 32, 64, 128);
+		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(400, 400);
+		params.leftMargin = 20;
+		params.bottomMargin = 20;
+		params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+		params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+		inputBase.addView(buttonSet , params);
+		
+		buttonSet  = new DirectionalPad(this, 1 << 9, 1, 2, 1 << 8);
+		params = new RelativeLayout.LayoutParams(400, 400);
+		params.rightMargin = 20;
+		params.bottomMargin = 20;
+		params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+		params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+		inputBase.addView(buttonSet , params);
+		
+		Input.setOnScreenInput(inputBase);
     }
     
     @Override public void onResume()

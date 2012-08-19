@@ -5,7 +5,7 @@ import android.view.*;
 import android.content.*;
 import android.widget.*;
 
-public class InputGroup extends RelativeLayout
+public class InputGroup extends RelativeLayout implements InputHandler
 {
     public InputGroup(Context aContext, AttributeSet aAttributes)
     {
