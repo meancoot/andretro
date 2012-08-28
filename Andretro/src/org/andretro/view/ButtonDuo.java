@@ -6,7 +6,6 @@ import org.andretro.*;
 import android.content.*;
 import android.widget.*;
 import android.view.*;
-import android.util.*;
 
 public class ButtonDuo extends ImageView implements InputHandler
 {

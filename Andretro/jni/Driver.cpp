@@ -55,7 +55,65 @@ DEFINEFUNCTION(size_t, retro_get_memory_size, unsigned id);
 // Environment callback. Gives implementations a way of performing uncommon tasks. Extensible.
 static bool retro_environment_imp(unsigned cmd, void *data)
 {
-    return false;
+	if(RETRO_ENVIRONMENT_SET_ROTATION == cmd)
+	{
+		// TODO
+		return false;
+	}
+	else if(RETRO_ENVIRONMENT_GET_OVERSCAN == cmd)
+	{
+		// ?
+		*(bool*)data = true;
+		return true;
+	}
+	else if(RETRO_ENVIRONMENT_GET_CAN_DUPE == cmd)
+	{
+		// TODO: Make it true
+		*(bool*)data = false;
+		return true;
+	}
+	else if(RETRO_ENVIRONMENT_GET_VARIABLE == cmd)
+	{
+		// TODO
+		return false;
+	}
+	else if(RETRO_ENVIRONMENT_SET_VARIABLES == cmd)
+	{
+		// HACK
+		const retro_variable* vals = (const retro_variable*)data;
+
+		while(vals->key)
+		{
+			Log("%s : %s", vals->key ? vals->key : "NULL", vals->value ? vals->value : "NULL");
+		}
+
+		return false;
+	}
+	else if(RETRO_ENVIRONMENT_SET_MESSAGE == cmd)
+	{
+		// TODO
+		return false;
+	}
+	else if(RETRO_ENVIRONMENT_SHUTDOWN == cmd)
+	{
+		// TODO
+		return false;
+	}
+	else if(RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL == cmd)
+	{
+		// TODO
+		return false;
+	}
+	else if(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY == cmd)
+	{
+		return false;
+	}
+	else if(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT == cmd)
+	{
+		return false;
+	}
+
+	return false;
 }
 
 // Render a frame. Pixel format is 15-bit 0RGB1555 native endian unless changed (see RETRO_ENVIRONMENT_SET_PIXEL_FORMAT).

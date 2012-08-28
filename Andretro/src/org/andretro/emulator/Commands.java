@@ -1,6 +1,4 @@
 package org.andretro.emulator;
-
-import java.io.*;
 import android.app.*;
 import android.content.*;
 import org.libretro.LibRetro;

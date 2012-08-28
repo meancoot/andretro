@@ -1,5 +1,4 @@
 package org.andretro.settings;
-import java.util.*;
 
 import org.andretro.emulator.*;
 

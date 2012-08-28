@@ -1,11 +1,8 @@
 package org.andretro.view;
-import org.andretro.*;
 
 import android.content.*;
-import android.content.res.*;
 import android.widget.*;
 import android.view.*;
-import android.util.*;
 
 public class GamepadButton extends ImageView implements InputHandler
 {

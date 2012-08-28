@@ -12,6 +12,7 @@ import android.app.*;
 import android.opengl.*;
 import android.os.*;
 import android.content.*;
+import android.content.res.*;
 import android.widget.*;
 
 
@@ -49,12 +50,12 @@ public class RetroDisplay extends Activity implements QuestionDialog.QuestionHan
     @Override public void onCreate(Bundle aState)
     {	
         super.onCreate(aState);
-        
-        // Initialize the emulator
-        if(null == aState)
+
+        // Go fullscreen
+        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
         {
-        	Game.I.queueCommand(new Commands.LoadGame(getIntent().getStringExtra("path"), null));
-        }
+        	getActionBar().hide();
+        }        
 
 		// Setup the view
         setContentView(R.layout.retro_display);
@@ -98,6 +99,7 @@ public class RetroDisplay extends Activity implements QuestionDialog.QuestionHan
     @Override public void onResume()
     {
     	super.onResume();
+    	view.onResume();
     	
 	    Game.I.queueCommand(new Commands.SetPrepresent(new Runnable()
 	    {
@@ -111,6 +113,7 @@ public class RetroDisplay extends Activity implements QuestionDialog.QuestionHan
     @Override public void onPause()
     {
     	super.onPause();
+    	view.onPause();
     	
     	Game.I.queueCommand(new Commands.SetPrepresent(null, null));
     }

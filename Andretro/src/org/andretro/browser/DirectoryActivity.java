@@ -86,8 +86,15 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
 	{
 		final File selected = adapter.getItem(aPosition).getFile();
 
-		Class<? extends Activity> startType = selected.isDirectory() ? DirectoryActivity.class : RetroDisplay.class; 
-		startActivity(new Intent(this, startType).putExtra("path", selected.getAbsolutePath()));
+		if(selected.isFile())
+		{
+			Game.I.queueCommand(new Commands.LoadGame(selected.getAbsolutePath(), null));
+			startActivity(new Intent(this, RetroDisplay.class));
+		}
+		else
+		{
+			startActivity(new Intent(this, DirectoryActivity.class).putExtra("path", selected.getAbsolutePath()));
+		}
 	}
 	
     @Override public boolean onCreateOptionsMenu(Menu aMenu)
