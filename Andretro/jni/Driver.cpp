@@ -3,59 +3,31 @@
 
 #include "Common.h"
 #include "libretro.h"
+#include "Library.h"
 
 namespace
 {
-    void* handle;
+    Library* module;
+    
     JNIEnv* env;
-    jobject videoFrame;
-    jintArray videoSize;
     jshortArray audioData;
     jint audioLength;
     jint joypad;
+
+    jobject videoFrame;
+    jint lastWidth;
+    jint lastHeight;
+
+    retro_system_info systemInfo;
+    retro_system_av_info avInfo;
 }
-
-#define DEFINEFUNCTION(RET, NAME, ...) \
- typedef RET (*NAME##_t)(__VA_ARGS__); \
- static NAME##_t NAME##_ptr
- 
-#define LOADFUNCTION(NAME) \
- NAME##_ptr = (NAME##_t)dlsym(handle, #NAME); \
- if(0 == NAME##_ptr){Log(dlerror()); return false;}
- 
-DEFINEFUNCTION(void, retro_set_environment, retro_environment_t);
-DEFINEFUNCTION(void, retro_set_video_refresh, retro_video_refresh_t);
-DEFINEFUNCTION(void, retro_set_audio_sample, retro_audio_sample_t);
-DEFINEFUNCTION(void, retro_set_audio_sample_batch, retro_audio_sample_batch_t);
-DEFINEFUNCTION(void, retro_set_input_poll, retro_input_poll_t);
-DEFINEFUNCTION(void, retro_set_input_state, retro_input_state_t);
-DEFINEFUNCTION(void, retro_init, void);
-DEFINEFUNCTION(void, retro_deinit, void);
-DEFINEFUNCTION(unsigned, retro_api_version, void);
-DEFINEFUNCTION(void, retro_get_system_info, struct retro_system_info *info);
-DEFINEFUNCTION(void, retro_get_system_av_info, struct retro_system_av_info *info);
-DEFINEFUNCTION(void, retro_set_controller_port_device, unsigned port, unsigned device);
-DEFINEFUNCTION(void, retro_reset, void);
-DEFINEFUNCTION(void, retro_run, void);
-DEFINEFUNCTION(size_t, retro_serialize_size, void);
-DEFINEFUNCTION(bool, retro_serialize, void *data, size_t size);
-DEFINEFUNCTION(bool, retro_unserialize, const void *data, size_t size);
-DEFINEFUNCTION(void, retro_cheat_reset, void);
-DEFINEFUNCTION(void, retro_cheat_set, unsigned index, bool enabled, const char *code);
-DEFINEFUNCTION(bool, retro_load_game, const struct retro_game_info *game);
-DEFINEFUNCTION(bool, retro_load_game_special, unsigned game_type, const struct retro_game_info *info, size_t num_info);
-DEFINEFUNCTION(void, retro_unload_game, void);
-DEFINEFUNCTION(unsigned, retro_get_region, void);
-DEFINEFUNCTION(void*, retro_get_memory_data, unsigned id);
-DEFINEFUNCTION(size_t, retro_get_memory_size, unsigned id);
-
 
 // Callbacks
 //
 // Environment callback. Gives implementations a way of performing uncommon tasks. Extensible.
 static bool retro_environment_imp(unsigned cmd, void *data)
 {
-	if(RETRO_ENVIRONMENT_SET_ROTATION == cmd)
+/*	if(RETRO_ENVIRONMENT_SET_ROTATION == cmd)
 	{
 		// TODO
 		return false;
@@ -111,7 +83,7 @@ static bool retro_environment_imp(unsigned cmd, void *data)
 	else if(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT == cmd)
 	{
 		return false;
-	}
+	}*/
 
 	return false;
 }
@@ -134,8 +106,8 @@ static void retro_video_refresh_imp(const void *data, unsigned width, unsigned h
         }
     }
     
-    uint32_t size[2] = {width, height};
-    env->SetIntArrayRegion(videoSize, 0, 2, (const int*)size);
+    lastWidth = width;
+    lastHeight = height;
 }
 
 // Renders a single audio frame. Should only be used if implementation generates a single sample at a time.
@@ -183,142 +155,89 @@ static int16_t retro_input_state_imp(unsigned port, unsigned device, unsigned in
 JNIFUNC(jboolean, loadLibrary)(JNIARGS, jstring path)
 {
     JavaChars libname(aEnv, path);
-    handle = dlopen(libname, RTLD_LAZY);
     
-    if(0 == handle)
+    delete module;
+    module = 0;
+    
+    try
     {
-    	Log(dlerror());
-    	return false;
+        module = new Library(libname);
+        return true;
     }
-
-    LOADFUNCTION(retro_set_environment);
-    LOADFUNCTION(retro_set_video_refresh);
-    LOADFUNCTION(retro_set_audio_sample);
-    LOADFUNCTION(retro_set_audio_sample_batch);
-    LOADFUNCTION(retro_set_input_poll);
-    LOADFUNCTION(retro_set_input_state);
-    LOADFUNCTION(retro_init);
-    LOADFUNCTION(retro_deinit);
-    LOADFUNCTION(retro_api_version);
-    LOADFUNCTION(retro_get_system_info);
-    LOADFUNCTION(retro_get_system_av_info);
-    LOADFUNCTION(retro_set_controller_port_device);
-    LOADFUNCTION(retro_reset);
-    LOADFUNCTION(retro_run);
-    LOADFUNCTION(retro_serialize_size);
-    LOADFUNCTION(retro_serialize);
-    LOADFUNCTION(retro_unserialize);
-    LOADFUNCTION(retro_cheat_reset);
-    LOADFUNCTION(retro_cheat_set);
-    LOADFUNCTION(retro_load_game);
-    LOADFUNCTION(retro_load_game_special);
-    LOADFUNCTION(retro_unload_game);
-    LOADFUNCTION(retro_get_region);
-    LOADFUNCTION(retro_get_memory_data);
-    LOADFUNCTION(retro_get_memory_size);
-
-    return true;
+    catch(...)
+    {
+        return false;
+    }
 }
 
 JNIFUNC(void, unloadLibrary)(JNIARGS)
 {
-	if(0 != handle)
-	{
-		dlclose(handle);
-		handle = 0;
+    delete module;
+    module = 0;
 
-	    retro_set_environment_ptr = 0;
-	    retro_set_video_refresh_ptr = 0;
-	    retro_set_audio_sample_ptr = 0;
-	    retro_set_audio_sample_batch_ptr = 0;
-	    retro_set_input_poll_ptr = 0;
-	    retro_set_input_state_ptr = 0;
-	    retro_init_ptr = 0;
-	    retro_deinit_ptr = 0;
-	    retro_api_version_ptr = 0;
-	    retro_get_system_info_ptr = 0;
-	    retro_get_system_av_info_ptr = 0;
-	    retro_set_controller_port_device_ptr = 0;
-	    retro_reset_ptr = 0;
-	    retro_run_ptr = 0;
-	    retro_serialize_size_ptr = 0;
-	    retro_serialize_ptr = 0;
-	    retro_unserialize_ptr = 0;
-	    retro_cheat_reset_ptr = 0;
-	    retro_cheat_set_ptr = 0;
-	    retro_load_game_ptr = 0;
-	    retro_load_game_special_ptr = 0;
-	    retro_unload_game_ptr = 0;
-	    retro_get_region_ptr = 0;
-	    retro_get_memory_data_ptr = 0;
-	    retro_get_memory_size_ptr = 0;
-	}
+    memset(&systemInfo, 0, sizeof(systemInfo));
 }
 
 JNIFUNC(void, init)(JNIARGS)
 {
-    retro_set_environment_ptr(retro_environment_imp);
-    retro_set_video_refresh_ptr(retro_video_refresh_imp);
-    retro_set_audio_sample_ptr(retro_audio_sample_imp);
-    retro_set_audio_sample_batch_ptr(retro_audio_sample_batch_imp);
-    retro_set_input_poll_ptr(retro_input_poll_imp);
-    retro_set_input_state_ptr(retro_input_state_imp);
+    module->set_environment(retro_environment_imp);
+    module->set_video_refresh(retro_video_refresh_imp);
+    module->set_audio_sample(retro_audio_sample_imp);
+    module->set_audio_sample_batch(retro_audio_sample_batch_imp);
+    module->set_input_poll(retro_input_poll_imp);
+    module->set_input_state(retro_input_state_imp);
 
-    retro_init_ptr();
+    module->init();
+
+    module->get_system_info(&systemInfo);
 }
 
 JNIFUNC(void, deinit)(JNIARGS)
 {
-    retro_deinit_ptr();
+    module->deinit();
 }
 
 JNIFUNC(jint, apiVersion)(JNIARGS)
 {
-    return retro_api_version_ptr();
+    return module->api_version();
 }
 
 JNIFUNC(void, getSystemInfo)(JNIARGS, jobject aSystemInfo)
 {
-    retro_system_info info;
-    retro_get_system_info_ptr(&info);
-
 	static const char* const n[] = {"libraryName", "libraryVersion", "validExtensions", "needFullPath", "blockExtract"};
 	static const char* const s[] = {"Ljava/lang/String;", "Ljava/lang/String;", "Ljava/lang/String;", "Z", "Z"};
 	static JavaClass sic(aEnv, aSystemInfo, 5, n, s);
 	
-    aEnv->SetObjectField(aSystemInfo, sic["libraryName"], JavaString(aEnv, info.library_name));
-    aEnv->SetObjectField(aSystemInfo, sic["libraryVersion"], JavaString(aEnv, info.library_version));
-    aEnv->SetObjectField(aSystemInfo, sic["validExtensions"], JavaString(aEnv, info.valid_extensions));
-    aEnv->SetBooleanField(aSystemInfo, sic["needFullPath"], info.need_fullpath);
-    aEnv->SetBooleanField(aSystemInfo, sic["blockExtract"], info.block_extract);
+    aEnv->SetObjectField(aSystemInfo, sic["libraryName"], JavaString(aEnv, systemInfo.library_name));
+    aEnv->SetObjectField(aSystemInfo, sic["libraryVersion"], JavaString(aEnv, systemInfo.library_version));
+    aEnv->SetObjectField(aSystemInfo, sic["validExtensions"], JavaString(aEnv, systemInfo.valid_extensions));
+    aEnv->SetBooleanField(aSystemInfo, sic["needFullPath"], systemInfo.need_fullpath);
+    aEnv->SetBooleanField(aSystemInfo, sic["blockExtract"], systemInfo.block_extract);
 }
 
 JNIFUNC(void, getSystemAVInfo)(JNIARGS, jobject aAVInfo)
 {
-    retro_system_av_info info;
-    retro_get_system_av_info_ptr(&info);
-
     static const char* const n[] = {"baseWidth", "baseHeight", "maxWidth", "maxHeight", "aspectRatio", "fps", "sampleRate"};
     static const char* const s[] = {"I", "I", "I", "I", "F", "D", "D"};
     static JavaClass sic(aEnv, aAVInfo, 7, n, s);
 
-    aEnv->SetIntField(aAVInfo, sic["baseWidth"], info.geometry.base_width);
-    aEnv->SetIntField(aAVInfo, sic["baseHeight"], info.geometry.base_height);
-    aEnv->SetIntField(aAVInfo, sic["maxWidth"], info.geometry.max_width);
-    aEnv->SetIntField(aAVInfo, sic["maxHeight"], info.geometry.max_height);
-    aEnv->SetFloatField(aAVInfo, sic["aspectRatio"], info.geometry.aspect_ratio);
-    aEnv->SetDoubleField(aAVInfo, sic["fps"], info.timing.fps);
-    aEnv->SetDoubleField(aAVInfo, sic["sampleRate"], info.timing.sample_rate);
+    aEnv->SetIntField(aAVInfo, sic["baseWidth"], avInfo.geometry.base_width);
+    aEnv->SetIntField(aAVInfo, sic["baseHeight"], avInfo.geometry.base_height);
+    aEnv->SetIntField(aAVInfo, sic["maxWidth"], avInfo.geometry.max_width);
+    aEnv->SetIntField(aAVInfo, sic["maxHeight"], avInfo.geometry.max_height);
+    aEnv->SetFloatField(aAVInfo, sic["aspectRatio"], avInfo.geometry.aspect_ratio);
+    aEnv->SetDoubleField(aAVInfo, sic["fps"], avInfo.timing.fps);
+    aEnv->SetDoubleField(aAVInfo, sic["sampleRate"], avInfo.timing.sample_rate);
 }
 
 JNIFUNC(void, setControllerPortDevice)(JNIARGS, jint port, jint device)
 {
-    retro_set_controller_port_device_ptr(port, device);
+    module->set_controller_port_device(port, device);
 }
 
 JNIFUNC(void, reset)(JNIARGS)
 {
-    retro_reset_ptr();
+    module->reset();
 }
 
 JNIFUNC(jint, run)(JNIARGS, jobject aVideo, jintArray aSize, jshortArray aAudio, jint aJoypad)
@@ -326,42 +245,45 @@ JNIFUNC(jint, run)(JNIARGS, jobject aVideo, jintArray aSize, jshortArray aAudio,
     // TODO
     env = aEnv;
     videoFrame = aVideo;
-    videoSize = aSize;
     audioData = aAudio;
     audioLength = 0;
     joypad = aJoypad;
     
-    retro_run_ptr();
-    
+    module->run();
+
+    // Upload video size (done here in case of dupe)
+    const jint size[2] = {lastWidth, lastHeight};
+    env->SetIntArrayRegion(aSize, 0, 2, size);
+
     return audioLength;
 }
 
 JNIFUNC(jint, serializeSize)(JNIARGS)
 {
-    return retro_serialize_size_ptr();
+    return module->serialize_size();
 }
 
 JNIFUNC(jboolean, serialize)(JNIARGS, jobject aData, jint aSize, jint aOffset)
 {
     uint8_t* data = (uint8_t*)env->GetDirectBufferAddress(aData);
-    return retro_serialize_ptr(&data[aOffset], aSize - aOffset);
+    return module->serialize(&data[aOffset], aSize - aOffset);
 }
 
 JNIFUNC(jboolean, unserialize)(JNIARGS, jobject aData, jint aSize, jint aOffset)
 {
     const uint8_t* data = (uint8_t*)env->GetDirectBufferAddress(aData);
-    return retro_unserialize_ptr(&data[aOffset], aSize - aOffset);
+    return module->unserialize(&data[aOffset], aSize - aOffset);
 }
 
 JNIFUNC(jboolean, serializeToFile)(JNIARGS, jstring aPath)
 {
-    size_t size = retro_serialize_size_ptr();
+    size_t size = module->serialize_size();
 
     if(size > 0)
     {        
         uint8_t buffer[size];
 
-        if(retro_serialize_ptr(buffer, size))
+        if(module->serialize(buffer, size))
         {
             JavaChars path(aEnv, aPath);
             FILE* file = fopen(path, "wb");
@@ -384,9 +306,9 @@ JNIFUNC(jboolean, unserializeFromFile)(JNIARGS, jstring aPath)
     
     FileReader data = FileReader(path);
 
-    if(data.size() >= retro_serialize_size_ptr())
+    if(data.size() >= module->serialize_size())
     {
-        return retro_unserialize_ptr(data.base(), data.size());
+        return module->unserialize(data.base(), data.size());
     }
     
     return false;
@@ -394,45 +316,48 @@ JNIFUNC(jboolean, unserializeFromFile)(JNIARGS, jstring aPath)
 
 JNIFUNC(void, cheatReset)(JNIARGS)
 {
-    retro_cheat_reset_ptr();
+    module->cheat_reset();
 }
 
 JNIFUNC(void, cheatSet)(JNIARGS, jint index, jboolean enabled, jstring code)
 {
     JavaChars codeN(aEnv, code);
-    retro_cheat_set_ptr(index, enabled, codeN);
+    module->cheat_set(index, enabled, codeN);
 }
 
 JNIFUNC(bool, loadGame)(JNIARGS, jstring path)
 {
-    //TODO: Cleanup
     JavaChars fileName(aEnv, path);
     
     retro_game_info info;
-
     info.path = fileName;
+	info.meta = 0;
     
-    FILE* file = fopen(fileName, "rb");
-    fseek(file, 0, SEEK_END);
-    info.size = ftell(file);
-    fseek(file, 0, SEEK_SET);
-    
-    info.data = malloc(info.size);
-    fread((void*)info.data, info.size, 1, file);
-    fclose(file);
-    info.meta = 0;
+	// TODO: Who deletes the memory?
+    if(!systemInfo.need_fullpath)
+    {
+		FILE* file = fopen(fileName, "rb");
+		fseek(file, 0, SEEK_END);
+		info.size = ftell(file);
+		fseek(file, 0, SEEK_SET);
 
-    return retro_load_game_ptr(&info);
+		info.data = malloc(info.size);
+		fread((void*)info.data, info.size, 1, file);
+		fclose(file);
+    }
+
+    return module->load_game(&info);
 }
 
 JNIFUNC(void, unloadGame)(JNIARGS)
 {
-    retro_unload_game_ptr();
+    module->unload_game();
+    memset(&avInfo, 0, sizeof(avInfo));
 }
 
 JNIFUNC(jint, getRegion)(JNIARGS)
 {
-    return retro_get_region_ptr();
+    return module->get_region();
 }
 
 // Note: aFileBase contains complete path to file without extension, the trailing dot is included.
@@ -441,7 +366,7 @@ JNIFUNC(void, loadSavedData)(JNIARGS, jstring aFileBase)
 	char buffer[1024];
 	JavaChars fileBase(aEnv, aFileBase);
 
-	size_t size = retro_get_memory_size_ptr(RETRO_MEMORY_SAVE_RAM);
+	size_t size = module->get_memory_size(RETRO_MEMORY_SAVE_RAM);
 	if(size)
 	{
 		snprintf(buffer, 1024, "%s.srm", (const char*)fileBase);
@@ -449,11 +374,11 @@ JNIFUNC(void, loadSavedData)(JNIARGS, jstring aFileBase)
 
 		if(data.size() == size)
 		{
-			memcpy(retro_get_memory_data_ptr(RETRO_MEMORY_SAVE_RAM), data.base(), size);
+			memcpy(module->get_memory_data(RETRO_MEMORY_SAVE_RAM), data.base(), size);
 		}
 	}
 
-	size = retro_get_memory_size_ptr(RETRO_MEMORY_RTC);
+	size = module->get_memory_size(RETRO_MEMORY_RTC);
 	if(size)
 	{
 		snprintf(buffer, 1024, "%s.rtc", (const char*)fileBase);
@@ -461,7 +386,7 @@ JNIFUNC(void, loadSavedData)(JNIARGS, jstring aFileBase)
 
 		if(data.size() == size)
 		{
-			memcpy(retro_get_memory_data_ptr(RETRO_MEMORY_RTC), data.base(), size);
+			memcpy(module->get_memory_data(RETRO_MEMORY_RTC), data.base(), size);
 		}
 	}
 }
@@ -471,18 +396,18 @@ JNIFUNC(void, writeSavedData)(JNIARGS, jstring aFileBase)
 	char buffer[1024];
 	JavaChars fileBase(aEnv, aFileBase);
 
-	int size = retro_get_memory_size_ptr(RETRO_MEMORY_SAVE_RAM);
+	int size = module->get_memory_size(RETRO_MEMORY_SAVE_RAM);
 	if(size)
 	{
 		snprintf(buffer, 1024, "%s.srm", (const char*)fileBase);
-		DumpFile(buffer, retro_get_memory_data_ptr(RETRO_MEMORY_SAVE_RAM), size);
+		DumpFile(buffer, module->get_memory_data(RETRO_MEMORY_SAVE_RAM), size);
 	}
 
-	size = retro_get_memory_size_ptr(RETRO_MEMORY_RTC);
+	size = module->get_memory_size(RETRO_MEMORY_RTC);
 	if(size)
 	{
 		snprintf(buffer, 1024, "%s.rtc", (const char*)fileBase);
-		DumpFile(buffer, retro_get_memory_data_ptr(RETRO_MEMORY_RTC), size);
+		DumpFile(buffer, module->get_memory_data(RETRO_MEMORY_RTC), size);
 	}
 }
 
