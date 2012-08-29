@@ -19,9 +19,16 @@ public final class Audio
 
         rate = aRate;
 
-        audio = new AudioTrack(AudioManager.STREAM_MUSIC, aRate, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT, 24000, AudioTrack.MODE_STREAM);
-        audio.setStereoVolume(1, 1);
-        audio.play();
+        try
+        {
+        	audio = new AudioTrack(AudioManager.STREAM_MUSIC, aRate, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT, 24000, AudioTrack.MODE_STREAM);
+        	audio.setStereoVolume(1, 1);
+        	audio.play();
+        }
+        catch(Exception e)
+        {
+        	audio = null;
+        }
     }
 
     public synchronized static void close()
@@ -42,7 +49,7 @@ public final class Audio
         {
             throw new IllegalArgumentException("Invalid audio stream chunk.");
         }
-    
+
         // Create audio if needed
         if(null == audio || aRate != rate)
         {
@@ -50,7 +57,10 @@ public final class Audio
         }
     
         // Write samples
-        audio.write(aSamples, 0, aCount);
+        if(null != audio)
+        {
+        	audio.write(aSamples, 0, aCount);
+        }
     }
 }
 
