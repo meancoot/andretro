@@ -26,7 +26,7 @@ public final class Game extends Thread
     private LibRetro.AVInfo avInfo;    
     
     int pauseDepth;
-    Runnable prePresent;
+    Runnable presentNotify;
     private File moduleDirectory;
     private Doodads.Set inputs;
     
@@ -232,15 +232,14 @@ public final class Game extends Thread
 	    		pumpEventQueue();
 	    		
 	    		// Execute any commands
-	    		if(loaded && 0 == pauseDepth && null != prePresent)
-	    		{
-	    			prePresent.run();
-	
+	    		if(loaded && 0 == pauseDepth && null != presentNotify)
+	    		{	
 	                //Emulate
 	    			Present.VideoFrame frame = Present.getFrameBuffer();
 	    			frame.aspect = avInfo.aspectRatio;
     				int len = LibRetro.run(frame.pixels, frame.size, audioSamples, Input.getBits(inputs.getDevice(0, 0)));
     				Present.putNextBuffer(frame);
+	    			presentNotify.run();
     				
     				Audio.write((int)avInfo.sampleRate, audioSamples, len);
 	    		}

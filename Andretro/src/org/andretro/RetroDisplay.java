@@ -79,7 +79,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     	super.onResume();
     	view.onResume();
     	
-	    Game.I.queueCommand(new Commands.SetPrepresent(new Runnable()
+	    Game.I.queueCommand(new Commands.SetPresentNotify(new Runnable()
 	    {
 	    	@Override public void run()
 	    	{
@@ -93,7 +93,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     	super.onPause();
     	view.onPause();
     	
-    	Game.I.queueCommand(new Commands.SetPrepresent(null, null));
+    	Game.I.queueCommand(new Commands.SetPresentNotify(null, null));
     }
             
     // QuestionDialog.QuestionHandler	
@@ -157,11 +157,6 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 
     	if(Game.I.isRunning())
     	{
-/*	        if(aItem.getItemId() == R.id.settings)
-            {
-    //        	startActivity(new Intent(this, SettingActivity.class));
-                return true;
-            }*/
 	        if(aItem.getItemId() == R.id.save_state || aItem.getItemId() == R.id.load_state)
 	        {
 	            final boolean loading = aItem.getItemId() == R.id.load_state;

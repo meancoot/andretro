@@ -184,19 +184,19 @@ public final class Commands
 		}
 	}
 	
-	public static final class SetPrepresent extends BaseCommand
+	public static final class SetPresentNotify extends BaseCommand
 	{
-		private final Runnable prePresent;
+		private final Runnable presentNotify;
 		
-		public SetPrepresent(Runnable aPrePresent, Callback aCallback)
+		public SetPresentNotify(Runnable aPresentNotify, Callback aCallback)
 		{
 			super(aCallback);
-			prePresent = aPrePresent;
+			presentNotify = aPresentNotify;
 		}
 		
 		@Override protected void perform()
 		{
-			Game.I.prePresent = prePresent;
+			Game.I.presentNotify = presentNotify;
 		}
 	}
 	
