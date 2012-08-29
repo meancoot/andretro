@@ -90,6 +90,16 @@ public final class Present
     	readyFrames.put(aFrame);
     }
     
+    /**
+     * Put a frame back into rotation without showing it.
+     * @param aFrame
+     * @throws InterruptedException
+     */
+    public static void cancel(VideoFrame aFrame) throws InterruptedException
+    {
+    	emptyFrames.put(aFrame);
+    }
+    
     public static void present(GL10 aGL) throws InterruptedException
     {
     	VideoFrame next = readyFrames.poll();

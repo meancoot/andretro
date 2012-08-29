@@ -17,6 +17,7 @@ namespace
     jobject videoFrame;
     jint lastWidth;
     jint lastHeight;
+    jboolean haveFrame;
 
     retro_system_info systemInfo;
     retro_system_av_info avInfo;
@@ -91,20 +92,40 @@ static bool retro_environment_imp(unsigned cmd, void *data)
 // Render a frame. Pixel format is 15-bit 0RGB1555 native endian unless changed (see RETRO_ENVIRONMENT_SET_PIXEL_FORMAT).
 // Width and height specify dimensions of buffer.
 // Pitch specifices length in bytes between two lines in buffer.
+template<typename T>
+void blizzit(const void* data, unsigned width, unsigned height, size_t pitch)
+{
+	const unsigned itersPerLine = width / (sizeof(T) / 2);
+
+	T* outPixels = (T*)env->GetDirectBufferAddress(videoFrame);
+	const uint8_t* inPixels = (uint8_t*)data;
+
+	for(int i = 0; i != height; i ++)
+	{
+		const T* line = (const T*)&inPixels[i * pitch];
+
+		for(int j = 0; j != itersPerLine; j ++)
+		{
+			*outPixels++ = *line++ << 1;
+		}
+	}
+}
+
 static void retro_video_refresh_imp(const void *data, unsigned width, unsigned height, size_t pitch)
 {
-	uint16_t* outPixels = (uint16_t*)env->GetDirectBufferAddress(videoFrame);
-    const uint8_t* inPixels = (uint8_t*)data;
-    
-    for(int i = 0; i != height; i ++)
-    {
-        const uint16_t* line = (const uint16_t*)&inPixels[i * pitch];
-    
-        for(int j = 0; j != width; j ++)
-        {
-            *outPixels++ = *line++ << 1;
-        }
-    }
+	// TODO: Handle SIGBUS is not 16 or 32 bit aligned!
+	// TODO: Maybe use NEON instructions?
+
+	haveFrame = true;
+
+	if(0 != (pitch & 3) || 0 != (((uintptr_t)data) & 3) || 0 != (width & 3))
+	{
+		blizzit<uint16_t>(data, width, height, pitch);
+	}
+	else
+	{
+		blizzit<uint32_t>(data, width, height, pitch);
+	}
     
     lastWidth = width;
     lastHeight = height;
@@ -248,12 +269,14 @@ JNIFUNC(jint, run)(JNIARGS, jobject aVideo, jintArray aSize, jshortArray aAudio,
     audioData = aAudio;
     audioLength = 0;
     joypad = aJoypad;
+    haveFrame = false;
     
     module->run();
 
     // Upload video size (done here in case of dupe)
     const jint size[2] = {lastWidth, lastHeight};
-    env->SetIntArrayRegion(aSize, 0, 2, size);
+    static const jint zeroSize[2] = {0, 0};
+    env->SetIntArrayRegion(aSize, 0, 2, haveFrame ? size : zeroSize);
 
     return audioLength;
 }

@@ -238,8 +238,16 @@ public final class Game extends Thread
 	    			Present.VideoFrame frame = Present.getFrameBuffer();
 	    			frame.aspect = avInfo.aspectRatio;
     				int len = LibRetro.run(frame.pixels, frame.size, audioSamples, Input.getBits(inputs.getDevice(0, 0)));
-    				Present.putNextBuffer(frame);
-	    			presentNotify.run();
+    				
+    				if(0 != frame.size[0] && 0 != frame.size[1])
+    				{
+    					Present.putNextBuffer(frame);
+    					presentNotify.run();
+    				}
+    				else
+    				{
+    					Present.cancel(frame);
+    				}
     				
     				Audio.write((int)avInfo.sampleRate, audioSamples, len);
 	    		}
