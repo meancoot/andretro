@@ -1,17 +1,21 @@
-package org.andretro.view;
+package org.andretro.input.view;
+
+import org.andretro.*;
 
 import android.content.*;
 import android.widget.*;
 import android.view.*;
 
-public class GamepadButton extends ImageView implements InputHandler
+public class Button extends ImageView implements InputHandler
 {
     int touchCount = 0;
     int bits;
 
-    public GamepadButton(Context aContext, int aBits)
+    public Button(Context aContext, int aBits)
     {
         super(aContext);
+    	setImageResource(R.drawable.button);
+    	
         bits = aBits;
     }
 

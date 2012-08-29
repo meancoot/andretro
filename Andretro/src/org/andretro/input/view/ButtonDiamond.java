@@ -1,4 +1,4 @@
-package org.andretro.view;
+package org.andretro.input.view;
 import org.andretro.*;
 
 import android.content.*;

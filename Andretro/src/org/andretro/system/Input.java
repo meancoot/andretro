@@ -1,6 +1,6 @@
 package org.andretro.system;
 
-import org.andretro.view.*;
+import org.andretro.input.view.*;
 import android.view.*;
 import java.util.*;
 

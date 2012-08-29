@@ -1,6 +1,4 @@
-package org.andretro.view;
-
-
+package org.andretro.input.view;
 import org.andretro.*;
 
 import android.content.*;
@@ -43,10 +41,6 @@ public class ButtonDuo extends ImageView implements InputHandler
             
             currentBits |= (x < width * 2) ? bits[0] : 0;
             currentBits |= (x > width) ? bits[1] : 0;
-
-            System.out.println("GOGO: " + currentBits);
-
-
 
             return true;
         }

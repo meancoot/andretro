@@ -2,7 +2,7 @@ package org.andretro;
 import org.andretro.emulator.*;
 import org.andretro.settings.*;
 import org.andretro.system.*;
-import org.andretro.view.*;
+import org.andretro.input.view.*;
 
 import javax.microedition.khronos.opengles.*;
 
@@ -69,32 +69,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 		
 		// HACK: add controls
 		InputGroup inputBase = (InputGroup)findViewById(R.id.base);
-
-		//nbDips * getResources().getDisplayMetrics().density
-		
-		ButtonDiamond buttonSet = new ButtonDiamond(this, 16, 32, 64, 128);
-		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(200, 200);
-		params.leftMargin = 20;
-		params.bottomMargin = 20;
-		params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-		params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-		inputBase.addView(buttonSet, params);
-		
-		buttonSet  = new ButtonDiamond(this, 1 << 9, 1, 2, 1 << 8);
-		params = new RelativeLayout.LayoutParams(200, 200);
-		params.rightMargin = 20;
-		params.bottomMargin = 20;
-		params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-		params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-		inputBase.addView(buttonSet, params);
-		
-		ButtonDuo buttonSet2 = new ButtonDuo(this, 4, 8);
-		params = new RelativeLayout.LayoutParams(200, 60);
-		params.bottomMargin = 20;
-		params.addRule(RelativeLayout.CENTER_HORIZONTAL);
-		params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-		inputBase.addView(buttonSet2, params);
-		
+		inputBase.loadInputLayout(this, "/sdcard/test.xml");
 		Input.setOnScreenInput(inputBase);
     }
     

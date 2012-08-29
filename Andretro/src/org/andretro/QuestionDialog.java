@@ -4,7 +4,6 @@ import android.content.*;
 import android.os.*;
 import android.view.*;
 import android.widget.*;
-import android.support.v4.app.*;
 import android.app.*;
 
 public class QuestionDialog extends android.support.v4.app.DialogFragment implements View.OnKeyListener

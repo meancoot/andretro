@@ -1,4 +1,5 @@
-package org.andretro.view;
+package org.andretro.input.view;
+
 
 public interface InputHandler
 {
