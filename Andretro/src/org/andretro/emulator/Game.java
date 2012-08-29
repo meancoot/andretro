@@ -200,6 +200,9 @@ public final class Game extends Thread
 			
 			avInfo = null;
     		loaded = false;
+    		
+    		// Shutdown any audio device
+    		Audio.close();
     	}
     }
         
