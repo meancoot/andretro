@@ -15,7 +15,7 @@ public final class Game extends Thread
     public final static Game I = new Game();
     private Game()
     {
-    	System.loadLibrary("retro_wrap");
+    	System.loadLibrary("retroiface");
     	start();
     }
  

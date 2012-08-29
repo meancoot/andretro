@@ -84,18 +84,25 @@ public class ModuleSelectActivity extends Activity implements AdapterView.OnItem
     {
         super.onCreate(savedInstanceState);
         
-        setContentView(R.layout.module_select);
+//        setContentView(R.layout.module_select);
+        setContentView(R.layout.directory_list);
+
         
         // Setup the list adapter
-        adapter = new IconAdapter<ModuleWrapper>(this, R.layout.module_select_item);
+//        adapter = new IconAdapter<ModuleWrapper>(this, R.layout.module_select_item);
+        adapter = new IconAdapter<ModuleWrapper>(this, R.layout.directory_list_item);
         
         for(final File lib: new File(modulePath).listFiles())
-        {	
-        	adapter.add(new ModuleWrapper(lib.getName()));
+        {
+        	if(lib.getName().startsWith("libretro_"))
+        	{
+        		adapter.add(new ModuleWrapper(lib.getName()));
+        	}
         }
         
         // Setup the list
-        GridView list = (GridView)findViewById(R.id.grid);
+//        GridView list = (GridView)findViewById(R.id.grid);
+        ListView list = (ListView)findViewById(R.id.list);
         list.setAdapter(adapter);
         list.setOnItemClickListener(this);
     }

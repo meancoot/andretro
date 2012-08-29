@@ -7,7 +7,7 @@ LOCAL_CPP_FEATURES := exceptions rtti
 
 LOCAL_SRC_FILES = Driver.cpp
 
-LOCAL_MODULE := retro_wrap
+LOCAL_MODULE := retroiface
 LOCAL_LDLIBS := -llog
 
 include $(BUILD_SHARED_LIBRARY)
