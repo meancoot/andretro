@@ -7,16 +7,17 @@ LOCAL_CPP_FEATURES := exceptions rtti
 
 LOCAL_SRC_FILES = Driver.cpp
 
-LOCAL_MODULE    := retro_wrap
+LOCAL_MODULE := retro_wrap
 LOCAL_LDLIBS := -llog
 
 include $(BUILD_SHARED_LIBRARY)
 
-# Copy local path as each sub make will change it
+# Include all present sub-modules
 FOCAL_PATH := $(LOCAL_PATH)
-include $(FOCAL_PATH)/gambatte/Android.mk
-include $(FOCAL_PATH)/stella/Android.mk
-include $(FOCAL_PATH)/snes9x-next/Android.mk
-include $(FOCAL_PATH)/Genesis-Plus-GX/Android.mk
-include $(FOCAL_PATH)/fceu-next/Android.mk
-include $(FOCAL_PATH)/prboom/Android.mk
+
+define function
+$(eval RETRO_MODULE_OBJECT := $(1))
+$(eval include $(FOCAL_PATH)/modules/Android.mk)
+endef
+
+$(foreach m,$(wildcard $(FOCAL_PATH)/modules/*.so),$(eval $(call function,$(m))))
