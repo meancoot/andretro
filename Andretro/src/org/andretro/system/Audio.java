@@ -12,6 +12,7 @@ public final class Audio
 {
     private static AudioTrack audio;
     private static int rate;
+    private static boolean failed;
 
     public synchronized static void open(int aRate)
     {
@@ -24,10 +25,14 @@ public final class Audio
         	audio = new AudioTrack(AudioManager.STREAM_MUSIC, aRate, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT, 24000, AudioTrack.MODE_STREAM);
         	audio.setStereoVolume(1, 1);
         	audio.play();
+        	
+        	failed = false;
         }
         catch(Exception e)
         {
         	audio = null;
+
+        	failed = true;
         }
     }
 
@@ -51,7 +56,7 @@ public final class Audio
         }
 
         // Create audio if needed
-        if(null == audio || aRate != rate)
+        if((null == audio && !failed) || aRate != rate)
         {
             open(aRate);
         }

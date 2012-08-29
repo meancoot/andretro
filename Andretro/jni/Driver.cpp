@@ -346,7 +346,13 @@ JNIFUNC(bool, loadGame)(JNIARGS, jstring path)
 		fclose(file);
     }
 
-    return module->load_game(&info);
+    if(module->load_game(&info))
+    {
+        module->get_system_av_info(&avInfo);
+        return true;
+    }
+    
+    return false;
 }
 
 JNIFUNC(void, unloadGame)(JNIARGS)
