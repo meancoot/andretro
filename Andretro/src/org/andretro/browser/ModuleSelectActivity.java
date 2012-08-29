@@ -12,39 +12,8 @@ import java.util.*;
 import java.io.*;
 
 final class ModuleWrapper implements IconAdapterItem
-{
-	// DATA
-	private static class Module
-	{
-		final String name;
-		final int icon;
-		
-		Module(String aName, int aIcon)
-		{
-			name = aName;
-			icon = aIcon;
-		}
-	}
-	
-	private static Map<String, Module> modules;
-	static
-	{
-		modules = new HashMap<String, Module>();
-		modules.put("libretro_fceu.so", new Module("Ninteno Entertainment System", R.drawable.nes));
-		modules.put("libretro_gambatte.so", new Module("Ninteno Game Boy (Color)", R.drawable.gameboy));
-		modules.put("libretro_genesis.so", new Module("Sega Genesis / Master System", R.drawable.genesis));
-		modules.put("libretro_snes9xnext.so", new Module("Super Ninteno Entertainment System", R.drawable.snes));
-		modules.put("libretro_stella.so", new Module("Atari 2600", R.drawable.a2600));
-	}
-	
-	private static Module getFromFile(String aFile)
-	{
-		return modules.get(aFile);
-	}
-	
-	// IMP
+{	
 	private final String fileName;
-	private final Module module;
 
     public ModuleWrapper(String aFileName)
     {
@@ -54,7 +23,6 @@ final class ModuleWrapper implements IconAdapterItem
     	}
 
         fileName = aFileName;
-        module = getFromFile(aFileName);
     }
     
     public String getFile()
@@ -64,12 +32,12 @@ final class ModuleWrapper implements IconAdapterItem
     
     @Override public String getText()
     {
-    	return (null == module) ? fileName : module.name;
+    	return fileName;
     }
     
     @Override public int getIconResourceId()
     {
-    	return (null == module) ? 0 : module.icon;
+    	return 0;
     }
 }
 
