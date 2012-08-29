@@ -16,6 +16,10 @@ public final class Present
 
     private static final int id[] = new int[1];
     private static FloatBuffer vertexData;
+    private static float screenWidth;
+    private static float screenHeight;
+    private static float lastAspect;
+    private static boolean refreshPositions;
 
     private static final ArrayBlockingQueue<VideoFrame> emptyFrames = new ArrayBlockingQueue<VideoFrame>(1);
     private static final ArrayBlockingQueue<VideoFrame> readyFrames = new ArrayBlockingQueue<VideoFrame>(1);
@@ -30,6 +34,7 @@ public final class Present
     	private VideoFrame() {}
     	public final ByteBuffer pixels = ByteBuffer.allocateDirect(1024 * 1024 * 2);
     	public final int[] size = new int[2];
+    	public float aspect;
     }
     
     
@@ -70,31 +75,9 @@ public final class Present
         aGL.glLoadIdentity();
         aGL.glOrthof(0, aWidth, aHeight, 0, -1, 1);
         
-        float x = 0.0f;
-        float y = 0.0f;
-        float width = aWidth;
-        float height = aHeight;
-        
-        float outputAspect = (width / height);
-        float inputAspect = 1.3333333f;
-
-    	if(outputAspect < inputAspect)
-    	{
-    		float oldheight = height;
-    		height = width / inputAspect;
-    		y = (oldheight - height) / 2;
-    	}
-    	else
-    	{
-    		float oldwidth = width;
-    		width = height * inputAspect;
-    		x = (oldwidth - width) / 2;
-    	}
-    	
-        setPosition(0, x, y, 0);
-        setPosition(1, x + width, y, 0);
-        setPosition(2, x, y + height, 0);
-        setPosition(3, x + width, y + height, 0);        	
+        screenWidth = aWidth;
+        screenHeight = aHeight;
+        refreshPositions = true;
     }
     
     public static VideoFrame getFrameBuffer() throws InterruptedException
@@ -111,8 +94,40 @@ public final class Present
     {
     	VideoFrame next = readyFrames.poll();
     	
-    	if(null != next)
+    	if(null != next && 0 < next.size[0] && 0 < next.size[1])
     	{
+    		// Update vertex positions
+    		if(refreshPositions || lastAspect != next.aspect)
+    		{
+    			lastAspect = next.aspect;
+    			
+    	        float x = 0.0f;
+    	        float y = 0.0f;
+    	        float width = screenWidth;
+    	        float height = screenHeight;
+    	        
+    	        float outputAspect = (width / height);
+    	        float inputAspect = (lastAspect == 0.0f) ? ((float)next.size[0] / (float)next.size[1]) : lastAspect;
+
+    	    	if(outputAspect < inputAspect)
+    	    	{
+    	    		float oldheight = height;
+    	    		height = width / inputAspect;
+    	    		y = (oldheight - height) / 2;
+    	    	}
+    	    	else
+    	    	{
+    	    		float oldwidth = width;
+    	    		width = height * inputAspect;
+    	    		x = (oldwidth - width) / 2;
+    	    	}
+    	    	
+    	        setPosition(0, x, y, 0);
+    	        setPosition(1, x + width, y, 0);
+    	        setPosition(2, x, y + height, 0);
+    	        setPosition(3, x + width, y + height, 0);        	
+    		}
+    		
 	    	// Set the texture coords
 	    	for(int i = 0; i != 4; i ++)
 	    	{
