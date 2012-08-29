@@ -3,6 +3,7 @@ package org.andretro.settings;
 import org.andretro.*;
 import org.andretro.emulator.*;
 
+import android.annotation.*;
 import android.content.*;
 import android.os.*;
 import android.preference.*;
@@ -75,7 +76,7 @@ final class Settings
 	{
 		final Doodads.Button button;
 		
-		public Button(Context aContext, final Doodads.Button aButton)
+		@TargetApi(12) public Button(Context aContext, final Doodads.Button aButton)
 		{
 			super(aContext, null);
 
@@ -92,10 +93,17 @@ final class Settings
 			setDialogTitle("Waiting for input");
 			setDialogMessage(aButton.fullName);
 			
-			setSummary(KeyEvent.keyCodeToString(button.getKeyCode()));
+	        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB_MR1)
+	        {
+	        	setSummary(KeyEvent.keyCodeToString(button.getKeyCode()));
+	        }
+	        else
+	        {
+	        	setSummary(Integer.toString(button.getKeyCode()));
+	        }
 		}
 				
-		@Override protected void showDialog(Bundle aState)
+		@Override @TargetApi(12) protected void showDialog(Bundle aState)
 		{
 			super.showDialog(aState);
 		
@@ -108,7 +116,14 @@ final class Settings
 				{
 					persistInt(aKeyCode);
 					button.setKeyCode(aKeyCode);
-					setSummary(KeyEvent.keyCodeToString(aKeyCode));
+			        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB_MR1)
+			        {
+			        	setSummary(KeyEvent.keyCodeToString(button.getKeyCode()));
+			        }
+			        else
+			        {
+			        	setSummary(Integer.toString(button.getKeyCode()));
+			        }
 					
 					getDialog().dismiss();
 					return false;

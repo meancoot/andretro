@@ -8,15 +8,14 @@ import javax.microedition.khronos.opengles.*;
 
 import android.view.*;
 import android.view.inputmethod.*;
-import android.app.*;
+import android.annotation.*;
 import android.opengl.*;
 import android.os.*;
 import android.content.*;
 import android.content.res.*;
 import android.widget.*;
 
-
-public class RetroDisplay extends Activity implements QuestionDialog.QuestionHandler
+public class RetroDisplay extends android.support.v4.app.FragmentActivity implements QuestionDialog.QuestionHandler
 {
 	private static final int CLOSE_GAME_QUESTION = 1;
 	
@@ -47,15 +46,18 @@ public class RetroDisplay extends Activity implements QuestionDialog.QuestionHan
 	    }    		
 	}
 	
-    @Override public void onCreate(Bundle aState)
+    @Override @TargetApi(11) public void onCreate(Bundle aState)
     {	
         super.onCreate(aState);
 
         // Go fullscreen
-        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
+        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB)
         {
-        	getActionBar().hide();
-        }        
+	        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
+	        {
+	        	getActionBar().hide();
+	        }
+        }
 
 		// Setup the view
         setContentView(R.layout.retro_display);
@@ -152,7 +154,7 @@ public class RetroDisplay extends Activity implements QuestionDialog.QuestionHan
         if(Game.I.isRunning())
         {
         	Game.I.queueCommand(new Commands.Pause(true, null));
-        	QuestionDialog.newInstance(CLOSE_GAME_QUESTION, "Really Close Game?", "All unsaved data will be lost.", "Yes", "No", null).show(getFragmentManager(), "mainfragment");
+        	QuestionDialog.newInstance(CLOSE_GAME_QUESTION, "Really Close Game?", "All unsaved data will be lost.", "Yes", "No", null).show(getSupportFragmentManager(), "mainfragment");
         }
         else
         {
