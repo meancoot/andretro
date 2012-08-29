@@ -37,15 +37,14 @@ public class InputGroup extends RelativeLayout implements InputHandler
         return bits;
     }
     
-    public void loadInputLayout(final Activity aContext, final String aFile)
+    public void loadInputLayout(final Activity aContext, final InputStream aFile)
     {
         SAXParserFactory factory = SAXParserFactory.newInstance();
         try
         {
-        	final InputStream file = new FileInputStream(aFile);
         	final SAXParser parser = factory.newSAXParser();
 
-        	parser.parse(file, new DefaultHandler()
+        	parser.parse(aFile, new DefaultHandler()
         	{
         		int horizontalAnchor = RelativeLayout.ALIGN_PARENT_LEFT;
         		int verticalAnchor = RelativeLayout.ALIGN_PARENT_TOP;

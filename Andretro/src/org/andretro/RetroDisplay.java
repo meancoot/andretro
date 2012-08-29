@@ -67,9 +67,10 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 		view.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 		view.setKeepScreenOn(true);
 		
-		// HACK: add controls
+		// Add controls
+		// TODO: Support system specific / disabling
 		InputGroup inputBase = (InputGroup)findViewById(R.id.base);
-		inputBase.loadInputLayout(this, "/sdcard/test.xml");
+		inputBase.loadInputLayout(this, getResources().openRawResource(R.raw.default_retro_pad));
 		Input.setOnScreenInput(inputBase);
     }
     
