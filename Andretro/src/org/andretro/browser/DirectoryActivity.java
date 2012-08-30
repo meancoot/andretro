@@ -93,7 +93,7 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
 		}
 		else
 		{
-			startActivity(new Intent(this, DirectoryActivity.class).putExtra("path", selected.getAbsolutePath()));
+			startActivity(new Intent(this, DirectoryActivity.class).putExtra("inroot", inRoot).putExtra("path", selected.getAbsolutePath()));
 		}
 	}
 	
