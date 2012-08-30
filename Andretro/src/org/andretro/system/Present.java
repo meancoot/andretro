@@ -17,8 +17,15 @@ public final class Present
     private static int programID;
     private static final int id[] = new int[8];
     
-    private static final float[] vertexBufferData = new float[] {-1, 1, 0, 0, 1, 1, 1, 0, -1, -1, 0, 1, 1, -1, 1, 1};
+    private static final float[] vertexBufferData = new float[]
+    {
+    	-1, 1, 0, 0, 1, 1, 1, 0, -1, -1, 0, 1, 1, -1, 1, 1,
+    	-1, 1, 1, 0, 1, 1, 1, 1, -1, -1, 0, 0, 1, -1, 0, 1,
+    	-1, 1, 1, 1, 1, 1, 0, 1, -1, -1, 1, 0, 1, -1, 0, 0,
+    	-1, 1, 0, 1, 1, 1, 0, 0, -1, -1, 1, 1, 1, -1, 1, 0
+    };
 
+    
     // Frame buffer queue
     private static final ArrayBlockingQueue<VideoFrame> emptyFrames = new ArrayBlockingQueue<VideoFrame>(1);
     private static final ArrayBlockingQueue<VideoFrame> readyFrames = new ArrayBlockingQueue<VideoFrame>(1);
@@ -32,7 +39,7 @@ public final class Present
     {
     	private VideoFrame() {}
     	public final ByteBuffer pixels = ByteBuffer.allocateDirect(1024 * 1024 * 2);
-    	public final int[] size = new int[2];
+    	public final int[] size = new int[3];
     	public float aspect;
     }
     
@@ -102,6 +109,7 @@ public final class Present
     	id[4] = glGetUniformLocation(programID, "imageWidth");
     	id[5] = glGetUniformLocation(programID, "imageHeight");
     	id[6] = glGetUniformLocation(programID, "imageAspect");
+    	id[7] = glGetUniformLocation(programID, "imageAspectInvert");
     	
         // Texture
     	glGenTextures(1, id, 0);
@@ -114,8 +122,7 @@ public final class Present
                
         // Vertex Buffer (Only if needed)
         FloatBuffer vertexData = ByteBuffer.allocateDirect(vertexBufferData.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer().put(vertexBufferData);
-        
-        glGenBuffers(1, id, 1);
+        glGenBuffers(1, id, 1);        
         glBindBuffer(GL_ARRAY_BUFFER, id[1]);
         glBufferData(GL_ARRAY_BUFFER, vertexBufferData.length * 4, vertexData.position(0), GL_STATIC_DRAW);
         
@@ -140,12 +147,13 @@ public final class Present
     	
     	if(null != next && 0 < next.size[0] && 0 < next.size[1])
     	{
-    		glUniform1f(id[4], next.size[0]);
-    		glUniform1f(id[5], next.size[1]);
+    		glUniform1f(id[4], (float)next.size[0]);
+    		glUniform1f(id[5], (float)next.size[1]);
     		glUniform1f(id[6], next.aspect);
+    		glUniform1f(id[7], (1 == (next.size[2] & 1)) ? 1.0f : 0.0f);
     		
 	    	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, next.size[0], next.size[1], GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, next.pixels);
-	        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	        glDrawArrays(GL_TRIANGLE_STRIP, next.size[2] * 4, 4);
 
 	        emptyFrames.put(next);
     	}

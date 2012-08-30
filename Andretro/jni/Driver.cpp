@@ -17,6 +17,7 @@ namespace
     jobject videoFrame;
     jint lastWidth;
     jint lastHeight;
+    jint rotation;
     jboolean haveFrame;
 
     retro_system_info systemInfo;
@@ -30,8 +31,8 @@ static bool retro_environment_imp(unsigned cmd, void *data)
 {
 	if(RETRO_ENVIRONMENT_SET_ROTATION == cmd)
 	{
-		// TODO
-		return false;
+		rotation = (*(unsigned*)data) & 3;
+		return true;
 	}
 	else if(RETRO_ENVIRONMENT_GET_OVERSCAN == cmd)
 	{
@@ -189,6 +190,8 @@ JNIFUNC(void, unloadLibrary)(JNIARGS)
     module = 0;
 
     memset(&systemInfo, 0, sizeof(systemInfo));
+
+    rotation = 0;
 }
 
 JNIFUNC(void, init)(JNIARGS)
@@ -266,9 +269,9 @@ JNIFUNC(jint, run)(JNIARGS, jobject aVideo, jintArray aSize, jshortArray aAudio,
     module->run();
 
     // Upload video size (done here in case of dupe)
-    const jint size[2] = {lastWidth, lastHeight};
-    static const jint zeroSize[2] = {0, 0};
-    env->SetIntArrayRegion(aSize, 0, 2, haveFrame ? size : zeroSize);
+    const jint size[3] = {lastWidth, lastHeight, rotation};
+    static const jint zeroSize[3] = {0};
+    env->SetIntArrayRegion(aSize, 0, 3, haveFrame ? size : zeroSize);
 
     return audioLength;
 }

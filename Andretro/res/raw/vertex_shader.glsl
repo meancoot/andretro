@@ -8,13 +8,19 @@ uniform float screenHeight;
 uniform float imageWidth;
 uniform float imageHeight;
 uniform float imageAspect;
+uniform float imageAspectInvert;
 
 const float textureSize = 1024.0;
 
 void main()
 {
     float outputAspect = screenWidth / screenHeight;
-    float inputAspect = (imageAspect <= 0.0) ? imageWidth / imageHeight : imageAspect;
+    float inputAspect = ((imageAspect <= 0.0) ? imageWidth / imageHeight : imageAspect);
+    
+    if(imageAspectInvert > 0.0)
+    {
+        inputAspect = 1.0 / inputAspect;
+    }
     
     float width = screenWidth;
     float height = screenHeight;
