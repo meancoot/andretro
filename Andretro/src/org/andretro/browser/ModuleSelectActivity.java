@@ -8,7 +8,6 @@ import android.os.*;
 import android.widget.*;
 import android.view.*;
 
-import java.util.*;
 import java.io.*;
 
 final class ModuleWrapper implements IconAdapterItem

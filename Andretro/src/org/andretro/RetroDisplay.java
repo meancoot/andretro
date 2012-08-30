@@ -25,19 +25,19 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 	{		
 	    @Override public void onSurfaceCreated(GL10 gl, javax.microedition.khronos.egl.EGLConfig config)
 	    {
-	        Present.initialize(gl);
+	        Present.initialize(RetroDisplay.this);
 	    }    
 
 	    @Override public void onSurfaceChanged(GL10 gl, int aWidth, int aHeight)
 	    {
-	        Present.setScreenSize(gl, aWidth, aHeight);
+	        Present.setScreenSize(aWidth, aHeight);
 	    }
 
 	    @Override public void onDrawFrame(GL10 gl)
 	    {
 	    	try
 	    	{
-	    		Present.present(gl);
+	    		Present.present();
 	    	}
 	    	catch(InterruptedException e)
 	    	{
@@ -63,6 +63,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         setContentView(R.layout.retro_display);
 
         view = (GLSurfaceView)findViewById(R.id.renderer);
+        view.setEGLContextClientVersion(2);
         view.setRenderer(new Draw());
 		view.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 		view.setKeepScreenOn(true);

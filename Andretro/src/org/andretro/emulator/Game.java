@@ -194,9 +194,7 @@ public final class Game extends Thread
     	if(loaded)
     	{
         	LibRetro.writeSavedData(getGameDataName(""));
-    		
-    		// TODO: Write save data
-			LibRetro.unloadGame();
+   			LibRetro.unloadGame();
 			
 			avInfo = null;
     		loaded = false;
@@ -236,11 +234,11 @@ public final class Game extends Thread
 	    		{	
 	                //Emulate
 	    			Present.VideoFrame frame = Present.getFrameBuffer();
-	    			frame.aspect = avInfo.aspectRatio;
     				int len = LibRetro.run(frame.pixels, frame.size, audioSamples, Input.getBits(inputs.getDevice(0, 0)));
     				
     				if(0 != frame.size[0] && 0 != frame.size[1])
     				{
+    	    			frame.aspect = avInfo.aspectRatio;
     					Present.putNextBuffer(frame);
     					presentNotify.run();
     				}
@@ -249,7 +247,10 @@ public final class Game extends Thread
     					Present.cancel(frame);
     				}
     				
-    				Audio.write((int)avInfo.sampleRate, audioSamples, len);
+    				if(0 != len)
+    				{
+    					Audio.write((int)avInfo.sampleRate, audioSamples, len);
+    				}
 	    		}
 	    		else
 	    		{
