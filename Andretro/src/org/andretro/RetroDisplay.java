@@ -77,7 +77,6 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     @Override public void onResume()
     {
     	super.onResume();
-    	view.onResume();
     	
 	    Game.I.queueCommand(new Commands.SetPresentNotify(new Runnable()
 	    {
@@ -97,7 +96,6 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     @Override public void onPause()
     {
     	super.onPause();
-    	view.onPause();
     	
     	Game.I.queueCommand(new Commands.SetPresentNotify(null, new Commands.Callback(this, new Runnable()
         {
