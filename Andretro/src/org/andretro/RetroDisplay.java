@@ -85,7 +85,13 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 	    	{
 	    		view.requestRender();
 	    	}
-	    }, null));
+	    }, new Commands.Callback(this, new Runnable()
+        {
+            @Override public void run()
+            {
+                view.onResume();
+            }
+        })));
     }
     
     @Override public void onPause()
@@ -93,7 +99,13 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     	super.onPause();
     	view.onPause();
     	
-    	Game.I.queueCommand(new Commands.SetPresentNotify(null, null));
+    	Game.I.queueCommand(new Commands.SetPresentNotify(null, new Commands.Callback(this, new Runnable()
+        {
+            @Override public void run()
+            {
+                view.onPause();
+            }
+        })));
     }
             
     // QuestionDialog.QuestionHandler	
