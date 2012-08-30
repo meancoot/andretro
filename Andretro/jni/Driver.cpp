@@ -28,21 +28,20 @@ namespace
 // Environment callback. Gives implementations a way of performing uncommon tasks. Extensible.
 static bool retro_environment_imp(unsigned cmd, void *data)
 {
-/*	if(RETRO_ENVIRONMENT_SET_ROTATION == cmd)
+	if(RETRO_ENVIRONMENT_SET_ROTATION == cmd)
 	{
 		// TODO
 		return false;
 	}
 	else if(RETRO_ENVIRONMENT_GET_OVERSCAN == cmd)
 	{
-		// ?
-		*(bool*)data = true;
+		// TODO: true causes snes9x-next to shit a brick
+		*(uint8_t*)data = false;
 		return true;
 	}
 	else if(RETRO_ENVIRONMENT_GET_CAN_DUPE == cmd)
 	{
-		// TODO: Make it true
-		*(bool*)data = false;
+		*(uint8_t*)data = true;
 		return true;
 	}
 	else if(RETRO_ENVIRONMENT_GET_VARIABLE == cmd)
@@ -53,13 +52,6 @@ static bool retro_environment_imp(unsigned cmd, void *data)
 	else if(RETRO_ENVIRONMENT_SET_VARIABLES == cmd)
 	{
 		// HACK
-		const retro_variable* vals = (const retro_variable*)data;
-
-		while(vals->key)
-		{
-			Log("%s : %s", vals->key ? vals->key : "NULL", vals->value ? vals->value : "NULL");
-		}
-
 		return false;
 	}
 	else if(RETRO_ENVIRONMENT_SET_MESSAGE == cmd)
@@ -84,7 +76,7 @@ static bool retro_environment_imp(unsigned cmd, void *data)
 	else if(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT == cmd)
 	{
 		return false;
-	}*/
+	}
 
 	return false;
 }
