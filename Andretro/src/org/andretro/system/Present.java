@@ -120,7 +120,7 @@ public final class Present
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, FRAMESIZE, FRAMESIZE, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, null);
                
-        // Vertex Buffer (Only if needed)
+        // Vertex Buffer
         FloatBuffer vertexData = ByteBuffer.allocateDirect(vertexBufferData.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer().put(vertexBufferData);
         glGenBuffers(1, id, 1);        
         glBindBuffer(GL_ARRAY_BUFFER, id[1]);

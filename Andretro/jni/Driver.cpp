@@ -283,14 +283,30 @@ JNIFUNC(jint, serializeSize)(JNIARGS)
 
 JNIFUNC(jboolean, serialize)(JNIARGS, jobject aData, jint aSize, jint aOffset)
 {
-    uint8_t* data = (uint8_t*)env->GetDirectBufferAddress(aData);
-    return module->serialize(&data[aOffset], aSize - aOffset);
+    const size_t size = module->serialize_size();
+    const size_t bufferLength = aSize - aOffset;
+
+    if(bufferLength >= size)
+    {
+    	uint8_t* const data = (uint8_t*)env->GetDirectBufferAddress(aData);
+    	return module->serialize(&data[aOffset], size);
+    }
+
+    return false;
 }
 
 JNIFUNC(jboolean, unserialize)(JNIARGS, jobject aData, jint aSize, jint aOffset)
 {
-    const uint8_t* data = (uint8_t*)env->GetDirectBufferAddress(aData);
-    return module->unserialize(&data[aOffset], aSize - aOffset);
+    const size_t size = module->serialize_size();
+    const size_t bufferLength = aSize - aOffset;
+
+    if(bufferLength >= size)
+    {
+		const uint8_t* const data = (uint8_t*)env->GetDirectBufferAddress(aData);
+		return module->unserialize(&data[aOffset], size);
+    }
+
+    return false;
 }
 
 JNIFUNC(jboolean, serializeToFile)(JNIARGS, jstring aPath)
