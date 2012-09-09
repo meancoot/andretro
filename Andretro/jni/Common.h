@@ -6,6 +6,7 @@
 #include <vector>
 #include <jni.h>
 #include <android/log.h>
+#include <fstream>
 
 #define Log(...) __android_log_print(ANDROID_LOG_INFO, "andretro", __VA_ARGS__);
 
@@ -42,6 +43,21 @@ class FileReader
         }
 };
 
+// Makes no guarantees about aData if read fails!
+bool ReadFile(const char* aPath, void* aData, size_t aLength)
+{
+	FILE* file = fopen(aPath, "rb");
+
+	if(file)
+	{
+		bool result = 1 == fread(aData, aLength, 1, file);
+		fclose(file);
+		return result;
+	}
+
+	return false;
+}
+
 bool DumpFile(const char* aPath, const void* aData, size_t aLength)
 {
 	FILE* file = fopen(aPath, "wb");
@@ -54,6 +70,18 @@ bool DumpFile(const char* aPath, const void* aData, size_t aLength)
 	}
 
 	return false;
+}
+
+bool HandleFile(const char* aPath, void* aData, size_t aLength, bool aRead)
+{
+	if(aRead)
+	{
+		return ReadFile(aPath, aData, aLength);
+	}
+	else
+	{
+		return DumpFile(aPath, aData, aLength);
+	}
 }
 
 struct JavaClass

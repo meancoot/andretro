@@ -1,4 +1,5 @@
 package org.andretro.emulator;
+
 import org.andretro.system.*;
 import org.libretro.*;
 
@@ -28,6 +29,7 @@ public final class Game extends Thread
     int pauseDepth;
     Runnable presentNotify;
     private File moduleDirectory;
+    private String dataName;
     private Doodads.Set inputs;
     
     private boolean initialized = false;
@@ -90,7 +92,7 @@ public final class Game extends Thread
     
     public String getGameDataName(String aExtension)
     {
-        return (null == moduleDirectory) ? null : moduleDirectory.getAbsolutePath() + "/test." + aExtension;
+    	return dataName + "." + aExtension;
     }
             
     /*
@@ -157,8 +159,10 @@ public final class Game extends Thread
     {
     	assertThread();
     	
+    	File loadedFile = new File(aFile);
+    	
         // Check file
-        if(null == aFile || !new File(aFile).isFile())
+        if(null == aFile || !loadedFile.isFile())
         {
             throw new IllegalArgumentException("File not found.");
         }
@@ -172,6 +176,8 @@ public final class Game extends Thread
         // Load
         if(LibRetro.loadGame(aFile))
         {	
+        	dataName = getModuleSystemDirectory() + "/" + loadedFile.getName().split("\\.(?=[^\\.]+$)")[0];
+        	
         	LibRetro.loadSavedData(getGameDataName(""));
         	
         	avInfo = new LibRetro.AVInfo();

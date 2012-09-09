@@ -401,54 +401,33 @@ JNIFUNC(jint, getRegion)(JNIARGS)
 }
 
 // Note: aFileBase contains complete path to file without extension, the trailing dot is included.
-JNIFUNC(void, loadSavedData)(JNIARGS, jstring aFileBase)
+void handleSaveData(const char* aFileBase, bool aLoad)
 {
-	char buffer[1024];
-	JavaChars fileBase(aEnv, aFileBase);
+	const unsigned areas[] = {RETRO_MEMORY_SAVE_RAM, RETRO_MEMORY_RTC};
+	const char* const extensions[] = {"srm", "rtc"};
 
-	size_t size = module->get_memory_size(RETRO_MEMORY_SAVE_RAM);
-	if(size)
+	for(int i = 0; i != 2; i ++)
 	{
-		snprintf(buffer, 1024, "%s.srm", (const char*)fileBase);
-		FileReader data(buffer);
+		size_t size = module->get_memory_size(areas[i]);
 
-		if(data.size() == size)
+		if(size && aFileBase)
 		{
-			memcpy(module->get_memory_data(RETRO_MEMORY_SAVE_RAM), data.base(), size);
-		}
-	}
-
-	size = module->get_memory_size(RETRO_MEMORY_RTC);
-	if(size)
-	{
-		snprintf(buffer, 1024, "%s.rtc", (const char*)fileBase);
-		FileReader data(buffer);
-
-		if(data.size() == size)
-		{
-			memcpy(module->get_memory_data(RETRO_MEMORY_RTC), data.base(), size);
+			std::string fullPath = std::string(aFileBase) + extensions[i];
+			HandleFile(fullPath.c_str(), module->get_memory_data(areas[i]), size, aLoad);
 		}
 	}
 }
 
+JNIFUNC(void, loadSavedData)(JNIARGS, jstring aFileBase)
+{
+	JavaChars fileBase(aEnv, aFileBase);
+	handleSaveData(fileBase, true);
+}
+
 JNIFUNC(void, writeSavedData)(JNIARGS, jstring aFileBase)
 {
-	char buffer[1024];
 	JavaChars fileBase(aEnv, aFileBase);
-
-	int size = module->get_memory_size(RETRO_MEMORY_SAVE_RAM);
-	if(size)
-	{
-		snprintf(buffer, 1024, "%s.srm", (const char*)fileBase);
-		DumpFile(buffer, module->get_memory_data(RETRO_MEMORY_SAVE_RAM), size);
-	}
-
-	size = module->get_memory_size(RETRO_MEMORY_RTC);
-	if(size)
-	{
-		snprintf(buffer, 1024, "%s.rtc", (const char*)fileBase);
-		DumpFile(buffer, module->get_memory_data(RETRO_MEMORY_RTC), size);
-	}
+	handleSaveData(fileBase, false);
 }
 
 // Gets region of memory.
