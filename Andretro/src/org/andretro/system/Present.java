@@ -145,17 +145,32 @@ public final class Present
     {
     	VideoFrame next = readyFrames.poll();
     	
-    	if(null != next && 0 < next.size[0] && 0 < next.size[1])
-    	{
-    		glUniform1f(id[4], (float)next.size[0]);
-    		glUniform1f(id[5], (float)next.size[1]);
-    		glUniform1f(id[6], next.aspect);
-    		glUniform1f(id[7], (1 == (next.size[2] & 1)) ? 1.0f : 0.0f);
-    		
-	    	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, next.size[0], next.size[1], GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, next.pixels);
-	        glDrawArrays(GL_TRIANGLE_STRIP, next.size[2] * 4, 4);
+    	if(null != next)
+    	{	
+    		if((0 < next.size[0]) && (0 < next.size[1]))
+    		{
+    			// Do this first, the emulator is waiting to get the buffer back!
+    	    	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, next.size[0], next.size[1], GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, next.pixels);
+    	    	
+    	    	float width = (float)next.size[0];
+    	    	float height = (float)next.size[1];
+    	    	float aspect = next.aspect;
+    	    	float rotate = (1 == (next.size[2] & 1)) ? 1.0f : 0.0f;
+    	    	
+    	        emptyFrames.put(next);
 
-	        emptyFrames.put(next);
+    	        // Now send the rest to OpenGL
+    	        glUniform1f(id[4], width);
+    			glUniform1f(id[5], height);
+    			glUniform1f(id[6], aspect);
+    			glUniform1f(id[7], rotate);
+    		
+    			glDrawArrays(GL_TRIANGLE_STRIP, next.size[2] * 4, 4);
+    		}
+    		else
+    		{
+    			emptyFrames.put(next);
+    		}
     	}
     }
 }
