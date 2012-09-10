@@ -2,11 +2,9 @@ package org.andretro;
 
 import android.content.*;
 import android.os.*;
-import android.view.*;
-import android.widget.*;
 import android.app.*;
 
-public class QuestionDialog extends android.support.v4.app.DialogFragment implements View.OnKeyListener
+public class QuestionDialog extends android.support.v4.app.DialogFragment
 {
 	public interface QuestionHandler
 	{
@@ -51,15 +49,11 @@ public class QuestionDialog extends android.support.v4.app.DialogFragment implem
 	{
 		final Bundle args = getArguments();
 		final int id = args.getInt("id");
-		
-		// HACK: Use hack view for input focus
-	    final View hackView = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_focus_hack, null);
-	    ((EditText)hackView).setText(args.getString("message"));
 
 		// TODO: Use string resources
 		AlertDialog result = new AlertDialog.Builder(getActivity())
 				.setTitle(args.getString("title"))
-				.setView(hackView)
+				.setMessage(args.getString("message"))
 				.setPositiveButton(args.getString("positive"), new DialogInterface.OnClickListener()
 		        {
 		            @Override public void onClick(DialogInterface UNUSED, int aWhich)
@@ -83,11 +77,5 @@ public class QuestionDialog extends android.support.v4.app.DialogFragment implem
 	{
 		((QuestionHandler)getActivity()).onAnswer(getArguments().getInt("id"), QuestionDialog.this, false);
 		super.onCancel(aDialog);
-	}
-	
-	@Override public boolean onKey(View aView, int aKeyCode, KeyEvent aEvent)
-	{
-		Dialog dialog = getDialog();
-		return (null != dialog) ? dialog.dispatchKeyEvent(aEvent) : false;
 	}
 }

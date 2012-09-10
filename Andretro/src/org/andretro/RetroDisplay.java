@@ -20,6 +20,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 	private static final int CLOSE_GAME_QUESTION = 1;
 	
 	private GLSurfaceView view;
+	private boolean questionOpen;
 	
 	class Draw implements GLSurfaceView.Renderer
 	{		
@@ -50,6 +51,8 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     {	
         super.onCreate(aState);
 
+        questionOpen = (null == aState) ? false : aState.getBoolean("questionOpen", false);
+        
         // Go fullscreen
         if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB)
         {
@@ -110,14 +113,16 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     // QuestionDialog.QuestionHandler	
     @Override public void onAnswer(int aID, QuestionDialog aDialog, boolean aPositive)
     {
-    	if(CLOSE_GAME_QUESTION == aID)
-    	{	
+    	if(CLOSE_GAME_QUESTION == aID && questionOpen)
+    	{
     		Game.I.queueCommand(new Commands.Pause(false, null));
     		if(aPositive)
     		{
     			Game.I.queueCommand(new Commands.CloseGame(null));
     			super.onBackPressed();
     		}
+    		
+    		questionOpen = false;
     	}
     }
        
@@ -140,13 +145,24 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     {	
         if(Game.I.isRunning())
         {
-        	Game.I.queueCommand(new Commands.Pause(true, null));
-        	QuestionDialog.newInstance(CLOSE_GAME_QUESTION, "Really Close Game?", "All unsaved data will be lost.", "Yes", "No", null).show(getSupportFragmentManager(), "mainfragment");
+        	if(!questionOpen)
+        	{
+        		Game.I.queueCommand(new Commands.Pause(true, null));
+        		QuestionDialog.newInstance(CLOSE_GAME_QUESTION, "Really Close Game?", "All unsaved data will be lost.", "Yes", "No", null).show(getSupportFragmentManager(), "mainfragment");
+        		
+        		questionOpen = true;
+        	}
         }
         else
         {
         	super.onBackPressed();
         }
+    }
+    
+    @Override protected void onSaveInstanceState(Bundle aState)
+    {
+    	super.onSaveInstanceState(aState);
+    	aState.putBoolean("questionOpen", questionOpen);
     }
     
     // Menu
