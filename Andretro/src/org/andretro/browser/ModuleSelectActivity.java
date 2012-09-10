@@ -7,6 +7,7 @@ import android.app.*;
 import android.os.*;
 import android.widget.*;
 import android.view.*;
+import android.view.inputmethod.*;
 
 import java.io.*;
 
@@ -94,4 +95,24 @@ public class ModuleSelectActivity extends Activity implements AdapterView.OnItem
 			}
 		})));			
 	}
+	
+    @Override public boolean onCreateOptionsMenu(Menu aMenu)
+    {
+    	super.onCreateOptionsMenu(aMenu);
+		getMenuInflater().inflate(R.menu.directory_list, aMenu);
+		aMenu.removeItem(R.id.goto_root);
+    	return true;
+    }
+
+    @Override public boolean onOptionsItemSelected(MenuItem aItem)
+    {
+        if(R.id.input_method_select == aItem.getItemId())
+        {
+        	InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+        	imm.showInputMethodPicker();
+        	return true;
+        }
+    	
+        return super.onOptionsItemSelected(aItem);
+    }
 }

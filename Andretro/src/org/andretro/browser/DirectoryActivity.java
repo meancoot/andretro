@@ -11,6 +11,7 @@ import android.app.*;
 import android.os.*;
 import android.widget.*;
 import android.view.*;
+import android.view.inputmethod.*;
 
 final class FileWrapper implements IconAdapterItem
 {
@@ -105,14 +106,14 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
     @Override public boolean onCreateOptionsMenu(Menu aMenu)
     {
     	super.onCreateOptionsMenu(aMenu);
+		getMenuInflater().inflate(R.menu.directory_list, aMenu);
     	
-    	if(!inRoot)
+    	if(inRoot)
     	{
-    		getMenuInflater().inflate(R.menu.directory_list, aMenu);
-    		return true;
+    		aMenu.removeItem(R.id.goto_root);
     	}
     	
-    	return false;
+    	return true;
     }
 
     @Override public boolean onOptionsItemSelected(MenuItem aItem)
@@ -122,6 +123,13 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
     		startActivity(new Intent(this, DirectoryActivity.class).putExtra("inroot", true).putExtra("path", Environment.getExternalStorageDirectory().getPath()));
     		return true;
     	}
+    	
+        if(R.id.input_method_select == aItem.getItemId())
+        {
+        	InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+        	imm.showInputMethodPicker();
+        	return true;
+        }
     	
         return super.onOptionsItemSelected(aItem);
     }
