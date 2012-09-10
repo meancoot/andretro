@@ -204,8 +204,15 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 	        }
 	        else if(aItem.getItemId() == R.id.reset)
 	        {
-	        	Game.I.queueCommand(new Commands.Reset(null));
-	        	return true;
+	            Game.I.queueCommand(new Commands.Reset(new Commands.Callback(this, new Runnable()
+	            {
+	                @Override public void run()
+	                {
+	                    Toast.makeText(RetroDisplay.this, "Game Reset", Toast.LENGTH_SHORT).show();
+	                }
+	            })));
+
+	            return true;
 	        }
     	}
     	

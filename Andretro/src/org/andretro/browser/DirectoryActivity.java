@@ -88,8 +88,13 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
 
 		if(selected.isFile())
 		{
-			Game.I.queueCommand(new Commands.LoadGame(selected.getAbsolutePath(), null));
-			startActivity(new Intent(this, RetroDisplay.class));
+	    	Game.I.queueCommand(new Commands.LoadGame(selected.getAbsolutePath(), new Commands.Callback(this, new Runnable()
+	        {
+	            @Override public void run()
+	            {
+	            	startActivity(new Intent(DirectoryActivity.this, RetroDisplay.class));
+	            }
+	        })));
 		}
 		else
 		{
