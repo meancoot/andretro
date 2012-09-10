@@ -9,6 +9,8 @@ namespace
 {
     Library* module;
     
+    FileReader ROM;
+    
     JNIEnv* env;
     jshortArray audioData;
     jint audioLength;
@@ -309,45 +311,6 @@ JNIFUNC(jboolean, unserialize)(JNIARGS, jobject aData, jint aSize, jint aOffset)
     return false;
 }
 
-JNIFUNC(jboolean, serializeToFile)(JNIARGS, jstring aPath)
-{
-    size_t size = module->serialize_size();
-
-    if(size > 0)
-    {        
-        uint8_t buffer[size];
-
-        if(module->serialize(buffer, size))
-        {
-            JavaChars path(aEnv, aPath);
-            FILE* file = fopen(path, "wb");
-            
-            if(file)
-            {
-                bool result = (1 == fwrite(buffer, size, 1, file));
-                fclose(file);                
-                return result;
-            }
-        }
-    }
-    
-    return false;
-}
-
-JNIFUNC(jboolean, unserializeFromFile)(JNIARGS, jstring aPath)
-{
-    JavaChars path(aEnv, aPath);
-    
-    FileReader data = FileReader(path);
-
-    if(data.size() >= module->serialize_size())
-    {
-        return module->unserialize(data.base(), data.size());
-    }
-    
-    return false;
-}
-
 JNIFUNC(void, cheatReset)(JNIARGS)
 {
     module->cheat_reset();
@@ -363,21 +326,19 @@ JNIFUNC(bool, loadGame)(JNIARGS, jstring path)
 {
     JavaChars fileName(aEnv, path);
     
-    retro_game_info info;
-    info.path = fileName;
-	info.meta = 0;
+    retro_game_info info = {fileName, 0, 0, 0};
     
-	// TODO: Who deletes the memory?
     if(!systemInfo.need_fullpath)
     {
-		FILE* file = fopen(fileName, "rb");
-		fseek(file, 0, SEEK_END);
-		info.size = ftell(file);
-		fseek(file, 0, SEEK_SET);
-
-		info.data = malloc(info.size);
-		fread((void*)info.data, info.size, 1, file);
-		fclose(file);
+        if(ROM.load(fileName))
+        {
+            info.data = ROM.base();
+            info.size = ROM.size();
+        }
+        else
+        {
+            return false;
+        }
     }
 
     if(module->load_game(&info))
@@ -393,6 +354,8 @@ JNIFUNC(void, unloadGame)(JNIARGS)
 {
     module->unload_game();
     memset(&avInfo, 0, sizeof(avInfo));
+    
+    ROM.close();
 }
 
 JNIFUNC(jint, getRegion)(JNIARGS)
@@ -438,4 +401,38 @@ JNIFUNC(jboolean, readMemoryRegion)(JNIARGS, int aID, jstring aFileName)
     }
     
     return true;
+}
+
+// Extensions: Serialize/Unserialize using a file
+JNIFUNC(jboolean, serializeToFile)(JNIARGS, jstring aPath)
+{
+    const size_t size = module->serialize_size();
+
+    if(size > 0)
+    {        
+        uint8_t buffer[size];
+        if(module->serialize(buffer, size))
+        {
+            return DumpFile(JavaChars(aEnv, aPath), buffer, size);
+        }
+    }
+    
+    return false;
+}
+
+JNIFUNC(jboolean, unserializeFromFile)(JNIARGS, jstring aPath)
+{
+    const size_t size = module->serialize_size();
+    
+    if(size > 0)
+    {
+        uint8_t buffer[size];
+        
+        if(ReadFile(JavaChars(aEnv, aPath), buffer, size))
+        {
+            return module->unserialize(buffer, size);
+        }
+    }
+
+    return false;
 }

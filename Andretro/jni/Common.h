@@ -16,20 +16,49 @@ class FileReader
         std::vector<uint8_t> data;
 
     public:
+        FileReader()
+        {
+        
+        }
+    
         FileReader(const char* aPath)
         {
-            FILE* file = fopen(aPath, "rb");
+            load(aPath);
+        }
+        
+        bool load(const char* aPath)
+        {
+            close();
             
-            if(file)
+            // Open new file
+            if(aPath)
             {
-                fseek(file, 0, SEEK_END);
-                data.resize(ftell(file));
-                fseek(file, 0, SEEK_SET);
+                FILE* file = fopen(aPath, "rb");
                 
-                fread(&data[0], data.size(), 1, file);
-                
-                fclose(file);
+                if(file)
+                {
+                    fseek(file, 0, SEEK_END);
+                    data.resize(ftell(file));
+                    fseek(file, 0, SEEK_SET);
+                    
+                    fread(&data[0], data.size(), 1, file);
+                    
+                    fclose(file);
+                    return true;
+                }
             }
+            
+            return false;
+        }
+        
+        void close()
+        {
+            data.clear();
+        }
+        
+        bool isOpen() const
+        {
+            return 0 < data.size();
         }
         
         const uint8_t* base() const
