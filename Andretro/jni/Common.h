@@ -72,18 +72,6 @@ bool DumpFile(const char* aPath, const void* aData, size_t aLength)
 	return false;
 }
 
-bool HandleFile(const char* aPath, void* aData, size_t aLength, bool aRead)
-{
-	if(aRead)
-	{
-		return ReadFile(aPath, aData, aLength);
-	}
-	else
-	{
-		return DumpFile(aPath, aData, aLength);
-	}
-}
-
 struct JavaClass
 {
 	jclass classID;

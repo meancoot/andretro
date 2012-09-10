@@ -1,5 +1,7 @@
 package org.libretro;
 
+import java.nio.ByteBuffer;
+
 public final class LibRetro
 {
 	public static final int  RETRO_API_VERSION = 1;
@@ -130,10 +132,10 @@ public final class LibRetro
 	public static native boolean loadGame(String aPath);
 	public static native void unloadGame();
 	public static native int getRegion();
-	public static native void loadSavedData(String aFileBase);
-	public static native void writeSavedData(String aFileBase);
-
-	// Gets region of memory.
-	//void *retro_get_memory_data(unsigned id);
-	//size_t retro_get_memory_size(unsigned id);
+	public static native int getMemorySize(int aID);
+	public static native ByteBuffer getMemoryData(int aID);
+	
+	// Helpers
+	public static native boolean writeMemoryRegion(int aID, String aFileName);
+	public static native boolean readMemoryRegion(int aID, String aFileBase);
 }

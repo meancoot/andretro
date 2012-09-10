@@ -400,36 +400,42 @@ JNIFUNC(jint, getRegion)(JNIARGS)
     return module->get_region();
 }
 
-// Note: aFileBase contains complete path to file without extension, the trailing dot is included.
-void handleSaveData(const char* aFileBase, bool aLoad)
+JNIFUNC(jobject, getMemoryData)(JNIARGS, int aID)
 {
-	const unsigned areas[] = {RETRO_MEMORY_SAVE_RAM, RETRO_MEMORY_RTC};
-	const char* const extensions[] = {"srm", "rtc"};
-
-	for(int i = 0; i != 2; i ++)
-	{
-		size_t size = module->get_memory_size(areas[i]);
-
-		if(size && aFileBase)
-		{
-			std::string fullPath = std::string(aFileBase) + extensions[i];
-			HandleFile(fullPath.c_str(), module->get_memory_data(areas[i]), size, aLoad);
-		}
-	}
+    void* const memoryData = module->get_memory_data(aID);
+    const size_t memorySize = module->get_memory_size(aID);
+    
+    return (memoryData && memorySize) ? aEnv->NewDirectByteBuffer(memoryData, memorySize) : 0;
 }
 
-JNIFUNC(void, loadSavedData)(JNIARGS, jstring aFileBase)
+JNIFUNC(int, getMemorySize)(JNIARGS, int aID)
 {
-	JavaChars fileBase(aEnv, aFileBase);
-	handleSaveData(fileBase, true);
+    return module->get_memory_size(aID);
 }
 
-JNIFUNC(void, writeSavedData)(JNIARGS, jstring aFileBase)
+// Extensions: Read or write a memory region into a specified file.
+JNIFUNC(jboolean, writeMemoryRegion)(JNIARGS, int aID, jstring aFileName)
 {
-	JavaChars fileBase(aEnv, aFileBase);
-	handleSaveData(fileBase, false);
+    const size_t size = module->get_memory_size(aID);
+    void* const data = module->get_memory_data(aID);
+    
+    if(size && data)
+    {
+        DumpFile(JavaChars(aEnv, aFileName), data, size);
+    }
+    
+    return true;
 }
 
-// Gets region of memory.
-//void *retro_get_memory_data(unsigned id);
-//size_t retro_get_memory_size(unsigned id);
+JNIFUNC(jboolean, readMemoryRegion)(JNIARGS, int aID, jstring aFileName)
+{
+    const size_t size = module->get_memory_size(aID);
+    void* const data = module->get_memory_data(aID);
+    
+    if(size && data)
+    {
+        ReadFile(JavaChars(aEnv, aFileName), data, size);
+    }
+    
+    return true;
+}

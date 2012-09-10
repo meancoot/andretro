@@ -178,7 +178,8 @@ public final class Game extends Thread
         {	
         	dataName = getModuleSystemDirectory() + "/" + loadedFile.getName().split("\\.(?=[^\\.]+$)")[0];
         	
-        	LibRetro.loadSavedData(getGameDataName(""));
+        	LibRetro.readMemoryRegion(LibRetro.RETRO_MEMORY_SAVE_RAM, getGameDataName("srm"));
+        	LibRetro.readMemoryRegion(LibRetro.RETRO_MEMORY_RTC, getGameDataName("rtc"));
         	
         	avInfo = new LibRetro.AVInfo();
             LibRetro.getSystemAVInfo(avInfo);
@@ -199,7 +200,9 @@ public final class Game extends Thread
     	
     	if(loaded)
     	{
-        	LibRetro.writeSavedData(getGameDataName(""));
+        	LibRetro.writeMemoryRegion(LibRetro.RETRO_MEMORY_SAVE_RAM, getGameDataName("srm"));
+        	LibRetro.writeMemoryRegion(LibRetro.RETRO_MEMORY_RTC, getGameDataName("rtc"));
+
    			LibRetro.unloadGame();
 			
 			avInfo = null;
