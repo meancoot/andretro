@@ -8,6 +8,7 @@ import android.app.*;
 
 import javax.xml.parsers.*;
 import java.io.*;
+import java.util.*;
 
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
@@ -37,8 +38,29 @@ public class InputGroup extends RelativeLayout implements InputHandler
         return bits;
     }
     
+    public void removeChildren()
+    {
+    	final List<View> toRemove = new ArrayList<View>();
+    	
+    	for(int i = 0; i != getChildCount(); i ++)
+    	{
+    		final View thisOne = getChildAt(i);
+    		if(thisOne instanceof InputHandler)
+    		{
+    			toRemove.add(thisOne);
+    		}
+    	}
+    	
+    	for(final View view: toRemove)
+    	{
+    		removeView(view);
+    	}
+    }
+    
     public void loadInputLayout(final Activity aContext, final InputStream aFile)
     {
+    	removeChildren();
+    	
         SAXParserFactory factory = SAXParserFactory.newInstance();
         try
         {

@@ -21,6 +21,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 	
 	private GLSurfaceView view;
 	private boolean questionOpen;
+	private boolean onScreenInput;
 	
 	class Draw implements GLSurfaceView.Renderer
 	{		
@@ -52,6 +53,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         super.onCreate(aState);
 
         questionOpen = (null == aState) ? false : aState.getBoolean("questionOpen", false);
+        onScreenInput = (null == aState) ? true : aState.getBoolean("onScreenInput", true);
         
         // Go fullscreen
         if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB)
@@ -72,10 +74,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 		view.setKeepScreenOn(true);
 		
 		// Add controls
-		// TODO: Support system specific / disabling
-		InputGroup inputBase = (InputGroup)findViewById(R.id.base);
-		inputBase.loadInputLayout(this, getResources().openRawResource(R.raw.default_retro_pad));
-		Input.setOnScreenInput(inputBase);
+		updateOnScreenControls();
     }
     
     @Override public void onResume()
@@ -163,6 +162,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     {
     	super.onSaveInstanceState(aState);
     	aState.putBoolean("questionOpen", questionOpen);
+    	aState.putBoolean("onScreenInput", onScreenInput);
     }
     
     // Menu
@@ -170,6 +170,9 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     {
     	super.onCreateOptionsMenu(aMenu);
     	getMenuInflater().inflate(R.menu.retro_display, aMenu);
+    	
+    	aMenu.findItem(R.id.show_on_screen_input).setChecked(onScreenInput);
+    	
         return true;
     }
         
@@ -182,6 +185,14 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         	return true;
         }
 
+        if(aItem.getItemId() == R.id.show_on_screen_input)
+        {
+        	onScreenInput = !aItem.isChecked();
+        	aItem.setChecked(onScreenInput);
+        	
+        	updateOnScreenControls();
+        }
+        
     	if(Game.I.isRunning())
     	{
 	        if(aItem.getItemId() == R.id.save_state || aItem.getItemId() == R.id.load_state)
@@ -217,6 +228,19 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     	}
     	
         return super.onOptionsItemSelected(aItem);
+    }
+    
+    private void updateOnScreenControls()
+    {
+		InputGroup inputBase = (InputGroup)findViewById(R.id.base);
+    	inputBase.removeChildren();
+		
+    	if(onScreenInput)
+    	{
+			inputBase.loadInputLayout(this, getResources().openRawResource(R.raw.default_retro_pad));
+    	}
+    	
+    	Input.setOnScreenInput(onScreenInput ? inputBase : null);
     }
 }
 
