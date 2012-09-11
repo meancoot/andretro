@@ -24,6 +24,7 @@
         <activity android:name=".browser.DirectoryActivity"></activity>
         <activity android:name=".RetroDisplay"></activity>
         <activity android:name=".settings.InputActivity"></activity>
+        <activity android:name=".settings.SettingActivity"></activity>
     </application>
 
 </manifest>

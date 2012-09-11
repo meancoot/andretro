@@ -8,6 +8,7 @@ import java.util.concurrent.*;
 
 import android.content.*;
 import android.os.*;
+import android.view.*;
 
 
 public final class Game extends Thread
@@ -31,6 +32,12 @@ public final class Game extends Thread
     private File moduleDirectory;
     private String dataName;
     private Doodads.Set inputs;
+    
+    // Fast forward
+    private int frameCounter;
+    int fastForwardKey;
+    int fastForwardSpeed = 1;
+    boolean fastForwardDefault;
     
     private boolean initialized = false;
     private boolean loaded = false;
@@ -241,26 +248,34 @@ public final class Game extends Thread
 	    		// Execute any commands
 	    		if(loaded && 0 == pauseDepth && null != presentNotify)
 	    		{	
-	                //Emulate
+	    			// Fast forward
+	    			final boolean fastKeyPressed = Input.isPressed(fastForwardKey);
+	    			final int frameToggle = fastForwardDefault ? 1 : fastForwardSpeed;
+	    			int frameTarget = fastForwardDefault ? fastForwardSpeed : 1;
+	    			frameTarget = (fastKeyPressed) ? frameToggle : frameTarget;
+	    			
+	                //Emulate	    			
 	    			Present.VideoFrame frame = Present.getFrameBuffer();
     				int len = LibRetro.run(frame.pixels, frame.size, audioSamples, Input.getBits(inputs.getDevice(0, 0)));
     				
-    				if(0 != frame.size[0] && 0 != frame.size[1])
+    				if((++frameCounter >= frameTarget) && 0 != frame.size[0] && 0 != frame.size[1])
     				{
     	    			frame.aspect = avInfo.aspectRatio;
     					Present.putNextBuffer(frame);
     					presentNotify.run();
+    					
+        				if(0 != len)
+        				{
+        					Audio.write((int)avInfo.sampleRate, audioSamples, len);
+        				}
+        				
+        				frameCounter = 0;
     				}
     				else
     				{
     					Present.cancel(frame);
     				}
-    				
-    				if(0 != len)
-    				{
-    					Audio.write((int)avInfo.sampleRate, audioSamples, len);
-    				}
-	    		}
+   	    		}
 	    		else
 	    		{
 	    			synchronized(this)

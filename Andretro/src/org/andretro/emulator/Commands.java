@@ -1,6 +1,8 @@
 package org.andretro.emulator;
 import android.app.*;
 import android.content.*;
+import android.view.*;
+
 import org.libretro.LibRetro;
 
 public final class Commands
@@ -211,6 +213,30 @@ public final class Commands
 		{
 			// TODO
 			LibRetro.setControllerPortDevice(0, LibRetro.RETRO_DEVICE_JOYPAD);
+		}
+	}
+	
+	public static final class RefreshSettings extends BaseCommand
+	{
+		private final SharedPreferences settings;
+		
+		public RefreshSettings(SharedPreferences aSettings, Callback aCallback)
+		{
+			super(aCallback);
+			
+			settings = aSettings;
+			
+			if(null == aSettings)
+			{
+				throw new RuntimeException("aSettings may not be null.");
+			}
+		}
+		
+		@Override protected void perform()
+		{
+			Game.I.fastForwardDefault = settings.getBoolean("fast_forward_default", false);
+			Game.I.fastForwardSpeed = Integer.parseInt(settings.getString("fast_forward_speed", "4"));
+			Game.I.fastForwardKey = settings.getInt("fast_forward_key", KeyEvent.KEYCODE_BUTTON_R2);
 		}
 	}
 }

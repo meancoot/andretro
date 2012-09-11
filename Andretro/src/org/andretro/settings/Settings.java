@@ -11,66 +11,87 @@ import android.view.*;
 import android.widget.*;
 
 final class Settings
-{	
-/*	public static class Boolean extends SwitchPreference
-	{
-		private final Setting setting;
-		
-		public Boolean(Context aContext, final Setting aSetting)
+{
+	public static class Boolean extends CheckBoxPreference
+	{		
+		public Boolean(Context aContext, String aKey, String aName, String aDescription, boolean aDefault)
 		{
 			super(aContext);
 			
-			setting = aSetting;
-			
-			setTitle(setting.getName());
-			setSummary(setting.getDescription());
-			
-			super.setChecked(setting.getBooleanValue());
-			setSwitchTextOff("NO");
-			setSwitchTextOn("YES");
-		}
-		
-		@Override public void setChecked(boolean aChecked)
-		{
-			super.setChecked(aChecked);
-			setting.setBooleanValue(aChecked);
+			setKey(aKey);
+			setTitle(aName);
+			setSummary(aDescription);
+			setPersistent(true);
+			setDefaultValue(aDefault);
 		}
 	}
 
+	
 	public static class Text extends EditTextPreference
-	{
-		private final Setting setting;
-		
-		public Text(Context aContext, Setting aSetting)
+	{		
+		public Text(Context aContext, String aKey, String aName, String aDescription, String aDefault)
 		{
 			super(aContext);
 			
-			setting = aSetting;
+			setKey(aKey);
+			setTitle(aName);
+			setSummary(aDescription);
+			setPersistent(true);
+			setDefaultValue(aDefault);
+		}
+	}
+	
+	public static class GenericButton extends DialogPreference
+	{	
+		@TargetApi(12) public GenericButton(Context aContext, String aKey, String aName, int aDefault)
+		{
+			super(aContext, null);
 
-			// Set text type based on input setting
-			switch(aSetting.getType())
-			{
-				case 0: getEditText().setInputType(InputType.TYPE_CLASS_NUMBER); break;
-				case 1: getEditText().setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED); break;
-				case 3: getEditText().setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED | InputType.TYPE_NUMBER_FLAG_DECIMAL); break;
-				case 4: getEditText().setInputType(InputType.TYPE_CLASS_TEXT); break;
-				case 5: getEditText().setInputType(InputType.TYPE_CLASS_TEXT); break;
-				default: throw new IllegalArgumentException("Setting type not valid for TextSetting");
-			}
+			setKey(aKey);
+			setTitle(aName);
+			setPersistent(true);
+			setDefaultValue(aDefault);
 			
-			// Set strings
-			setTitle(setting.getName());
-			setSummary(setting.getDescription());
+			// HACK: Set a layout that forces the dialog to get key focus
+			// TODO: Make the layout better looking!
+			setDialogLayoutResource(R.layout.dialog_focus_hack);
 			
-			super.setText(setting.getStringValue());
+			setDialogTitle("Waiting for input");
+			setDialogMessage(aName);
+			refreshSummary(aDefault);
+		}
+				
+		@Override @TargetApi(12) protected void showDialog(Bundle aState)
+		{
+			super.showDialog(aState);
+		
+			// HACK: Set the message in the hacked layout
+			((EditText)getDialog().findViewById(R.id.hack_message)).setText(getDialogMessage());
+			
+			getDialog().setOnKeyListener(new DialogInterface.OnKeyListener()
+			{	
+				@Override public boolean onKey(DialogInterface aDialog, int aKeyCode, KeyEvent aEvent)
+				{
+					persistInt(aKeyCode);
+					refreshSummary(0);					
+					getDialog().dismiss();
+					return false;
+				}
+			});
 		}
 		
-		@Override public void setText(String aText)
+		@TargetApi(12) private void refreshSummary(int aDefault)
 		{
-			super.setText(aText);		
-			setting.setStringValue(aText);
+	        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB_MR1)
+	        {
+	        	setSummary(KeyEvent.keyCodeToString(getPersistedInt(aDefault)));
+	        }
+	        else
+	        {
+	        	setSummary(Integer.toString(getPersistedInt(aDefault)));
+	        }			
 		}
-	}*/
+	}
 
 	public static class Button extends DialogPreference
 	{

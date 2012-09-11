@@ -59,4 +59,9 @@ public final class Input
 		
 		return result;
 	}
+	
+	public static synchronized boolean isPressed(int aKeyCode)
+	{
+		return keys.contains(aKeyCode);
+	}
 }

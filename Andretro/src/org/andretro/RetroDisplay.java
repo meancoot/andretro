@@ -213,6 +213,11 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 	        	startActivity(new Intent(this, InputActivity.class));
         		return true;
 	        }
+	        else if(aItem.getItemId() == R.id.system_settings)
+	        {
+	        	startActivity(new Intent(this, SettingActivity.class));
+        		return true;
+	        }
 	        else if(aItem.getItemId() == R.id.reset)
 	        {
 	            Game.I.queueCommand(new Commands.Reset(new Commands.Callback(this, new Runnable()
