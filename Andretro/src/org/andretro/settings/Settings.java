@@ -58,10 +58,15 @@ final class Settings
 			
 			setDialogTitle("Waiting for input");
 			setDialogMessage(aName);
-			refreshSummary(aDefault);
 		}
-				
-		@Override @TargetApi(12) protected void showDialog(Bundle aState)
+		
+		@Override protected void onAttachedToActivity()
+		{
+			super.onAttachedToActivity();
+			refreshSummary();
+		}
+		
+		@Override protected void showDialog(Bundle aState)
 		{
 			super.showDialog(aState);
 		
@@ -73,83 +78,46 @@ final class Settings
 				@Override public boolean onKey(DialogInterface aDialog, int aKeyCode, KeyEvent aEvent)
 				{
 					persistInt(aKeyCode);
-					refreshSummary(0);					
+					valueChanged(aKeyCode);
+					refreshSummary();					
 					getDialog().dismiss();
 					return false;
 				}
 			});
 		}
 		
-		@TargetApi(12) private void refreshSummary(int aDefault)
+		@TargetApi(12) private void refreshSummary()
 		{
 	        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB_MR1)
 	        {
-	        	setSummary(KeyEvent.keyCodeToString(getPersistedInt(aDefault)));
+	        	setSummary(KeyEvent.keyCodeToString(getPersistedInt(0)));
 	        }
 	        else
 	        {
-	        	setSummary(Integer.toString(getPersistedInt(aDefault)));
+	        	setSummary(Integer.toString(getPersistedInt(0)));
 	        }			
+		}
+		
+		protected void valueChanged(int aKeyCode)
+		{
+			
 		}
 	}
 
-	public static class Button extends DialogPreference
+	public static class Button extends GenericButton
 	{
 		final Doodads.Button button;
 		
-		@TargetApi(12) public Button(Context aContext, final Doodads.Button aButton)
+		public Button(Context aContext, final Doodads.Button aButton)
 		{
-			super(aContext, null);
-
+			super(aContext, aButton.configKey, aButton.fullName, 0);
+			
 			button = aButton;
-			
-			setTitle(aButton.fullName);
-			setKey(aButton.configKey);
-			setPersistent(true);
-			
-			// HACK: Set a layout that forces the dialog to get key focus
-			// TODO: Make the layout better looking!
-			setDialogLayoutResource(R.layout.dialog_focus_hack);
-			
-			setDialogTitle("Waiting for input");
-			setDialogMessage(aButton.fullName);
-			
-	        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB_MR1)
-	        {
-	        	setSummary(KeyEvent.keyCodeToString(button.getKeyCode()));
-	        }
-	        else
-	        {
-	        	setSummary(Integer.toString(button.getKeyCode()));
-	        }
 		}
 				
-		@Override @TargetApi(12) protected void showDialog(Bundle aState)
+		@Override protected void valueChanged(int aKeyCode)
 		{
-			super.showDialog(aState);
-		
-			// HACK: Set the message in the hacked layout
-			((EditText)getDialog().findViewById(R.id.hack_message)).setText(getDialogMessage());
-			
-			getDialog().setOnKeyListener(new DialogInterface.OnKeyListener()
-			{	
-				@Override public boolean onKey(DialogInterface aDialog, int aKeyCode, KeyEvent aEvent)
-				{
-					persistInt(aKeyCode);
-					button.setKeyCode(aKeyCode);
-			        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB_MR1)
-			        {
-			        	setSummary(KeyEvent.keyCodeToString(button.getKeyCode()));
-			        }
-			        else
-			        {
-			        	setSummary(Integer.toString(button.getKeyCode()));
-			        }
-					
-					getDialog().dismiss();
-					return false;
-				}
-			});
+			button.setKeyCode(aKeyCode);
 		}
 	}
 
