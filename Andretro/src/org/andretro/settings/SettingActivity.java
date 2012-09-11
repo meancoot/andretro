@@ -23,9 +23,12 @@ public class SettingActivity extends PreferenceActivity
 		PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(this);
 		
 		// Add fast forward setting
-		screen.addPreference(new Settings.Text(this, "fast_forward_speed", "Fast Forward Speed", "Rate for fastforward mode.", "4"));
-		screen.addPreference(new Settings.Boolean(this, "fast_forward_default", "Use fast forward mode by default", "", false));
-		screen.addPreference(new Settings.GenericButton(this, "fast_forward_key", "Key held to toggle fast forward.", KeyEvent.KEYCODE_BUTTON_R2));
+		PreferenceCategory fastForward = new PreferenceCategory(this);
+		fastForward.setTitle("Fast Forward");
+		screen.addPreference(fastForward);
+		fastForward.addPreference(new Settings.Text(this, "fast_forward_speed", "Fast Forward Speed", "Rate for fastforward mode.", "4"));
+		fastForward.addPreference(new Settings.Boolean(this, "fast_forward_default", "Use fast forward mode by default", "", false));
+		fastForward.addPreference(new Settings.GenericButton(this, "fast_forward_key", "Key held to toggle fast forward.", KeyEvent.KEYCODE_BUTTON_R2));
 		
 		setPreferenceScreen(screen);
 	}

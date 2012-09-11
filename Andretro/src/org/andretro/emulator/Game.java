@@ -135,6 +135,7 @@ public final class Game extends Thread
 			new File(moduleDirectory.getAbsolutePath() + "/Games").mkdirs();
 			
 			inputs = new Doodads.Set(aContext.getSharedPreferences("retropad", 0));
+			new Commands.RefreshSettings(aContext.getSharedPreferences(getModuleName(), 0), null).run();
 			
 			initialized = true;
 		}
