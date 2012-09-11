@@ -240,16 +240,11 @@ public final class Commands
 			Game.I.fastForwardSpeed = Integer.parseInt(settings.getString("fast_forward_speed", "4"));
 			Game.I.fastForwardKey = settings.getInt("fast_forward_key", KeyEvent.KEYCODE_BUTTON_R2);
 			
-			Game.I.rewindEnabled = settings.getBoolean("rewind_enabled", false);
+			
+			final boolean rewindEnabled = settings.getBoolean("rewind_enabled", false);
+			final int rewindDataSize = Integer.parseInt(settings.getString("rewind_buffer_size", "16")) * 1024 * 1024;
+			LibRetro.setupRewinder(rewindEnabled ? rewindDataSize : 0);
 			Game.I.rewindKey = settings.getInt("rewind_key", KeyEvent.KEYCODE_BUTTON_L2);
-			
-			final int bufferSize = Integer.parseInt(settings.getString("rewind_buffer_size", "16")) * 1024 * 1024;
-			
-			if(null == Game.I.rewindBuffer || Game.I.rewindBuffer.capacity() != bufferSize)
-			{
-				Game.I.rewindBuffer = ByteBuffer.allocateDirect(bufferSize);
-				Game.I.rewindPosition = 0;
-			}
 		}
 	}
 }

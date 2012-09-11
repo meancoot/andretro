@@ -39,12 +39,7 @@ public final class Game extends Thread
     int fastForwardKey;
     int fastForwardSpeed = 1;
     boolean fastForwardDefault;
-    
-    // Rewind
-    boolean rewindEnabled;
     int rewindKey;
-    ByteBuffer rewindBuffer;
-    int rewindPosition;
     
     private boolean initialized = false;
     private boolean loaded = false;
@@ -199,7 +194,7 @@ public final class Game extends Thread
         	avInfo = new LibRetro.AVInfo();
             LibRetro.getSystemAVInfo(avInfo);
 
-            new Commands.RefreshInput(null).run();            
+            new Commands.RefreshInput(null).run();
             
             loaded = true;
         }
@@ -222,7 +217,6 @@ public final class Game extends Thread
 			
 			avInfo = null;
     		loaded = false;
-    		rewindPosition = 0;
     		
     		// Shutdown any audio device
     		Audio.close();
@@ -258,31 +252,15 @@ public final class Game extends Thread
 	    		if(loaded && 0 == pauseDepth && null != presentNotify)
 	    		{	
 	    			// Fast forward
+	    			final boolean rewindKeyPressed = Input.isPressed(rewindKey);
 	    			final boolean fastKeyPressed = Input.isPressed(fastForwardKey);
 	    			final int frameToggle = fastForwardDefault ? 1 : fastForwardSpeed;
 	    			int frameTarget = fastForwardDefault ? fastForwardSpeed : 1;
 	    			frameTarget = (fastKeyPressed) ? frameToggle : frameTarget;
-	    				    			
-	    			// Rewind
-	    			final boolean rewindKeyDown = Input.isPressed(rewindKey);
-	    			final int serializeSize = LibRetro.serializeSize();
-	    			
-	    			if(rewindEnabled && rewindKeyDown)
-	    			{
-	    				if(serializeSize <= rewindPosition)
-	    				{
-	    					rewindPosition -= serializeSize;
-    	    				LibRetro.unserialize(rewindBuffer, rewindBuffer.capacity(), rewindPosition);
-	    				}
-	    				else
-	    				{
-	    					continue;
-	    				}
-	    			}
-	    			
+	    				    				    			
 	                //Emulate   			
 	    			Present.VideoFrame frame = Present.getFrameBuffer();
-    				int len = LibRetro.run(frame.pixels, frame.size, audioSamples, Input.getBits(inputs.getDevice(0, 0)));
+    				int len = LibRetro.run(frame.pixels, frame.size, audioSamples, Input.getBits(inputs.getDevice(0, 0)), rewindKeyPressed);
     				
     				if((++frameCounter >= frameTarget) && 0 != frame.size[0] && 0 != frame.size[1])
     				{
@@ -300,18 +278,6 @@ public final class Game extends Thread
     				else
     				{
     					Present.cancel(frame);
-    				}
-    				
-	    			// Rewind
-    				if(rewindEnabled && !rewindKeyDown)
-    				{
-    					final int rewindSize = rewindBuffer.capacity();
-    					
-    					if((rewindSize - rewindPosition) > serializeSize)
-    					{
-    						LibRetro.serialize(rewindBuffer, rewindSize, rewindPosition);
-    						rewindPosition += serializeSize;
-    					}
     				}
    	    		}
 	    		else

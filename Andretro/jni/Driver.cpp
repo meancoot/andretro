@@ -5,11 +5,14 @@
 #include "libretro.h"
 #include "Library.h"
 
+#include "Rewinder.h"
+
 namespace
 {
     Library* module;
     
     FileReader ROM;
+    Rewinder rewinder;
     
     JNIEnv* env;
     jshortArray audioData;
@@ -258,7 +261,7 @@ JNIFUNC(void, reset)(JNIARGS)
     module->reset();
 }
 
-JNIFUNC(jint, run)(JNIARGS, jobject aVideo, jintArray aSize, jshortArray aAudio, jint aJoypad)
+JNIFUNC(jint, run)(JNIARGS, jobject aVideo, jintArray aSize, jshortArray aAudio, jint aJoypad, jboolean aRewind)
 {
     // TODO
     env = aEnv;
@@ -268,7 +271,17 @@ JNIFUNC(jint, run)(JNIARGS, jobject aVideo, jintArray aSize, jshortArray aAudio,
     joypad = aJoypad;
     haveFrame = false;
     
-    module->run();
+    const bool rewound = aRewind && rewinder.eatFrame(module);
+
+    if(!aRewind || rewound)
+    {
+    	module->run();
+
+    	if(!aRewind)
+    	{
+    		rewinder.stashFrame(module);
+    	}
+    }
 
     // Upload video size (done here in case of dupe)
     const jint size[3] = {lastWidth, lastHeight, rotation};
@@ -281,34 +294,6 @@ JNIFUNC(jint, run)(JNIARGS, jobject aVideo, jintArray aSize, jshortArray aAudio,
 JNIFUNC(jint, serializeSize)(JNIARGS)
 {
     return module->serialize_size();
-}
-
-JNIFUNC(jboolean, serialize)(JNIARGS, jobject aData, jint aSize, jint aOffset)
-{
-    const size_t size = module->serialize_size();
-    const size_t bufferLength = aSize - aOffset;
-
-    if(bufferLength >= size)
-    {
-    	uint8_t* const data = (uint8_t*)env->GetDirectBufferAddress(aData);
-    	return module->serialize(&data[aOffset], size);
-    }
-
-    return false;
-}
-
-JNIFUNC(jboolean, unserialize)(JNIARGS, jobject aData, jint aSize, jint aOffset)
-{
-    const size_t size = module->serialize_size();
-    const size_t bufferLength = aSize - aOffset;
-
-    if(bufferLength >= size)
-    {
-		const uint8_t* const data = (uint8_t*)env->GetDirectBufferAddress(aData);
-		return module->unserialize(&data[aOffset], size);
-    }
-
-    return false;
 }
 
 JNIFUNC(void, cheatReset)(JNIARGS)
@@ -344,6 +329,8 @@ JNIFUNC(bool, loadGame)(JNIARGS, jstring path)
     if(module->load_game(&info))
     {
         module->get_system_av_info(&avInfo);
+
+        rewinder.gameLoaded(module);
         return true;
     }
     
@@ -374,6 +361,12 @@ JNIFUNC(jobject, getMemoryData)(JNIARGS, int aID)
 JNIFUNC(int, getMemorySize)(JNIARGS, int aID)
 {
     return module->get_memory_size(aID);
+}
+
+// Extensions: Rewinder
+JNIFUNC(void, setupRewinder)(JNIARGS, int aSize)
+{
+	rewinder.setSize(aSize);
 }
 
 // Extensions: Read or write a memory region into a specified file.

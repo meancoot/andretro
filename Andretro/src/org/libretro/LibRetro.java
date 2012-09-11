@@ -121,10 +121,10 @@ public final class LibRetro
 	public static native void getSystemAVInfo(AVInfo aInfo);
 	public static native void setControllerPortDevice(int aPort, int aDevice);
 	public static native void reset();
-	public static native int run(Object aVideo, int[] aSize, short[] aAudio, int aJoypad);
+	public static native int run(Object aVideo, int[] aSize, short[] aAudio, int aJoypad, boolean aRewind);
 	public static native int serializeSize();
-	public static native boolean serialize(ByteBuffer aData, int aSize, int aOffset);
-	public static native boolean unserialize(ByteBuffer aData, int aSize, int aOffset);
+//	public static native boolean serialize(byte[] aData, int aSize);
+//	public static native boolean unserialize(byte[] aData, int aSize);
 	public static native void cheatReset();
 	public static native void cheatSet(int aIndex, boolean aEnabled, String aCode);
 	public static native boolean loadGame(String aPath);
@@ -134,6 +134,8 @@ public final class LibRetro
 	public static native ByteBuffer getMemoryData(int aID);
 	
 	// Helpers
+	public static native void setupRewinder(int aDataSize); // 0 or less disables
+	
 	public static native boolean writeMemoryRegion(int aID, String aFileName);
 	public static native boolean readMemoryRegion(int aID, String aFileBase);
 
