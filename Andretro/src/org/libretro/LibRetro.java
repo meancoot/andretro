@@ -123,10 +123,8 @@ public final class LibRetro
 	public static native void reset();
 	public static native int run(Object aVideo, int[] aSize, short[] aAudio, int aJoypad);
 	public static native int serializeSize();
-	public static native boolean serialize(Object aData, int aSize, int aOffset);
-	public static native boolean unserialize(Object aData, int aSize, int aOffset);
-	public static native boolean serializeToFile(String aPath);
-	public static native boolean unserializeFromFile(String aPath);
+	public static native boolean serialize(ByteBuffer aData, int aSize, int aOffset);
+	public static native boolean unserialize(ByteBuffer aData, int aSize, int aOffset);
 	public static native void cheatReset();
 	public static native void cheatSet(int aIndex, boolean aEnabled, String aCode);
 	public static native boolean loadGame(String aPath);
@@ -138,4 +136,7 @@ public final class LibRetro
 	// Helpers
 	public static native boolean writeMemoryRegion(int aID, String aFileName);
 	public static native boolean readMemoryRegion(int aID, String aFileBase);
+
+	public static native boolean serializeToFile(String aPath);
+	public static native boolean unserializeFromFile(String aPath);
 }

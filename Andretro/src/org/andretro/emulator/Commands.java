@@ -1,4 +1,6 @@
 package org.andretro.emulator;
+import java.nio.*;
+
 import android.app.*;
 import android.content.*;
 import android.view.*;
@@ -237,6 +239,17 @@ public final class Commands
 			Game.I.fastForwardDefault = settings.getBoolean("fast_forward_default", false);
 			Game.I.fastForwardSpeed = Integer.parseInt(settings.getString("fast_forward_speed", "4"));
 			Game.I.fastForwardKey = settings.getInt("fast_forward_key", KeyEvent.KEYCODE_BUTTON_R2);
+			
+			Game.I.rewindEnabled = settings.getBoolean("rewind_enabled", false);
+			Game.I.rewindKey = settings.getInt("rewind_key", KeyEvent.KEYCODE_BUTTON_L2);
+			
+			final int bufferSize = Integer.parseInt(settings.getString("rewind_buffer_size", "16")) * 1024 * 1024;
+			
+			if(null == Game.I.rewindBuffer || Game.I.rewindBuffer.capacity() != bufferSize)
+			{
+				Game.I.rewindBuffer = ByteBuffer.allocateDirect(bufferSize);
+				Game.I.rewindPosition = 0;
+			}
 		}
 	}
 }

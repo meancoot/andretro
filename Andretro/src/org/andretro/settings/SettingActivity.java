@@ -30,6 +30,14 @@ public class SettingActivity extends PreferenceActivity
 		fastForward.addPreference(new Settings.Boolean(this, "fast_forward_default", "Use fast forward mode by default", "", false));
 		fastForward.addPreference(new Settings.GenericButton(this, "fast_forward_key", "Key held to toggle fast forward.", KeyEvent.KEYCODE_BUTTON_R2));
 		
+		// Add rewind settings
+		PreferenceCategory rewind = new PreferenceCategory(this);
+		rewind.setTitle("Rewind");
+		screen.addPreference(rewind);
+		rewind.addPreference(new Settings.Boolean(this, "rewind_enabled", "Enable the population of the rewind buffer", "", false));
+		rewind.addPreference(new Settings.Text(this, "rewind_buffer_size", "Size of rewind buffer in MB", "", "16"));
+		rewind.addPreference(new Settings.GenericButton(this, "rewind_key", "Key held to activate rewind.", KeyEvent.KEYCODE_BUTTON_L2));
+		
 		setPreferenceScreen(screen);
 	}
 	

@@ -4,6 +4,7 @@ import org.andretro.system.*;
 import org.libretro.*;
 
 import java.io.*;
+import java.nio.*;
 import java.util.concurrent.*;
 
 import android.content.*;
@@ -38,6 +39,12 @@ public final class Game extends Thread
     int fastForwardKey;
     int fastForwardSpeed = 1;
     boolean fastForwardDefault;
+    
+    // Rewind
+    boolean rewindEnabled;
+    int rewindKey;
+    ByteBuffer rewindBuffer;
+    int rewindPosition;
     
     private boolean initialized = false;
     private boolean loaded = false;
@@ -215,6 +222,7 @@ public final class Game extends Thread
 			
 			avInfo = null;
     		loaded = false;
+    		rewindPosition = 0;
     		
     		// Shutdown any audio device
     		Audio.close();
@@ -254,8 +262,25 @@ public final class Game extends Thread
 	    			final int frameToggle = fastForwardDefault ? 1 : fastForwardSpeed;
 	    			int frameTarget = fastForwardDefault ? fastForwardSpeed : 1;
 	    			frameTarget = (fastKeyPressed) ? frameToggle : frameTarget;
+	    				    			
+	    			// Rewind
+	    			final boolean rewindKeyDown = Input.isPressed(rewindKey);
+	    			final int serializeSize = LibRetro.serializeSize();
 	    			
-	                //Emulate	    			
+	    			if(rewindEnabled && rewindKeyDown)
+	    			{
+	    				if(serializeSize <= rewindPosition)
+	    				{
+	    					rewindPosition -= serializeSize;
+    	    				LibRetro.unserialize(rewindBuffer, rewindBuffer.capacity(), rewindPosition);
+	    				}
+	    				else
+	    				{
+	    					continue;
+	    				}
+	    			}
+	    			
+	                //Emulate   			
 	    			Present.VideoFrame frame = Present.getFrameBuffer();
     				int len = LibRetro.run(frame.pixels, frame.size, audioSamples, Input.getBits(inputs.getDevice(0, 0)));
     				
@@ -275,6 +300,18 @@ public final class Game extends Thread
     				else
     				{
     					Present.cancel(frame);
+    				}
+    				
+	    			// Rewind
+    				if(rewindEnabled && !rewindKeyDown)
+    				{
+    					final int rewindSize = rewindBuffer.capacity();
+    					
+    					if((rewindSize - rewindPosition) > serializeSize)
+    					{
+    						LibRetro.serialize(rewindBuffer, rewindSize, rewindPosition);
+    						rewindPosition += serializeSize;
+    					}
     				}
    	    		}
 	    		else
