@@ -4,6 +4,7 @@
 #include <vector>
 #include <deque>
 #include <stdint.h>
+#include <zlib.h>
 #include "Library.h"
 #include "Common.h"
 
@@ -34,6 +35,7 @@ class Rewinder
 
     std::vector<uint8_t> data;
     std::vector<uint8_t> buffer;
+    std::vector<uint8_t> compressBuffer;
     
     uint32_t nextFrame;
     
@@ -49,6 +51,7 @@ class Rewinder
         void gameLoaded(const Library* aModule)
         {
             buffer.resize(aModule->serialize_size());
+            compressBuffer.resize(compressBound(aModule->serialize_size()));
             nextFrame = 0;
             frames.clear();
         }
@@ -66,18 +69,22 @@ class Rewinder
             {
                 if(aModule->serialize(&buffer[0], buffer.size()))
                 {
-                    nextFrame = ((data.size() - nextFrame) < buffer.size()) ? 0 : nextFrame;
-                    memcpy(&data[nextFrame], &buffer[0], buffer.size());
-                        
-                    // Add to list
-                    frames.push_back(Frame(nextFrame, buffer.size()));
-                    nextFrame += buffer.size();
-                    
-                    // Remove any dead entries from the list
-                    while((frames.size() > 1) && frames.front().overlaps(frames.back()))
-                    {
-                        frames.pop_front();
-                    }
+                	uLongf len = compressBuffer.size();
+                	if(Z_OK == compress(&compressBuffer[0], &len, &buffer[0], buffer.size()))
+                	{
+                        nextFrame = ((data.size() - nextFrame) < len) ? 0 : nextFrame;
+                        memcpy(&data[nextFrame], &compressBuffer[0], len);
+
+                        // Add to list
+                        frames.push_back(Frame(nextFrame, len));
+                        nextFrame += len;
+
+                        // Remove any dead entries from the list
+                        while((frames.size() > 1) && frames.front().overlaps(frames.back()))
+                        {
+                            frames.pop_front();
+                        }
+                	}
                 }
             }
         }
@@ -89,10 +96,14 @@ class Rewinder
                 if(!frames.empty())
                 {
                     const Frame loadFrame = frames.back();
-                    
                     frames.pop_back();
                     nextFrame = loadFrame.location;
-                    return aModule->unserialize(&data[loadFrame.location], loadFrame.size);
+
+                    uLongf len = buffer.size();
+                    if(Z_OK == uncompress(&buffer[0], &len, &data[loadFrame.location], loadFrame.size))
+                    {
+                    	return aModule->unserialize(&buffer[0], buffer.size());
+                    }
                 }
                 else
                 {
