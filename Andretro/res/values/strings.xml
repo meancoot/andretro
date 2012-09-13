@@ -9,5 +9,10 @@
     <string name="input_method">Input Method</string>
     <string name="show_on_screen_input">On Screen Input</string>
     <string name="system_settings">System Settings</string>
+    <string-array name="aspect_mode_values">
+        <item >Default</item>
+        <item >4:3</item>
+        <item >1:1</item>
+    </string-array>
 
 </resources>

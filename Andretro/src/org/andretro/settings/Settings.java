@@ -12,35 +12,6 @@ import android.widget.*;
 
 final class Settings
 {
-	public static class Boolean extends CheckBoxPreference
-	{		
-		public Boolean(Context aContext, String aKey, String aName, String aDescription, boolean aDefault)
-		{
-			super(aContext);
-			
-			setKey(aKey);
-			setTitle(aName);
-			setSummary(aDescription);
-			setPersistent(true);
-			setDefaultValue(aDefault);
-		}
-	}
-
-	
-	public static class Text extends EditTextPreference
-	{		
-		public Text(Context aContext, String aKey, String aName, String aDescription, String aDefault)
-		{
-			super(aContext);
-			
-			setKey(aKey);
-			setTitle(aName);
-			setSummary(aDescription);
-			setPersistent(true);
-			setDefaultValue(aDefault);
-		}
-	}
-	
 	public static class GenericButton extends DialogPreference
 	{	
 		@TargetApi(12) public GenericButton(Context aContext, String aKey, String aName, int aDefault)

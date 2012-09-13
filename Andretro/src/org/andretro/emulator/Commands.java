@@ -5,6 +5,7 @@ import android.app.*;
 import android.content.*;
 import android.view.*;
 
+import org.andretro.system.*;
 import org.libretro.LibRetro;
 
 public final class Commands
@@ -236,11 +237,33 @@ public final class Commands
 		
 		@Override protected void perform()
 		{
+			// Scaling
+			Present.setSmoothingMode(settings.getBoolean("scaling_smooth", true));
+			
+			final String aspectMode = settings.getString("scaling_aspect_mode", "Default");
+			if("Default".equals(aspectMode))
+			{
+				Present.setForcedAspect(false, 0.0f);
+			}
+			else if("4:3".equals(aspectMode))
+			{
+				Present.setForcedAspect(true, 1.3333333f);
+			}
+			else if("1:1".equals(aspectMode))
+			{
+				Present.setForcedAspect(true, -1.0f);
+			}
+			else
+			{
+				throw new RuntimeException("Aspect mode not expected");
+			}
+			
+			// Fast forward
 			Game.I.fastForwardDefault = settings.getBoolean("fast_forward_default", false);
 			Game.I.fastForwardSpeed = Integer.parseInt(settings.getString("fast_forward_speed", "4"));
 			Game.I.fastForwardKey = settings.getInt("fast_forward_key", KeyEvent.KEYCODE_BUTTON_R2);
 			
-			
+			// Rewind
 			final boolean rewindEnabled = settings.getBoolean("rewind_enabled", false);
 			final int rewindDataSize = Integer.parseInt(settings.getString("rewind_buffer_size", "16")) * 1024 * 1024;
 			LibRetro.setupRewinder(rewindEnabled ? rewindDataSize : 0);

@@ -16,6 +16,9 @@ public final class Present
 
     private static int programID;
     private static final int id[] = new int[8];
+    private static volatile boolean smoothMode = true;
+    private static volatile boolean aspectMode = false;
+    private static volatile float aspectForce = 0.0f;
     
     private static final float[] vertexBufferData = new float[]
     {
@@ -114,8 +117,6 @@ public final class Present
         // Texture
     	glGenTextures(1, id, 0);
         glBindTexture(GL_TEXTURE_2D, id[0]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, FRAMESIZE, FRAMESIZE, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, null);
@@ -140,7 +141,18 @@ public final class Present
         glUniform1f(id[2], aWidth);
         glUniform1f(id[3], aHeight);
     }
-        
+    
+    public static void setSmoothingMode(boolean aEnable)
+    {
+    	smoothMode = aEnable;
+    }
+    
+    public static void setForcedAspect(boolean aUseCustom, float aAspect)
+    {
+    	aspectMode = aUseCustom;
+    	aspectForce = aAspect;
+    }
+    
     public static void present() throws InterruptedException
     {
     	VideoFrame next = readyFrames.poll();
@@ -158,11 +170,14 @@ public final class Present
     	    	float rotate = (1 == (next.size[2] & 1)) ? 1.0f : 0.0f;
     	    	
     	        emptyFrames.put(next);
-
-    	        // Now send the rest to OpenGL
+    	        
+    	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, smoothMode ? GL_LINEAR : GL_NEAREST);
+    	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, smoothMode ? GL_LINEAR : GL_NEAREST);
+    	        
+    	        // Now send the rest to OpenGL    	        
     	        glUniform1f(id[4], width);
     			glUniform1f(id[5], height);
-    			glUniform1f(id[6], aspect);
+    			glUniform1f(id[6], !aspectMode ? aspect : ((aspectForce < 0.0f) ? (width / height) : aspectForce));
     			glUniform1f(id[7], rotate);
     		
     			glDrawArrays(GL_TRIANGLE_STRIP, next.size[2] * 4, 4);
