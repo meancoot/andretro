@@ -30,6 +30,11 @@ final class ModuleWrapper implements IconAdapterItem
     	return fileName;
     }
     
+    public boolean isEnabled()
+    {
+    	return true;
+    }
+    
     @Override public String getText()
     {
     	return fileName;

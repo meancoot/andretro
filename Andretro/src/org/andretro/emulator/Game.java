@@ -4,6 +4,7 @@ import org.andretro.system.*;
 import org.libretro.*;
 
 import java.io.*;
+import java.util.*;
 import java.util.concurrent.*;
 
 import android.content.*;
@@ -111,6 +112,7 @@ public final class Game extends Thread
     // LIBRARY
     private boolean libraryLoaded;
     private LibRetro.SystemInfo systemInfo;
+    private String[] extensions;
     private File moduleDirectory;
     private Doodads.Set inputs;
     
@@ -126,6 +128,9 @@ public final class Game extends Thread
 			
 			systemInfo = new LibRetro.SystemInfo();
 			LibRetro.getSystemInfo(systemInfo);
+			
+			extensions = systemInfo.validExtensions.split("\\|");
+			Arrays.sort(extensions);
 			
 			moduleDirectory = new File(Environment.getExternalStorageDirectory().getPath() + "/andretro/" + systemInfo.libraryName);
 			moduleDirectory.mkdirs();
@@ -158,6 +163,13 @@ public final class Game extends Thread
     		inputs = null;
     		libraryLoaded = false;
     	}    	
+    }
+    
+    public boolean validFile(File aFile)
+    {
+    	final String path = aFile.getAbsolutePath(); 
+        final int dot = path.lastIndexOf(".");
+        return (dot < 0) ? false : (0 <= Arrays.binarySearch(extensions, path.substring(dot + 1)));
     }
     
     public boolean hasLibrary()

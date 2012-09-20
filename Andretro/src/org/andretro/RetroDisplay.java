@@ -48,7 +48,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 	    }    		
 	}
 	
-    @Override @TargetApi(11) public void onCreate(Bundle aState)
+    @Override @TargetApi(14) public void onCreate(Bundle aState)
     {	
         super.onCreate(aState);
 
@@ -56,18 +56,8 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         onScreenInput = (null == aState) ? true : aState.getBoolean("onScreenInput", true);
         
         // Go fullscreen
-        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB)
-        {
-	        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
-	        {
-	        	getActionBar().hide();
-	        }
-        }
-        else
-        {
-        	requestWindowFeature(Window.FEATURE_NO_TITLE);
-        }
-
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        
 		// Setup the view
         setContentView(R.layout.retro_display);
 
@@ -76,6 +66,21 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         view.setRenderer(new Draw());
 		view.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 		view.setKeepScreenOn(true);
+
+		// Hide action bar / dim buttons
+        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB)
+        {
+	        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
+	        {
+	        	getActionBar().hide();
+	        }
+        }
+        
+        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+        {
+	        view.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
+        }
+
 		
 		// Add controls
 		updateOnScreenControls();

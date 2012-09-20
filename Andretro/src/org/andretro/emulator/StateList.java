@@ -1,18 +1,10 @@
 package org.andretro.emulator;
 
-import java.io.*;
-import java.util.*;
-
 import org.andretro.*;
-import org.andretro.browser.*;
-import org.andretro.emulator.Commands.*;
-import org.andretro.settings.*;
 
 import android.app.*;
-import android.content.*;
 import android.os.*;
 import android.view.*;
-import android.view.inputmethod.*;
 import android.widget.*;
 
 public class StateList extends Activity implements AdapterView.OnItemClickListener

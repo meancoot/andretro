@@ -35,6 +35,11 @@ final class FileWrapper implements IconAdapterItem
     	return file;
     }
     
+    public boolean isEnabled()
+    {
+    	return file.isDirectory() || Game.I.validFile(file);
+    }
+    
     @Override public String getText()
     {
     	return file.getName();
