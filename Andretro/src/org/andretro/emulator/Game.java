@@ -174,6 +174,11 @@ public final class Game extends Thread
     {
     	assertThread();
 
+    	if(!libraryLoaded)
+    	{
+    		throw new RuntimeException("Library isn't loaded");
+    	}
+    	
         // Unload
     	closeFile();
         
@@ -201,6 +206,12 @@ public final class Game extends Thread
     void closeFile()
     {
     	assertThread();
+    	
+    	if(!libraryLoaded)
+    	{
+    		throw new RuntimeException("Library isn't loaded");
+    	}
+
     	
     	if(gameLoaded)
     	{

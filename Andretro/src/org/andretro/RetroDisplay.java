@@ -201,15 +201,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     	{
 	        if(aItem.getItemId() == R.id.save_state || aItem.getItemId() == R.id.load_state)
 	        {
-	            final boolean loading = aItem.getItemId() == R.id.load_state;
-	        
-	            Game.I.queueCommand(new Commands.StateAction(loading, 0, new Commands.Callback(this, new Runnable()
-	            {
-	                @Override public void run()
-	                {
-	                    Toast.makeText(RetroDisplay.this, loading ? "State Loaded" : "State Saved", Toast.LENGTH_SHORT).show();
-	                }
-	            })));
+	        	startActivity(new Intent(this, StateList.class).putExtra("loading", aItem.getItemId() == R.id.load_state));
 	            return true;
 	        }
 	        else if(aItem.getItemId() == R.id.input_settings)
