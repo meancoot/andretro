@@ -63,6 +63,10 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 	        	getActionBar().hide();
 	        }
         }
+        else
+        {
+        	requestWindowFeature(Window.FEATURE_NO_TITLE);
+        }
 
 		// Setup the view
         setContentView(R.layout.retro_display);
@@ -142,7 +146,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         
     @Override public void onBackPressed()
     {	
-        if(Game.I.isRunning())
+        if(Game.I.hasGame())
         {
         	if(!questionOpen)
         	{
@@ -193,7 +197,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         	updateOnScreenControls();
         }
         
-    	if(Game.I.isRunning())
+    	if(Game.I.hasGame())
     	{
 	        if(aItem.getItemId() == R.id.save_state || aItem.getItemId() == R.id.load_state)
 	        {

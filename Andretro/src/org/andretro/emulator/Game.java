@@ -4,12 +4,10 @@ import org.andretro.system.*;
 import org.libretro.*;
 
 import java.io.*;
-import java.nio.*;
 import java.util.concurrent.*;
 
 import android.content.*;
 import android.os.*;
-import android.view.*;
 
 
 public final class Game extends Thread
@@ -22,17 +20,65 @@ public final class Game extends Thread
     	start();
     }
  
-    // Game Info
-    private final BlockingQueue<Commands.BaseCommand> eventQueue = new ArrayBlockingQueue<Commands.BaseCommand>(8);    
+    // Thread
+    private void assertThread()
+    {
+    	if(Thread.currentThread() != I)
+    	{
+    		throw new RuntimeException("Parent function must only be called on the Game thread.");
+    	}
+    }
+
+    private void assertNotThread()
+    {
+    	if(Thread.currentThread() == I)
+    	{
+    		throw new RuntimeException("Parent function must not be called on the Game thread.");
+    	}
+    }
     
-    private LibRetro.SystemInfo systemInfo;
-    private LibRetro.AVInfo avInfo;    
+    // Command queue
+    private final BlockingQueue<Commands.BaseCommand> eventQueue = new ArrayBlockingQueue<Commands.BaseCommand>(8);
+    
+    public void queueCommand(final Commands.BaseCommand aCommand)
+    {
+    	assertNotThread();
+    	
+    	// Sanity
+    	if(!isAlive())
+    	{
+    		throw new RuntimeException("Game thread has already exited.");
+    	}
+    	
+    	if(null == aCommand)
+    	{
+    		throw new NullPointerException("Command may not be null.");
+    	}
+    	
+		// Put the event in the queue and notify any waiting clients that it's present. (This will wake the waiting emulator if needed.)
+		eventQueue.add(aCommand);
+		
+		synchronized(this)
+		{
+			this.notifyAll();
+		}
+    }
+
+    private void pumpEventQueue()
+    {
+    	assertThread();    	
+
+    	// Run all events
+    	for(Commands.BaseCommand i = eventQueue.poll(); null != i; i = eventQueue.poll())
+    	{
+    		i.run();
+    	}
+    }
+
+    // Game Info
     
     int pauseDepth;
     Runnable presentNotify;
-    private File moduleDirectory;
-    private String dataName;
-    private Doodads.Set inputs;
     
     // Fast forward
     private int frameCounter;
@@ -40,50 +86,8 @@ public final class Game extends Thread
     int fastForwardSpeed = 1;
     boolean fastForwardDefault;
     int rewindKey;
-    
-    private boolean initialized = false;
-    private boolean loaded = false;
-    
-    public void queueCommand(final Commands.BaseCommand aCommand)
-    {
-    	// Sanity
-    	if(Thread.currentThread() == I)
-    	{
-    		throw new RuntimeException("The Game thread must not place objects in the command queue.");
-    	}
 
-    	if(null == aCommand)
-    	{
-    		throw new NullPointerException("Command may not be null.");
-    	}
-    	
-		// Put the event in the queue and notify any waiting clients that it's present. (This will wake the waiting emulator if needed.)
-		try
-		{
-			eventQueue.put(aCommand);
-			
-			synchronized(this)
-			{
-				this.notifyAll();
-			}
-		}
-		catch(InterruptedException e)
-		{
-			Thread.currentThread().interrupt();
-		}
-    }
-
-    // Functions to retrieve game data, careful as the data may be null, or outdated!
-    public boolean isInitiailized()
-    {
-    	return initialized;
-    }
-    
-    public boolean isRunning()
-    {
-        return loaded;
-    }
-
+    // Functions to retrieve game data, careful as the data may be null, or outdated!    
     public Doodads.Set getInputs()
     {
     	return inputs;
@@ -104,25 +108,17 @@ public final class Game extends Thread
     	return dataName + "." + aExtension;
     }
             
-    /*
-     * PRIVATE INTERFACE; ONLY CALL LOCALLY OR FROM Cammands.*
-     */
-    private void assertThread()
-    {
-    	if(Thread.currentThread() != I)
-    	{
-    		throw new RuntimeException("Parent function must only be called on the Game thread.");
-    	}
-    }
+    // LIBRARY
+    private boolean libraryLoaded;
+    private LibRetro.SystemInfo systemInfo;
+    private File moduleDirectory;
+    private Doodads.Set inputs;
     
     boolean loadLibrary(Context aContext, String aLibrary)
     {
     	assertThread();
-    	// Sanity
-    	if(initialized)
-    	{
-    		throw new RuntimeException("Game module is already loaded");
-    	}
+    	
+    	closeLibrary();
     	
 		if(LibRetro.loadLibrary(aLibrary))
 		{
@@ -139,17 +135,17 @@ public final class Game extends Thread
 			inputs = new Doodads.Set(aContext.getSharedPreferences("retropad", 0));
 			new Commands.RefreshSettings(aContext.getSharedPreferences(getModuleName(), 0), null).run();
 			
-			initialized = true;
+			libraryLoaded = true;
 		}
 		
-		return initialized;
+		return libraryLoaded;
     }
     
     void closeLibrary()
     {
     	assertThread();
     	
-    	if(initialized)
+    	if(libraryLoaded)
     	{
     		closeFile();
     		
@@ -160,19 +156,26 @@ public final class Game extends Thread
     		systemInfo = null;
     		moduleDirectory = null;
     		inputs = null;
-    		initialized = false;
+    		libraryLoaded = false;
     	}    	
     }
+    
+    public boolean hasLibrary()
+    {
+    	return libraryLoaded;
+    }
+    
+    // GAME
+    private boolean gameLoaded;
+    private LibRetro.AVInfo avInfo;
+    private String dataName;
 	    
     void loadFile(File aFile)
     {
     	assertThread();
 
         // Unload
-        if(loaded)
-        {
-        	closeFile();
-        }
+    	closeFile();
         
         // Load
         if(null != aFile && aFile.isFile() && LibRetro.loadGame(aFile.getAbsolutePath()))
@@ -187,7 +190,7 @@ public final class Game extends Thread
 
             new Commands.RefreshInput(null).run();
             
-            loaded = true;
+            gameLoaded = true;
         }
         else
         {
@@ -199,7 +202,7 @@ public final class Game extends Thread
     {
     	assertThread();
     	
-    	if(loaded)
+    	if(gameLoaded)
     	{
         	LibRetro.writeMemoryRegion(LibRetro.RETRO_MEMORY_SAVE_RAM, getGameDataName("srm"));
         	LibRetro.writeMemoryRegion(LibRetro.RETRO_MEMORY_RTC, getGameDataName("rtc"));
@@ -207,24 +210,19 @@ public final class Game extends Thread
    			LibRetro.unloadGame();
 			
 			avInfo = null;
-    		loaded = false;
+    		gameLoaded = false;
     		
     		// Shutdown any audio device
     		Audio.close();
     	}
     }
-        
-    private void pumpEventQueue()
+    
+    public boolean hasGame()
     {
-    	assertThread();    	
-
-    	// Run all events
-    	for(Commands.BaseCommand i = eventQueue.poll(); null != i; i = eventQueue.poll())
-    	{
-    		i.run();
-    	}
+        return gameLoaded;
     }
 
+    // LOOP
     @Override public void run()
     {
     	assertThread();
@@ -240,7 +238,7 @@ public final class Game extends Thread
 	    		pumpEventQueue();
 	    		
 	    		// Execute any commands
-	    		if(loaded && 0 == pauseDepth && null != presentNotify)
+	    		if(gameLoaded && 0 == pauseDepth && null != presentNotify)
 	    		{	
 	    			// Fast forward
 	    			final boolean rewindKeyPressed = Input.isPressed(rewindKey);

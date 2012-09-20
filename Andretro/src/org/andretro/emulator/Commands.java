@@ -1,5 +1,4 @@
 package org.andretro.emulator;
-import java.nio.*;
 import java.io.*;
 
 import android.app.*;

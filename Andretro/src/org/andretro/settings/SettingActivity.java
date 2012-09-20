@@ -2,10 +2,8 @@ package org.andretro.settings;
 import org.andretro.R;
 
 import org.andretro.emulator.*;
-import org.andretro.settings.Settings.*;
 
 import android.preference.*;
-import android.view.*;
 import android.os.*;
 
 public class SettingActivity extends PreferenceActivity
@@ -14,7 +12,7 @@ public class SettingActivity extends PreferenceActivity
 	{
 		super.onCreate(aState);
 		
-		if(!Game.I.isInitiailized())
+		if(!Game.I.hasLibrary())
 		{
 			throw new RuntimeException("No library is loaded");
 		}
