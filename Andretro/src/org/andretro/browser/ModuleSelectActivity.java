@@ -101,6 +101,7 @@ public class ModuleSelectActivity extends Activity implements AdapterView.OnItem
     	super.onCreateOptionsMenu(aMenu);
 		getMenuInflater().inflate(R.menu.directory_list, aMenu);
 		aMenu.removeItem(R.id.goto_root);
+		aMenu.removeItem(R.id.system_settings);
     	return true;
     }
 

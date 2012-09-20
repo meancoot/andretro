@@ -153,7 +153,6 @@ public final class Game extends Thread
     	{
     		closeFile();
     		
-    		LibRetro.unloadGame();
     		LibRetro.deinit();
     		LibRetro.unloadLibrary();
     		

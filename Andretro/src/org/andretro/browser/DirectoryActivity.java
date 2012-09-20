@@ -2,6 +2,7 @@ package org.andretro.browser;
 
 import org.andretro.*;
 import org.andretro.emulator.*;
+import org.andretro.settings.*;
 
 import java.util.*;
 import java.io.*;
@@ -131,6 +132,13 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
         	return true;
         }
     	
+        if(aItem.getItemId() == R.id.system_settings)
+        {
+        	startActivity(new Intent(this, SettingActivity.class));
+    		return true;
+        }
+
+        
         return super.onOptionsItemSelected(aItem);
     }
         

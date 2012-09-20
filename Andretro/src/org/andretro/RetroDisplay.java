@@ -130,7 +130,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     	int keyCode = aEvent.getKeyCode();
     	
     	// Keys to never handle as game input
-		if(keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP)
+		if(keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_MENU)
 		{
 			return super.dispatchKeyEvent(aEvent);
 		}

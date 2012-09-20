@@ -14,9 +14,9 @@ public class SettingActivity extends PreferenceActivity
 	{
 		super.onCreate(aState);
 		
-		if(!Game.I.isRunning())
+		if(!Game.I.isInitiailized())
 		{
-			throw new RuntimeException("No Game is loaded");
+			throw new RuntimeException("No library is loaded");
 		}
 		
 		getPreferenceManager().setSharedPreferencesName(Game.I.getModuleName());
