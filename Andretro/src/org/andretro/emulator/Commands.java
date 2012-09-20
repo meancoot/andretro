@@ -1,5 +1,6 @@
 package org.andretro.emulator;
 import java.nio.*;
+import java.io.*;
 
 import android.app.*;
 import android.content.*;
@@ -97,18 +98,23 @@ public final class Commands
 	
 	public static final class LoadGame extends BaseCommand
 	{
-		private final String path;
+		private final File file;
 		
-		public LoadGame(String aPath, Callback aCallback)
+		public LoadGame(File aFile, Callback aCallback)
 		{
 			super(aCallback);
 			
-			path = aPath;
+			if(null == aFile)
+			{
+				throw new RuntimeException("aFile may not be null.");
+			}
+			
+			file = aFile;
 		}
 		
 		@Override protected void perform()
 		{
-			Game.I.loadFile(path);
+			Game.I.loadFile(file);
 		}
 	}
 	

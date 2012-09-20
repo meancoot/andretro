@@ -90,7 +90,7 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
 
 		if(selected.isFile())
 		{
-	    	Game.I.queueCommand(new Commands.LoadGame(selected.getAbsolutePath(), new Commands.Callback(this, new Runnable()
+	    	Game.I.queueCommand(new Commands.LoadGame(selected, new Commands.Callback(this, new Runnable()
 	        {
 	            @Override public void run()
 	            {

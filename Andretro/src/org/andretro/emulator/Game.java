@@ -164,17 +164,9 @@ public final class Game extends Thread
     	}    	
     }
 	    
-    void loadFile(String aFile)
+    void loadFile(File aFile)
     {
     	assertThread();
-    	
-    	File loadedFile = new File(aFile);
-    	
-        // Check file
-        if(null == aFile || !loadedFile.isFile())
-        {
-            throw new IllegalArgumentException("File not found.");
-        }
 
         // Unload
         if(loaded)
@@ -183,9 +175,9 @@ public final class Game extends Thread
         }
         
         // Load
-        if(LibRetro.loadGame(aFile))
+        if(null != aFile && aFile.isFile() && LibRetro.loadGame(aFile.getAbsolutePath()))
         {	
-        	dataName = getModuleSystemDirectory() + "/" + loadedFile.getName().split("\\.(?=[^\\.]+$)")[0];
+        	dataName = getModuleSystemDirectory() + "/" + aFile.getName().split("\\.(?=[^\\.]+$)")[0];
         	
         	LibRetro.readMemoryRegion(LibRetro.RETRO_MEMORY_SAVE_RAM, getGameDataName("srm"));
         	LibRetro.readMemoryRegion(LibRetro.RETRO_MEMORY_RTC, getGameDataName("rtc"));
