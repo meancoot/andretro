@@ -55,18 +55,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         questionOpen = (null == aState) ? false : aState.getBoolean("questionOpen", false);
         onScreenInput = (null == aState) ? true : aState.getBoolean("onScreenInput", true);
         
-        // Go fullscreen
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        
-		// Setup the view
-        setContentView(R.layout.retro_display);
-
-        view = (GLSurfaceView)findViewById(R.id.renderer);
-        view.setEGLContextClientVersion(2);
-        view.setRenderer(new Draw());
-		view.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-		view.setKeepScreenOn(true);
-
+        // Setup the window
 		// Hide action bar / dim buttons
         if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB)
         {
@@ -75,12 +64,25 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 	        	getActionBar().hide();
 	        }
         }
-        
+        else
+        {
+            requestWindowFeature(Window.FEATURE_NO_TITLE);
+        }
+                
+		// Setup the view
+        setContentView(R.layout.retro_display);
+
+        view = (GLSurfaceView)findViewById(R.id.renderer);
+        view.setEGLContextClientVersion(2);
+        view.setRenderer(new Draw());
+		view.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+		view.setKeepScreenOn(true);
+		
+		// Dim buttons
         if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH)
         {
 	        view.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
         }
-
 		
 		// Add controls
 		updateOnScreenControls();
