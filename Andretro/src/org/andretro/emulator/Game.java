@@ -52,11 +52,6 @@ public final class Game implements Runnable
     		thread = new Thread(new Game());
     		thread.start();
     	}
-    	    	
-    	if(null == aCommand)
-    	{
-    		throw new NullPointerException("Command may not be null.");
-    	}
     	
 		// Put the event in the queue and notify any waiting clients that it's present. (This will wake the waiting emulator if needed.)
 		eventQueue.add(aCommand);
