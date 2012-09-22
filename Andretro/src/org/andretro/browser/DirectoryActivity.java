@@ -55,7 +55,14 @@ final class FileWrapper implements IconAdapterItem
     	if(null != aOther)
     	{
     		// Who says ternary is hard to follow
-    		return (typeIndex == aOther.typeIndex) ? file.compareTo(aOther.file) : ((typeIndex < aOther.typeIndex) ? -1 : 1);
+    		if(isEnabled() == aOther.isEnabled())
+    		{
+    			return (typeIndex == aOther.typeIndex) ? file.compareTo(aOther.file) : ((typeIndex < aOther.typeIndex) ? -1 : 1);
+    		}
+    		else
+    		{
+    			return isEnabled() ? -1 : 1;
+    		}
     	}
     	
     	return -1;
