@@ -11,46 +11,48 @@ import android.content.*;
 import android.os.*;
 
 
-public final class Game extends Thread
+public final class Game implements Runnable
 {
     // Singleton
-    public final static Game I = new Game();
-    private Game()
+    static
     {
     	System.loadLibrary("retroiface");
-    	start();
     }
  
     // Thread
-    private void assertThread()
+    private static Thread thread;
+    
+    static void assertThread()
     {
-    	if(Thread.currentThread() != I)
+    	if(Thread.currentThread() != thread)
     	{
     		throw new RuntimeException("Parent function must only be called on the Game thread.");
     	}
     }
 
-    private void assertNotThread()
+    static void assertNotThread()
     {
-    	if(Thread.currentThread() == I)
+    	if(Thread.currentThread() == thread)
     	{
     		throw new RuntimeException("Parent function must not be called on the Game thread.");
     	}
     }
     
     // Command queue
-    private final BlockingQueue<Commands.BaseCommand> eventQueue = new ArrayBlockingQueue<Commands.BaseCommand>(8);
+    private static final BlockingQueue<Commands.BaseCommand> eventQueue = new ArrayBlockingQueue<Commands.BaseCommand>(8);
     
-    public void queueCommand(final Commands.BaseCommand aCommand)
+    public static void queueCommand(final Commands.BaseCommand aCommand)
     {
     	assertNotThread();
     	
     	// Sanity
-    	if(!isAlive())
+    	if(null == thread || !thread.isAlive())
     	{
-    		throw new RuntimeException("Game thread has already exited.");
+    		Logger.d("No thread running, start new one");
+    		thread = new Thread(new Game());
+    		thread.start();
     	}
-    	
+    	    	
     	if(null == aCommand)
     	{
     		throw new NullPointerException("Command may not be null.");
@@ -59,13 +61,13 @@ public final class Game extends Thread
 		// Put the event in the queue and notify any waiting clients that it's present. (This will wake the waiting emulator if needed.)
 		eventQueue.add(aCommand);
 		
-		synchronized(this)
+		synchronized(thread)
 		{
-			this.notifyAll();
+			thread.notifyAll();
 		}
     }
 
-    private void pumpEventQueue()
+    private static void pumpEventQueue()
     {
     	assertThread();    	
 
@@ -78,45 +80,45 @@ public final class Game extends Thread
 
     // Game Info
     
-    int pauseDepth;
-    Runnable presentNotify;
+    static int pauseDepth;
+    static Runnable presentNotify;
     
     // Fast forward
-    private int frameCounter;
-    int fastForwardKey;
-    int fastForwardSpeed = 1;
-    boolean fastForwardDefault;
-    int rewindKey;
+    private static int frameCounter;
+    static int fastForwardKey;
+    static int fastForwardSpeed = 1;
+    static boolean fastForwardDefault;
+    static int rewindKey;
 
     // Functions to retrieve game data, careful as the data may be null, or outdated!    
-    public Doodads.Set getInputs()
+    public static Doodads.Set getInputs()
     {
     	return inputs;
     }
     
-    public String getModuleName()
+    public static String getModuleName()
     {
     	return (null == systemInfo) ? null : systemInfo.libraryName;
     }
     
-    public String getModuleSystemDirectory()
+    public static String getModuleSystemDirectory()
     {
     	return (null == moduleDirectory) ? null : moduleDirectory.getAbsolutePath();
     }
     
-    public String getGameDataName(String aExtension)
+    public static String getGameDataName(String aExtension)
     {
     	return dataName + "." + aExtension;
     }
             
     // LIBRARY
-    private boolean libraryLoaded;
-    private LibRetro.SystemInfo systemInfo;
-    private String[] extensions;
-    private File moduleDirectory;
-    private Doodads.Set inputs;
+    private static boolean libraryLoaded;
+    private static LibRetro.SystemInfo systemInfo;
+    private static String[] extensions;
+    private static File moduleDirectory;
+    private static Doodads.Set inputs;
     
-    boolean loadLibrary(Context aContext, String aLibrary)
+    static boolean loadLibrary(Context aContext, String aLibrary)
     {
     	assertThread();
     	
@@ -146,7 +148,7 @@ public final class Game extends Thread
 		return libraryLoaded;
     }
     
-    void closeLibrary()
+    static void closeLibrary()
     {
     	assertThread();
     	
@@ -165,24 +167,24 @@ public final class Game extends Thread
     	}    	
     }
     
-    public boolean validFile(File aFile)
+    public static boolean validFile(File aFile)
     {
     	final String path = aFile.getAbsolutePath(); 
         final int dot = path.lastIndexOf(".");
         return (dot < 0) ? false : (0 <= Arrays.binarySearch(extensions, path.substring(dot + 1)));
     }
     
-    public boolean hasLibrary()
+    public static boolean hasLibrary()
     {
     	return libraryLoaded;
     }
     
     // GAME
-    private boolean gameLoaded;
-    private LibRetro.AVInfo avInfo;
-    private String dataName;
+    private static boolean gameLoaded;
+    private static LibRetro.AVInfo avInfo;
+    private static String dataName;
 	    
-    void loadFile(File aFile)
+    static void loadFile(File aFile)
     {
     	assertThread();
 
@@ -215,7 +217,7 @@ public final class Game extends Thread
         }
     }
     
-    void closeFile()
+    static void closeFile()
     {
     	assertThread();
     	
@@ -240,7 +242,7 @@ public final class Game extends Thread
     	}
     }
     
-    public boolean hasGame()
+    public static boolean hasGame()
     {
         return gameLoaded;
     }
@@ -256,7 +258,7 @@ public final class Game extends Thread
     	try
     	{        	
 	    	// Run until interrupted
-	    	while(!isInterrupted())
+	    	while(!thread.isInterrupted())
 	    	{
 	    		pumpEventQueue();
 	    		
@@ -294,9 +296,9 @@ public final class Game extends Thread
    	    		}
 	    		else
 	    		{
-	    			synchronized(this)
+	    			synchronized(thread)
 	    			{
-    					this.wait();
+	    				thread.wait();
 	    			}
 	    		}
 	    	}

@@ -37,7 +37,7 @@ final class FileWrapper implements IconAdapterItem
     
     public boolean isEnabled()
     {
-    	return file.isDirectory() || Game.I.validFile(file);
+    	return file.isDirectory() || Game.validFile(file);
     }
     
     @Override public String getText()
@@ -95,7 +95,7 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
 
 		if(selected.isFile())
 		{
-	    	Game.I.queueCommand(new Commands.LoadGame(selected, new Commands.Callback(this, new Runnable()
+	    	Game.queueCommand(new Commands.LoadGame(selected, new Commands.Callback(this, new Runnable()
 	        {
 	            @Override public void run()
 	            {

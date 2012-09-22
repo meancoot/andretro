@@ -92,7 +92,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     {
     	super.onResume();
     	
-	    Game.I.queueCommand(new Commands.SetPresentNotify(new Runnable()
+	    Game.queueCommand(new Commands.SetPresentNotify(new Runnable()
 	    {
 	    	@Override public void run()
 	    	{
@@ -111,7 +111,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     {
     	super.onPause();
     	
-    	Game.I.queueCommand(new Commands.SetPresentNotify(null, new Commands.Callback(this, new Runnable()
+    	Game.queueCommand(new Commands.SetPresentNotify(null, new Commands.Callback(this, new Runnable()
         {
             @Override public void run()
             {
@@ -125,10 +125,10 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     {
     	if(CLOSE_GAME_QUESTION == aID && questionOpen)
     	{
-    		Game.I.queueCommand(new Commands.Pause(false, null));
+    		Game.queueCommand(new Commands.Pause(false, null));
     		if(aPositive)
     		{
-    			Game.I.queueCommand(new Commands.CloseGame(null));
+    			Game.queueCommand(new Commands.CloseGame(null));
     			super.onBackPressed();
     		}
     		
@@ -153,11 +153,11 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         
     @Override public void onBackPressed()
     {	
-        if(Game.I.hasGame())
+        if(Game.hasGame())
         {
         	if(!questionOpen)
         	{
-        		Game.I.queueCommand(new Commands.Pause(true, null));
+        		Game.queueCommand(new Commands.Pause(true, null));
         		QuestionDialog.newInstance(CLOSE_GAME_QUESTION, "Really Close Game?", "All unsaved data will be lost.", "Yes", "No", null).show(getSupportFragmentManager(), "mainfragment");
         		
         		questionOpen = true;
@@ -204,7 +204,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         	updateOnScreenControls();
         }
         
-    	if(Game.I.hasGame())
+    	if(Game.hasGame())
     	{
 	        if(aItem.getItemId() == R.id.save_state || aItem.getItemId() == R.id.load_state)
 	        {
@@ -223,7 +223,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 	        }
 	        else if(aItem.getItemId() == R.id.reset)
 	        {
-	            Game.I.queueCommand(new Commands.Reset(new Commands.Callback(this, new Runnable()
+	            Game.queueCommand(new Commands.Reset(new Commands.Callback(this, new Runnable()
 	            {
 	                @Override public void run()
 	                {

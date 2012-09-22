@@ -43,11 +43,8 @@ public final class Commands
 		
 		@Override public final void run()
 		{
-		    if(Thread.currentThread() != Game.I)
-		    {
-		        throw new RuntimeException("Emulator Commands must only be run from the emulator thread.");
-		    }
-		
+			Game.assertThread();
+
 			perform();
 			
 			if(null != finishedCallback)
@@ -78,7 +75,7 @@ public final class Commands
 		
 		@Override protected void perform()
 		{
-			Game.I.loadLibrary(context, library);
+			Game.loadLibrary(context, library);
 		}
 	}
 	
@@ -91,7 +88,7 @@ public final class Commands
 		
 		@Override protected void perform()
 		{
-			Game.I.closeLibrary();
+			Game.closeLibrary();
 		}
 	}
 	
@@ -113,7 +110,7 @@ public final class Commands
 		
 		@Override protected void perform()
 		{
-			Game.I.loadFile(file);
+			Game.loadFile(file);
 		}
 	}
 	
@@ -126,7 +123,7 @@ public final class Commands
 		
 		@Override protected void perform()
 		{
-			Game.I.closeFile();
+			Game.closeFile();
 		}
 	}
 	
@@ -164,11 +161,11 @@ public final class Commands
         {
             if(load)
             {
-                LibRetro.unserializeFromFile(Game.I.getGameDataName("st" + slot));
+                LibRetro.unserializeFromFile(Game.getGameDataName("st" + slot));
             }
             else
             {
-                LibRetro.serializeToFile(Game.I.getGameDataName("st" + slot));
+                LibRetro.serializeToFile(Game.getGameDataName("st" + slot));
             }
         }
 	}
@@ -185,12 +182,12 @@ public final class Commands
 		
 		@Override protected void perform()
 		{
-			if(0 == Game.I.pauseDepth && !pause)
+			if(0 == Game.pauseDepth && !pause)
 			{
 				throw new RuntimeException("Internal Error: Emulator was unpaused too many times (Please Report).");
 			}
 			
-			Game.I.pauseDepth += pause ? 1 : -1;			
+			Game.pauseDepth += pause ? 1 : -1;			
 		}
 	}
 	
@@ -206,7 +203,7 @@ public final class Commands
 		
 		@Override protected void perform()
 		{
-			Game.I.presentNotify = presentNotify;
+			Game.presentNotify = presentNotify;
 		}
 	}
 	
@@ -264,15 +261,15 @@ public final class Commands
 			}
 			
 			// Fast forward
-			Game.I.fastForwardDefault = settings.getBoolean("fast_forward_default", false);
-			Game.I.fastForwardSpeed = Integer.parseInt(settings.getString("fast_forward_speed", "4"));
-			Game.I.fastForwardKey = settings.getInt("fast_forward_key", KeyEvent.KEYCODE_BUTTON_R2);
+			Game.fastForwardDefault = settings.getBoolean("fast_forward_default", false);
+			Game.fastForwardSpeed = Integer.parseInt(settings.getString("fast_forward_speed", "4"));
+			Game.fastForwardKey = settings.getInt("fast_forward_key", KeyEvent.KEYCODE_BUTTON_R2);
 			
 			// Rewind
 			final boolean rewindEnabled = settings.getBoolean("rewind_enabled", false);
 			final int rewindDataSize = Integer.parseInt(settings.getString("rewind_buffer_size", "16")) * 1024 * 1024;
 			LibRetro.setupRewinder(rewindEnabled ? rewindDataSize : 0);
-			Game.I.rewindKey = settings.getInt("rewind_key", KeyEvent.KEYCODE_BUTTON_L2);
+			Game.rewindKey = settings.getInt("rewind_key", KeyEvent.KEYCODE_BUTTON_L2);
 		}
 	}
 }

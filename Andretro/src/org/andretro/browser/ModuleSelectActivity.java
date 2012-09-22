@@ -84,19 +84,19 @@ public class ModuleSelectActivity extends Activity implements AdapterView.OnItem
     {
     	super.onResume();
     	
-    	Game.I.queueCommand(new Commands.ShutDown(null));
+    	Game.queueCommand(new Commands.ShutDown(null));
     }
     
 	@Override public void onItemClick(AdapterView<?> aListView, View aView, int aPosition, long aID)
 	{
 		String file = adapter.getItem(aPosition).getFile();
 		
-		Game.I.queueCommand(new Commands.Initialize(this,  modulePath + file, new Commands.Callback(this, new Runnable()
+		Game.queueCommand(new Commands.Initialize(this,  modulePath + file, new Commands.Callback(this, new Runnable()
 		{
 			@Override public void run()
 			{
 				startActivity(new Intent(ModuleSelectActivity.this, DirectoryActivity.class)
-					.putExtra("path", Game.I.getModuleSystemDirectory() + "/Games"));
+					.putExtra("path", Game.getModuleSystemDirectory() + "/Games"));
 			}
 		})));			
 	}

@@ -23,7 +23,7 @@ public class InputActivity extends PreferenceActivity
 		PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(this);
 		
 		// Add port 1's pad
-		Doodads.Device device = Game.I.getInputs().getDevice(0,  0);
+		Doodads.Device device = Game.getInputs().getDevice(0,  0);
 		for(Doodads.Button i: device.getAll())
 		{
 			screen.addPreference(new Settings.Button(this, i));
@@ -36,6 +36,6 @@ public class InputActivity extends PreferenceActivity
 	{
 		super.onPause();
 
-		Game.I.queueCommand(new Commands.RefreshInput(null));
+		Game.queueCommand(new Commands.RefreshInput(null));
 	}
 }

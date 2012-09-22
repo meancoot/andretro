@@ -102,7 +102,7 @@ final class Settings
 			super(aContext);
 			
 			buttonGroup = aGroup;
-			port = Game.I.getInputs().getItem(aPort);
+			port = Game.getInputs().getItem(aPort);
 			
 			setKey(port.configKey);
 			setPersistent(true);
