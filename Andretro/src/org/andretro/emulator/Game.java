@@ -108,6 +108,7 @@ public final class Game implements Runnable
             
     // LIBRARY
     private static boolean libraryLoaded;
+    private static String libraryFilename;
     private static LibRetro.SystemInfo systemInfo;
     private static String[] extensions;
     private static File moduleDirectory;
@@ -117,28 +118,33 @@ public final class Game implements Runnable
     {
     	assertThread();
     	
-    	closeLibrary();
-    	
-		if(LibRetro.loadLibrary(aLibrary))
-		{
-			LibRetro.init();
-			
-			systemInfo = new LibRetro.SystemInfo();
-			LibRetro.getSystemInfo(systemInfo);
-			
-			extensions = systemInfo.validExtensions.split("\\|");
-			Arrays.sort(extensions);
-			
-			moduleDirectory = new File(Environment.getExternalStorageDirectory().getPath() + "/andretro/" + systemInfo.libraryName);
-			moduleDirectory.mkdirs();
-			
-			new File(moduleDirectory.getAbsolutePath() + "/Games").mkdirs();
-			
-			inputs = new Doodads.Set(aContext.getSharedPreferences("retropad", 0));
-			new Commands.RefreshSettings(aContext.getSharedPreferences(getModuleName(), 0), null).run();
-			
-			libraryLoaded = true;
-		}
+    	// Don't open the library if it's already open!
+    	if(!aLibrary.equals(libraryFilename))
+    	{
+	    	closeLibrary();
+	    	
+			if(LibRetro.loadLibrary(aLibrary))
+			{	
+				LibRetro.init();
+				
+				systemInfo = new LibRetro.SystemInfo();
+				LibRetro.getSystemInfo(systemInfo);
+				
+				extensions = systemInfo.validExtensions.split("\\|");
+				Arrays.sort(extensions);
+				
+				moduleDirectory = new File(Environment.getExternalStorageDirectory().getPath() + "/andretro/" + systemInfo.libraryName);
+				moduleDirectory.mkdirs();
+				
+				new File(moduleDirectory.getAbsolutePath() + "/Games").mkdirs();
+				
+				inputs = new Doodads.Set(aContext.getSharedPreferences("retropad", 0));
+				new Commands.RefreshSettings(aContext.getSharedPreferences(getModuleName(), 0), null).run();
+				
+				libraryLoaded = true;
+				libraryFilename = aLibrary;
+			}
+    	}
 		
 		return libraryLoaded;
     }
@@ -159,6 +165,7 @@ public final class Game implements Runnable
     		moduleDirectory = null;
     		inputs = null;
     		libraryLoaded = false;
+    		libraryFilename = null;
     	}    	
     }
     

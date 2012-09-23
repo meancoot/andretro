@@ -14,10 +14,10 @@ import android.widget.*;
 import android.view.*;
 import android.view.inputmethod.*;
 
-final class FileWrapper implements IconAdapterItem
+class FileWrapper implements IconAdapterItem
 {
-    private final File file;
-    private final int typeIndex;
+    protected final File file;
+    protected final int typeIndex;
 
     public FileWrapper(File aFile)
     {
@@ -69,16 +69,35 @@ final class FileWrapper implements IconAdapterItem
     }
 }
 
+final class ModuleWrapper extends FileWrapper
+{
+    public ModuleWrapper(File aFile)
+    {
+    	super(aFile);
+    }
+        
+    public boolean isEnabled()
+    {
+    	return true;
+    }
+}
+
+
 public class DirectoryActivity extends Activity implements AdapterView.OnItemClickListener
 {
+	// HACK: Hard path
+	static final String modulePath = "/data/data/org.andretro/lib/";
+	
     private IconAdapter<FileWrapper> adapter;
     private boolean inRoot;
+    private String moduleName;
     
     @Override public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         
         setContentView(R.layout.directory_list);
+        moduleName = getIntent().getStringExtra("moduleName");
         inRoot = getIntent().getBooleanExtra("inroot", false);
         
         adapter = new IconAdapter<FileWrapper>(this, R.layout.directory_list_item);
@@ -89,30 +108,80 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
         list.setOnItemClickListener(this);
         
         // Load Directory
-        String path = getIntent().getStringExtra("path");
-        path = (path == null) ? Environment.getExternalStorageDirectory().getPath() : path;
+        String path;
+        if(null != moduleName)
+        {
+        	path = getIntent().getStringExtra("path");
+			Game.queueCommand(new Commands.Initialize(this, moduleName, new Commands.Callback(this, new Runnable()
+			{
+				@Override public void run()
+				{
+		        	String filePath = getIntent().getStringExtra("path");
+		        	filePath = (filePath == null) ? Environment.getExternalStorageDirectory().getPath() : filePath;
+		            wrapFiles(new File(filePath));
+				}
+			})));
+        }
+        else
+        {
+        	path = "Select Emulator";
+        	
+            for(final File lib: new File(modulePath).listFiles())
+            {
+            	if(lib.getName().startsWith("libretro_"))
+            	{
+            		adapter.add(new ModuleWrapper(lib));
+            	}
+            }
+        }
 
         setTitle(path);
-        wrapFiles(new File(path));
     }
     
 	@Override public void onItemClick(AdapterView<?> aListView, View aView, int aPosition, long aID)
 	{
 		final File selected = adapter.getItem(aPosition).getFile();
 
-		if(selected.isFile())
+		if(null != moduleName)
 		{
-	    	Game.queueCommand(new Commands.LoadGame(selected, new Commands.Callback(this, new Runnable()
-	        {
-	            @Override public void run()
-	            {
-	            	startActivity(new Intent(DirectoryActivity.this, RetroDisplay.class));
-	            }
-	        })));
+			if(selected.isFile())
+			{
+		    	Game.queueCommand(new Commands.LoadGame(selected, new Commands.Callback(this, new Runnable()
+		        {
+		            @Override public void run()
+		            {
+		            	startActivity(new Intent(DirectoryActivity.this, RetroDisplay.class));
+		            }
+		        })));
+			}
+			else
+			{
+				startActivity(new Intent(this, DirectoryActivity.class).putExtra("inroot", inRoot)
+						.putExtra("path", selected.getAbsolutePath())
+						.putExtra("moduleName", moduleName));
+			}
 		}
 		else
 		{
-			startActivity(new Intent(this, DirectoryActivity.class).putExtra("inroot", inRoot).putExtra("path", selected.getAbsolutePath()));
+			Game.queueCommand(new Commands.Initialize(this, selected.getAbsolutePath(), new Commands.Callback(this, new Runnable()
+			{
+				@Override public void run()
+				{
+					startActivity(new Intent(DirectoryActivity.this, DirectoryActivity.class)
+						.putExtra("path", Game.getModuleSystemDirectory() + "/Games")
+						.putExtra("moduleName", selected.getAbsolutePath()));
+				}
+			})));
+		}
+	}
+	
+	@Override public void onResume()
+	{
+		super.onResume();
+		
+		if(null != moduleName)
+		{
+			Game.queueCommand(new Commands.Initialize(this, moduleName, null));
 		}
 	}
 	
@@ -124,6 +193,12 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
     	if(inRoot)
     	{
     		aMenu.removeItem(R.id.goto_root);
+    	}
+    	
+    	if(null == moduleName)
+    	{
+    		aMenu.removeItem(R.id.goto_root);
+    		aMenu.removeItem(R.id.system_settings);
     	}
     	
     	return true;
