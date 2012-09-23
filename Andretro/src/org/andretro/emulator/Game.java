@@ -173,7 +173,15 @@ public final class Game implements Runnable
     {
     	final String path = aFile.getAbsolutePath(); 
         final int dot = path.lastIndexOf(".");
-        return (dot < 0) ? false : (0 <= Arrays.binarySearch(extensions, path.substring(dot + 1)));
+        final String extension = (dot < 0) ? null : path.substring(dot + 1);
+        
+        // HACK: If blockExtract isn't set, don't allow zip files to be valid.
+        if(!systemInfo.blockExtract && null != extension && 0 == extension.compareToIgnoreCase("zip"))
+        {
+        	return false;
+        }
+
+    	return (null == extension) ? false : (0 <= Arrays.binarySearch(extensions, extension));
     }
     
     public static boolean hasLibrary()

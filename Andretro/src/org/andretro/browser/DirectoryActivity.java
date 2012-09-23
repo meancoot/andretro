@@ -208,7 +208,10 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
     {
     	if(R.id.goto_root == aItem.getItemId())
     	{
-    		startActivity(new Intent(this, DirectoryActivity.class).putExtra("inroot", true).putExtra("path", Environment.getExternalStorageDirectory().getPath()));
+    		startActivity(new Intent(this, DirectoryActivity.class)
+    				.putExtra("inroot", true)
+    				.putExtra("path", Environment.getExternalStorageDirectory().getPath())
+    				.putExtra("moduleName", moduleName));
     		return true;
     	}
     	
