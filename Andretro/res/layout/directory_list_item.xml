@@ -9,6 +9,7 @@
         android:id="@+id/icon"
         android:layout_width="48dp"
         android:layout_height="48dp"
+        android:contentDescription="@string/file_type_icon"
         android:padding="8dp" />
 
     <TextView

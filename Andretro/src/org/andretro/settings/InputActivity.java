@@ -5,12 +5,7 @@ import org.andretro.emulator.*;
 import android.preference.*;
 import android.os.*;
 
-
-/**
- * PreferenceFragment which lists all ports for a particular system.
- * @author jason
- *
- */
+@SuppressWarnings("deprecation")
 public class InputActivity extends PreferenceActivity
 {
 	@Override public void onCreate(Bundle aState)

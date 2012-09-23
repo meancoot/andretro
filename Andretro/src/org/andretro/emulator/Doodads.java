@@ -41,12 +41,7 @@ public final class Doodads
 		 * List of input objects.
 		 */
 		protected final ArrayList<E> inputs;
-		
-		/**
-		 * The index of this input object in its parent's list.
-		 */
-		public final int index;
-		
+				
 		/**
 		 * The number of children in this object.
 		 */
@@ -59,16 +54,10 @@ public final class Doodads
 		 * @param aCount Number of devices in this set.
 		 * @param aIndex Index of this item in its parent's set.
 		 */
-		GroupedInput(String aShort, String aFull, int aCount, int aIndex)
+		GroupedInput(String aShort, String aFull, int aCount)
 		{
 			super(aShort, aFull);
-			
-			if(aIndex < 0)
-			{
-				throw new IllegalArgumentException("Index must be greater than or equal to 0");
-			}
-			
-			index = aIndex;
+
 			count = aCount;
 			inputs = new ArrayList<E>(aCount);
 			
@@ -144,7 +133,7 @@ public final class Doodads
 	{        
 	    Device(SharedPreferences aPreferences, final Port aPort, int aDevice)
 	    {
-	    	super("device" + aDevice, "Device " + aDevice, 16, aDevice);
+	    	super("device" + aDevice, "Device " + aDevice, 16);
 
 	    	for(int i = 0; i != 16; i ++)
 	    	{
@@ -161,7 +150,7 @@ public final class Doodads
 	    
 	    Port(SharedPreferences aPreferences, int aPort)
 	    {
-	    	super("port" + aPort, "Port " + aPort, 1, aPort);
+	    	super("port" + aPort, "Port " + aPort, 1);
 	    
 	    	configKey = "port_" + aPort;
 	    	defaultDevice = "device0";
@@ -183,7 +172,7 @@ public final class Doodads
 	{
 	    Set(SharedPreferences aPreferences)
 	    {
-	    	super("root", "root", 1, 0);
+	    	super("root", "root", 1);
 	    	
 	    	for(int i = 0; i != count; i ++)
 	    	{

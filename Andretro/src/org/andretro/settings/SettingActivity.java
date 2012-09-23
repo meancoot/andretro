@@ -6,6 +6,7 @@ import org.andretro.emulator.*;
 import android.preference.*;
 import android.os.*;
 
+@SuppressWarnings("deprecation")
 public class SettingActivity extends PreferenceActivity
 {
 	@Override public void onCreate(Bundle aState)

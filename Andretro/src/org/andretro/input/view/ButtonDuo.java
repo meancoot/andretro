@@ -1,10 +1,12 @@
 package org.andretro.input.view;
 import org.andretro.*;
 
+import android.annotation.*;
 import android.content.*;
 import android.widget.*;
 import android.view.*;
 
+@SuppressLint("ViewConstructor")
 public class ButtonDuo extends ImageView implements InputHandler
 {
     int currentBits = 0;

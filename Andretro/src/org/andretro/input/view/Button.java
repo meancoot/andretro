@@ -2,10 +2,12 @@ package org.andretro.input.view;
 
 import org.andretro.*;
 
+import android.annotation.SuppressLint;
 import android.content.*;
 import android.widget.*;
 import android.view.*;
 
+@SuppressLint("ViewConstructor")
 public class Button extends ImageView implements InputHandler
 {
     int touchCount = 0;
