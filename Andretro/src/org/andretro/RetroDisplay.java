@@ -129,7 +129,13 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     		if(aPositive)
     		{
     			Game.queueCommand(new Commands.CloseGame(null));
-    			System.exit(0);
+    			Game.queueCommand(new Commands.ShutDown(new Commands.Callback(this, new Runnable()
+    			{
+    				@Override public void run()
+    				{
+    					System.exit(0);
+    				}
+    			})));
     		}
     		
     		questionOpen = false;
