@@ -22,7 +22,9 @@ public final class Audio
 
         try
         {
-        	audio = new AudioTrack(AudioManager.STREAM_MUSIC, aRate, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT, 24000, AudioTrack.MODE_STREAM);
+        	final int bufferSize = AudioTrack.getMinBufferSize(aRate, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT);
+        	Logger.d("====" + bufferSize);
+        	audio = new AudioTrack(AudioManager.STREAM_MUSIC, aRate, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
         	audio.setStereoVolume(1, 1);
         	audio.play();
         	
