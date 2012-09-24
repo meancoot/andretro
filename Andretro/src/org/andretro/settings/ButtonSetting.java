@@ -15,6 +15,13 @@ public class ButtonSetting extends DialogPreference
 	@TargetApi(12) public ButtonSetting(Context aContext, AttributeSet aAttributes)
 	{
 		super(aContext, aAttributes);
+		
+		// HACK: Set a layout that forces the dialog to get key focus
+		// TODO: Make the layout better looking!
+		setDialogLayoutResource(R.layout.dialog_focus_hack);
+		
+		setDialogTitle("Waiting for input");
+		setDialogMessage(getTitle());
 	}
 	
 	@TargetApi(12) public ButtonSetting(Context aContext, String aKey, String aName, int aDefault)
