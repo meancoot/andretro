@@ -13,7 +13,7 @@ import org.andretro.emulator.Doodads;
  */
 public final class Input
 {
-	private static Set<Integer> keys = new HashSet<Integer>();
+	private static Set<Integer> keys = new TreeSet<Integer>();
 	private static InputGroup onscreenInput;
 	
     // Called by UI
@@ -42,12 +42,7 @@ public final class Input
 	// Called by emulator
 	public static synchronized int getBits(Doodads.Device aDevice)
 	{
-		int result = 0;
-		
-		if(null != onscreenInput)
-		{
-			result |= onscreenInput.getBits();
-		}
+		int result = (null != onscreenInput) ? onscreenInput.getBits() : 0;
 		
 		for(Doodads.Button i: aDevice.getAll())
 		{

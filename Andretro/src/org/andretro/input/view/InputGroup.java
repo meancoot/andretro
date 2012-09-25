@@ -59,9 +59,9 @@ public class InputGroup extends RelativeLayout
         final int count = aEvent.getPointerCount();
         for(int i = 0; i != count; i ++)
         {
-        	if(i == aEvent.getActionIndex() && aEvent.getActionMasked() != MotionEvent.ACTION_UP)
-        	{	        	
-	        	for(Handler j: handlers)
+        	if(aEvent.getActionMasked() != MotionEvent.ACTION_UP || i != aEvent.getActionIndex())
+        	{
+        		for(Handler j: handlers)
 	        	{
 	        		currentBits |= j.getBits((int)aEvent.getX(i), (int)aEvent.getY(i));
 	        	}

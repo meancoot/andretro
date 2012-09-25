@@ -155,7 +155,7 @@ public final class Present
     
     public static void present() throws InterruptedException
     {
-    	VideoFrame next = readyFrames.poll();
+    	VideoFrame next = readyFrames.poll(250, TimeUnit.MILLISECONDS);
     	
     	if(null != next)
     	{	
