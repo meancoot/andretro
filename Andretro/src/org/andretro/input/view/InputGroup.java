@@ -5,6 +5,7 @@ import android.view.*;
 import android.content.*;
 import android.widget.*;
 import android.app.*;
+import android.graphics.*;
 
 import javax.xml.parsers.*;
 import java.io.*;
@@ -13,29 +14,66 @@ import java.util.*;
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
 
-public class InputGroup extends RelativeLayout implements InputHandler
+public class InputGroup extends RelativeLayout
 {
+	public static interface InputHandler
+	{
+	    int getBits(int aX, int aY);
+	}
+
+	private static class Handler
+	{
+		final Rect area = new Rect();
+		final View view;
+		final InputHandler handler;
+		
+		public Handler(View aView, InputHandler aHandler)
+		{
+			view = aView;
+			handler = aHandler;
+		}
+		
+		public int getBits(int aX, int aY)
+		{
+			area.left = view.getLeft();
+			area.right = view.getRight();
+			area.top = view.getTop();
+			area.bottom = view.getBottom();
+			return area.contains(aX, aY) ? handler.getBits(aX, aY) : 0;
+		}
+	}
+	private ArrayList<Handler> handlers = new ArrayList<Handler>();
+	
+	private int currentBits;
+	
     public InputGroup(Context aContext, AttributeSet aAttributes)
     {
         super(aContext, aAttributes);
+        setFocusableInTouchMode(true);
     }
+
+    @Override public boolean onTouchEvent(MotionEvent aEvent)
+    {
+    	currentBits = 0;
+    	
+        final int count = aEvent.getPointerCount();
+        for(int i = 0; i != count; i ++)
+        {
+        	if(i == aEvent.getActionIndex() && aEvent.getActionMasked() != MotionEvent.ACTION_UP)
+        	{	        	
+	        	for(Handler j: handlers)
+	        	{
+	        		currentBits |= j.getBits((int)aEvent.getX(i), (int)aEvent.getY(i));
+	        	}
+        	}
+        }
+
+        return true;
+    }    
     
     public int getBits()
     {    
-        int bits = 0;
-        int childCount = getChildCount();
-        
-        for(int i = 0; i != childCount; i ++)
-        {
-            View child = getChildAt(i);
-            if(child instanceof InputHandler)
-            {
-                InputHandler childIH = (InputHandler)child;
-                bits |= childIH.getBits();
-            }
-        }
-        
-        return bits;
+    	return currentBits;
     }
     
     public void removeChildren()
@@ -55,6 +93,8 @@ public class InputGroup extends RelativeLayout implements InputHandler
     	{
     		removeView(view);
     	}
+    	
+    	handlers.clear();
     }
     
     public void loadInputLayout(final Activity aContext, final InputStream aFile)
@@ -141,7 +181,9 @@ public class InputGroup extends RelativeLayout implements InputHandler
 	    				params.addRule(horizontalAnchor);
 	    				params.addRule(verticalAnchor);
 						    				
-	    				addView((ImageView)inputView, params);
+	    				ImageView handler = (ImageView)inputView;
+	    				addView(handler, params);
+	    				handlers.add(new Handler(handler, inputView));
     				}        			
         		}
         	});

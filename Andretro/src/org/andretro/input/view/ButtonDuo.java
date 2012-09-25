@@ -4,10 +4,9 @@ import org.andretro.*;
 import android.annotation.*;
 import android.content.*;
 import android.widget.*;
-import android.view.*;
 
 @SuppressLint("ViewConstructor")
-public class ButtonDuo extends ImageView implements InputHandler
+public class ButtonDuo extends ImageView implements InputGroup.InputHandler
 {
     int currentBits = 0;
     int bits[] = new int[2];
@@ -22,31 +21,14 @@ public class ButtonDuo extends ImageView implements InputHandler
         bits[1] = aRightBits;
     }
         
-    @Override public int getBits()
+    @Override public int getBits(int aX, int aY)
     {
-        return currentBits;
-    }
-    
-    @Override public boolean onTouchEvent(MotionEvent aEvent)
-    {
-        int action = aEvent.getAction();
-    
-        if(action == MotionEvent.ACTION_UP)
-        {
-            currentBits = 0;
-            return true;
-        }
-        else if(action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_MOVE)
-        {
-            int x = (int)aEvent.getX();
-            int width = getWidth() / 3;
-            
-            currentBits |= (x < width * 2) ? bits[0] : 0;
-            currentBits |= (x > width) ? bits[1] : 0;
-
-            return true;
-        }
+        final int x = aX - getLeft();
+        final int width = getWidth() / 3;
         
-        return false;
+        int result = (x < width * 2) ? bits[0] : 0;
+        result |= (x > width) ? bits[1] : 0;
+
+        return result;
     }
 }

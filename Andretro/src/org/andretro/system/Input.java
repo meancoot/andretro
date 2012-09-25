@@ -14,7 +14,7 @@ import org.andretro.emulator.Doodads;
 public final class Input
 {
 	private static Set<Integer> keys = new HashSet<Integer>();
-	private static InputHandler onscreenInput;
+	private static InputGroup onscreenInput;
 	
     // Called by UI
 	public synchronized static void processEvent(KeyEvent aEvent)
@@ -34,7 +34,7 @@ public final class Input
 		keys.clear();
 	}
 
-	public synchronized static void setOnScreenInput(InputHandler aInput)
+	public synchronized static void setOnScreenInput(InputGroup aInput)
 	{
 		onscreenInput = aInput;
 	}

@@ -5,10 +5,9 @@ import org.andretro.*;
 import android.annotation.SuppressLint;
 import android.content.*;
 import android.widget.*;
-import android.view.*;
 
 @SuppressLint("ViewConstructor")
-public class Button extends ImageView implements InputHandler
+public class Button extends ImageView implements InputGroup.InputHandler
 {
     int touchCount = 0;
     int bits;
@@ -21,24 +20,8 @@ public class Button extends ImageView implements InputHandler
         bits = aBits;
     }
 
-    @Override public int getBits()
+    @Override public int getBits(int aX, int aY)
     {
-        return (touchCount > 0) ? bits : 0;
-    }
-    
-    @Override public boolean onTouchEvent(MotionEvent aEvent)
-    {
-        if(aEvent.getAction() == MotionEvent.ACTION_DOWN)
-        {
-            touchCount ++;
-            return true;
-        }
-        else if(aEvent.getAction() == MotionEvent.ACTION_UP)
-        {
-            touchCount --;
-            return true;
-        }
-        
-        return false;
+        return bits;
     }
 }
