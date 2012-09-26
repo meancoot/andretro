@@ -7,6 +7,10 @@ import android.os.*;
 import android.view.*;
 import android.widget.*;
 
+import java.io.*;
+import java.util.*;
+import java.text.*;
+
 public class StateList extends Activity implements AdapterView.OnItemClickListener
 {
     private ArrayAdapter<String> adapter;
@@ -31,7 +35,14 @@ public class StateList extends Activity implements AdapterView.OnItemClickListen
         // Add data
         for(int i = 0; i != 10; i ++)
         {
-        	adapter.add("Slot " + i);
+        	final File slotFile = new File(Game.getGameDataName("st" + i));
+        	final boolean hasSlotFile = slotFile.isFile() && slotFile.exists();
+        	final String slotFileDate = hasSlotFile ? DateFormat.getDateTimeInstance().format(new Date(slotFile.lastModified())) : "EMPTY";
+        			
+        	if(!loading || hasSlotFile)
+        	{
+        		adapter.add("Slot " + i + " (" + slotFileDate + ")");
+        	}
         }
     }
     
