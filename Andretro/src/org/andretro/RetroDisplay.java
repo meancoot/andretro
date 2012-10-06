@@ -12,8 +12,8 @@ import android.annotation.*;
 import android.opengl.*;
 import android.os.*;
 import android.content.*;
-import android.content.res.*;
 import android.widget.*;
+import android.app.*;
 
 public class RetroDisplay extends android.support.v4.app.FragmentActivity implements QuestionDialog.QuestionHandler
 {
@@ -22,6 +22,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 	private GLSurfaceView view;
 	private boolean questionOpen;
 	private boolean onScreenInput;
+	private boolean showActionBar;
 	
 	class Draw implements GLSurfaceView.Renderer
 	{		
@@ -54,21 +55,19 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 
         questionOpen = (null == aState) ? false : aState.getBoolean("questionOpen", false);
         onScreenInput = (null == aState) ? true : aState.getBoolean("onScreenInput", true);
+        showActionBar = (null == aState) ? true : aState.getBoolean("showActionBar", true);
         
         // Setup the window
 		// Hide action bar / dim buttons
-        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB)
+        if(android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.HONEYCOMB)
         {
-	        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
-	        {
-	        	getActionBar().hide();
-	        }
+        	requestWindowFeature(Window.FEATURE_NO_TITLE);
         }
         else
         {
-            requestWindowFeature(Window.FEATURE_NO_TITLE);
+        	requestWindowFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
         }
-                
+ 
 		// Setup the view
         setContentView(R.layout.retro_display);
 
@@ -77,12 +76,8 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         view.setRenderer(new Draw());
 		view.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 		view.setKeepScreenOn(true);
-		
-		// Dim buttons
-        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-        {
-	        view.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
-        }
+
+		setupWindow();
 		
 		// Add controls
 		updateOnScreenControls();
@@ -91,6 +86,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     @Override public void onResume()
     {
     	super.onResume();
+    	setupWindow();
     	
 	    Game.queueCommand(new Commands.SetPresentNotify(new Runnable()
 	    {
@@ -139,9 +135,32 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     		}
     		
     		questionOpen = false;
+    		setupWindow();
     	}
     }
-       
+    
+    @Override @TargetApi(11) public boolean dispatchTouchEvent(MotionEvent aEvent)
+    {	
+    	if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB)
+    	{
+	    	final ActionBar bar = getActionBar();
+	    	final float barSize = (null == bar) ? 0 : bar.getHeight() * getResources().getDisplayMetrics().density;
+	    	
+			if((null != bar) && (aEvent.getActionMasked() == MotionEvent.ACTION_DOWN))
+			{
+				final boolean top = aEvent.getY() < barSize;
+				if((top && !showActionBar) || (!top && showActionBar))
+				{
+					showActionBar = !showActionBar;
+					setupWindow();
+					return true;		
+				}
+			}
+    	}
+		
+		return super.dispatchTouchEvent(aEvent);
+    }
+    
     @Override public boolean dispatchKeyEvent(KeyEvent aEvent)
     {   
     	int keyCode = aEvent.getKeyCode();
@@ -180,6 +199,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     	super.onSaveInstanceState(aState);
     	aState.putBoolean("questionOpen", questionOpen);
     	aState.putBoolean("onScreenInput", onScreenInput);
+    	aState.putBoolean("showActionBar", showActionBar);
     }
     
     // Menu
@@ -255,6 +275,28 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     	}
     	
     	Input.setOnScreenInput(onScreenInput ? inputBase : null);
+    }
+    
+    @TargetApi(14) private void setupWindow()
+    {
+        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB)
+        {        	
+        	final ActionBar bar = getActionBar();
+        	
+	        if(null != bar && showActionBar)
+	        {
+	        	bar.show();
+	        }
+	        else if(null != bar && !showActionBar)
+	        {
+	        	bar.hide();
+	        }
+        }
+
+        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+        {
+	        view.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
+        }
     }
 }
 
