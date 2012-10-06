@@ -23,6 +23,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 	private boolean questionOpen;
 	private boolean onScreenInput;
 	private boolean showActionBar;
+	private volatile boolean refreshWindowAndInput = true;
 	
 	class Draw implements GLSurfaceView.Renderer
 	{		
@@ -38,6 +39,17 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 
 	    @Override public void onDrawFrame(GL10 gl)
 	    {
+	    	if(refreshWindowAndInput)
+	    	{	    		
+	    		RetroDisplay.this.runOnUiThread(new Runnable()
+	    		{
+	    			@Override public void run()
+	    			{
+	    				setupWindowAndControls();
+	    			}
+	    		});
+	    	}
+	    	
 	    	try
 	    	{
 	    		Present.present();
@@ -76,17 +88,12 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         view.setRenderer(new Draw());
 		view.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 		view.setKeepScreenOn(true);
-
-		setupWindow();
-		
-		// Add controls
-		updateOnScreenControls();
     }
     
     @Override public void onResume()
     {
     	super.onResume();
-    	setupWindow();
+    	refreshWindowAndInput = true;
     	
 	    Game.queueCommand(new Commands.SetPresentNotify(new Runnable()
 	    {
@@ -135,7 +142,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     		}
     		
     		questionOpen = false;
-    		setupWindow();
+    		refreshWindowAndInput = true;
     	}
     }
     
@@ -152,7 +159,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 				if((top && !showActionBar) || (!top && showActionBar))
 				{
 					showActionBar = !showActionBar;
-					setupWindow();
+					refreshWindowAndInput = true;
 					return true;		
 				}
 			}
@@ -227,7 +234,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         	onScreenInput = !aItem.isChecked();
         	aItem.setChecked(onScreenInput);
         	
-        	updateOnScreenControls();
+        	refreshWindowAndInput = true;
         }
         
     	if(Game.hasGame())
@@ -263,22 +270,12 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     	
         return super.onOptionsItemSelected(aItem);
     }
-    
-    private void updateOnScreenControls()
+        
+    @TargetApi(14) private void setupWindowAndControls()
     {
-		InputGroup inputBase = (InputGroup)findViewById(R.id.base);
-    	inputBase.removeChildren();
-		
-    	if(onScreenInput)
-    	{
-			inputBase.loadInputLayout(this, getResources().openRawResource(R.raw.default_retro_pad));
-    	}
+    	refreshWindowAndInput = false;
     	
-    	Input.setOnScreenInput(onScreenInput ? inputBase : null);
-    }
-    
-    @TargetApi(14) private void setupWindow()
-    {
+    	// Set Window Properties
         if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB)
         {        	
         	final ActionBar bar = getActionBar();
@@ -297,6 +294,17 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         {
 	        view.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
         }
+        
+        // Set on screen input
+		InputGroup inputBase = (InputGroup)findViewById(R.id.base);
+    	inputBase.removeChildren();
+		
+    	if(onScreenInput)
+    	{
+			inputBase.loadInputLayout(this, getResources().openRawResource(R.raw.default_retro_pad));
+    	}
+    	
+    	Input.setOnScreenInput(onScreenInput ? inputBase : null);
     }
 }
 
