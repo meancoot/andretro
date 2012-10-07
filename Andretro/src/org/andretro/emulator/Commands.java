@@ -1,7 +1,6 @@
 package org.andretro.emulator;
 import java.io.*;
 
-import android.app.*;
 import android.content.*;
 import android.view.*;
 
@@ -9,59 +8,13 @@ import org.andretro.system.*;
 import org.libretro.LibRetro;
 
 public final class Commands
-{
-    public static class Callback
-    {
-        private final Runnable callback;
-        private final Activity activity;
-        
-        public Callback(Activity aActivity, Runnable aCallback)
-        {
-            callback = aCallback;
-            activity = aActivity;
-            
-            if(null == callback || null == activity)
-            {
-                throw new RuntimeException("Neither aCallback nor aActivity may be null.");
-            }
-        }
-        
-        public void perform()
-        {
-            activity.runOnUiThread(callback);
-        }
-    }
-
-	static abstract class BaseCommand implements Runnable
-	{
-		private final Callback finishedCallback;
-		
-		BaseCommand(Callback aFinished)
-		{
-			finishedCallback = aFinished;
-		}
-		
-		@Override public final void run()
-		{
-			Game.assertThread();
-
-			perform();
-			
-			if(null != finishedCallback)
-			{
-				finishedCallback.perform();
-			}
-		}
-		
-		abstract protected void perform();
-	}
-	
-	public static final class Initialize extends BaseCommand
+{	
+	public static final class Initialize extends CommandQueue.BaseCommand
 	{
 		private final Context context;
 		private final String library;
 		
-		public Initialize(Context aContext, String aLibrary, Callback aCallback)
+		public Initialize(Context aContext, String aLibrary, CommandQueue.Callback aCallback)
 		{
 			super(aCallback);
 			context = aContext;
@@ -79,9 +32,9 @@ public final class Commands
 		}
 	}
 	
-	public static final class ShutDown extends BaseCommand
+	public static final class ShutDown extends CommandQueue.BaseCommand
 	{
-		public ShutDown(Callback aCallback)
+		public ShutDown(CommandQueue.Callback aCallback)
 		{
 			super(aCallback);
 		}
@@ -92,11 +45,11 @@ public final class Commands
 		}
 	}
 	
-	public static final class LoadGame extends BaseCommand
+	public static final class LoadGame extends CommandQueue.BaseCommand
 	{
 		private final File file;
 		
-		public LoadGame(File aFile, Callback aCallback)
+		public LoadGame(File aFile, CommandQueue.Callback aCallback)
 		{
 			super(aCallback);
 			
@@ -114,9 +67,9 @@ public final class Commands
 		}
 	}
 	
-	public static final class CloseGame extends BaseCommand
+	public static final class CloseGame extends CommandQueue.BaseCommand
 	{
-		public CloseGame(Callback aCallback)
+		public CloseGame(CommandQueue.Callback aCallback)
 		{
 			super(aCallback);
 		}
@@ -127,9 +80,9 @@ public final class Commands
 		}
 	}
 	
-	public static final class Reset extends BaseCommand
+	public static final class Reset extends CommandQueue.BaseCommand
 	{
-	    public Reset(Callback aCallback)
+	    public Reset(CommandQueue.Callback aCallback)
 	    {
 	        super(aCallback);
 	    }
@@ -140,12 +93,12 @@ public final class Commands
 	    }
 	}
 	
-	public static final class StateAction extends BaseCommand
+	public static final class StateAction extends CommandQueue.BaseCommand
 	{
 	    private final boolean load;
 	    private final int slot;
 	
-        public StateAction(boolean aLoad, int aSlot, Callback aCallback)
+        public StateAction(boolean aLoad, int aSlot, CommandQueue.Callback aCallback)
         {
             super(aCallback);
             load = aLoad;
@@ -170,11 +123,11 @@ public final class Commands
         }
 	}
 	
-	public static final class Pause extends BaseCommand
+	public static final class Pause extends CommandQueue.BaseCommand
 	{
 		private final boolean pause;
 		
-		public Pause(boolean aPause, Callback aCallback)
+		public Pause(boolean aPause, CommandQueue.Callback aCallback)
 		{
 			super(aCallback);
 			pause = aPause;
@@ -191,11 +144,11 @@ public final class Commands
 		}
 	}
 	
-	public static final class SetPresentNotify extends BaseCommand
+	public static final class SetPresentNotify extends CommandQueue.BaseCommand
 	{
 		private final Runnable presentNotify;
 		
-		public SetPresentNotify(Runnable aPresentNotify, Callback aCallback)
+		public SetPresentNotify(Runnable aPresentNotify, CommandQueue.Callback aCallback)
 		{
 			super(aCallback);
 			presentNotify = aPresentNotify;
@@ -207,9 +160,9 @@ public final class Commands
 		}
 	}
 	
-	public static final class RefreshInput extends BaseCommand
+	public static final class RefreshInput extends CommandQueue.BaseCommand
 	{
-		public RefreshInput(Callback aCallback)
+		public RefreshInput(CommandQueue.Callback aCallback)
 		{
 			super(aCallback);
 		}
@@ -221,11 +174,11 @@ public final class Commands
 		}
 	}
 	
-	public static final class RefreshSettings extends BaseCommand
+	public static final class RefreshSettings extends CommandQueue.BaseCommand
 	{
 		private final SharedPreferences settings;
 		
-		public RefreshSettings(SharedPreferences aSettings, Callback aCallback)
+		public RefreshSettings(SharedPreferences aSettings, CommandQueue.Callback aCallback)
 		{
 			super(aCallback);
 			

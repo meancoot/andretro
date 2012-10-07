@@ -101,7 +101,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 	    	{
 	    		view.requestRender();
 	    	}
-	    }, new Commands.Callback(this, new Runnable()
+	    }, new CommandQueue.Callback(this, new Runnable()
         {
             @Override public void run()
             {
@@ -114,7 +114,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     {
     	super.onPause();
     	
-    	Game.queueCommand(new Commands.SetPresentNotify(null, new Commands.Callback(this, new Runnable()
+    	Game.queueCommand(new Commands.SetPresentNotify(null, new CommandQueue.Callback(this, new Runnable()
         {
             @Override public void run()
             {
@@ -132,7 +132,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     		if(aPositive)
     		{
     			Game.queueCommand(new Commands.CloseGame(null));
-    			Game.queueCommand(new Commands.ShutDown(new Commands.Callback(this, new Runnable()
+    			Game.queueCommand(new Commands.ShutDown(new CommandQueue.Callback(this, new Runnable()
     			{
     				@Override public void run()
     				{
@@ -256,7 +256,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 	        }
 	        else if(aItem.getItemId() == R.id.reset)
 	        {
-	            Game.queueCommand(new Commands.Reset(new Commands.Callback(this, new Runnable()
+	            Game.queueCommand(new Commands.Reset(new CommandQueue.Callback(this, new Runnable()
 	            {
 	                @Override public void run()
 	                {

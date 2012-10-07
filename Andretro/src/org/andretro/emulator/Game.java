@@ -5,7 +5,6 @@ import org.libretro.*;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.*;
 
 import android.content.*;
 import android.os.*;
@@ -21,56 +20,21 @@ public final class Game implements Runnable
  
     // Thread
     private static Thread thread;
+    private static final CommandQueue eventQueue = new CommandQueue();
     
-    static void assertThread()
+    public static void queueCommand(final CommandQueue.BaseCommand aCommand)
     {
-    	if(Thread.currentThread() != thread)
-    	{
-    		throw new RuntimeException("Parent function must only be called on the Game thread.");
-    	}
-    }
-
-    static void assertNotThread()
-    {
-    	if(Thread.currentThread() == thread)
-    	{
-    		throw new RuntimeException("Parent function must not be called on the Game thread.");
-    	}
-    }
-    
-    // Command queue
-    private static final BlockingQueue<Commands.BaseCommand> eventQueue = new ArrayBlockingQueue<Commands.BaseCommand>(8);
-    
-    public static void queueCommand(final Commands.BaseCommand aCommand)
-    {
-    	assertNotThread();
-    	
     	// Sanity
     	if(null == thread || !thread.isAlive())
     	{
     		Logger.d("No thread running, start new one");
     		thread = new Thread(new Game());
     		thread.start();
+    		eventQueue.setThread(thread);
     	}
     	
 		// Put the event in the queue and notify any waiting clients that it's present. (This will wake the waiting emulator if needed.)
-		eventQueue.add(aCommand);
-		
-		synchronized(thread)
-		{
-			thread.notifyAll();
-		}
-    }
-
-    private static void pumpEventQueue()
-    {
-    	assertThread();    	
-
-    	// Run all events
-    	for(Commands.BaseCommand i = eventQueue.poll(); null != i; i = eventQueue.poll())
-    	{
-    		i.run();
-    	}
+		eventQueue.queueCommand(aCommand);
     }
 
     // Game Info
@@ -116,7 +80,7 @@ public final class Game implements Runnable
     
     static boolean loadLibrary(Context aContext, String aLibrary)
     {
-    	assertThread();
+    	eventQueue.assertThread();
     	
     	// Don't open the library if it's already open!
     	if(!aLibrary.equals(libraryFilename))
@@ -151,7 +115,7 @@ public final class Game implements Runnable
     
     static void closeLibrary()
     {
-    	assertThread();
+    	eventQueue.assertThread();
     	
     	if(libraryLoaded)
     	{
@@ -196,7 +160,7 @@ public final class Game implements Runnable
 	    
     static void loadFile(File aFile)
     {
-    	assertThread();
+    	eventQueue.assertThread();
 
     	if(!libraryLoaded)
     	{
@@ -229,7 +193,7 @@ public final class Game implements Runnable
     
     static void closeFile()
     {
-    	assertThread();
+    	eventQueue.assertThread();
     	
     	if(!libraryLoaded)
     	{
@@ -260,7 +224,7 @@ public final class Game implements Runnable
     // LOOP
     @Override public void run()
     {
-    	assertThread();
+    	eventQueue.assertThread();
     	
     	// Buffer for audio samples
     	final short[] audioSamples = new short[48000];
@@ -270,7 +234,7 @@ public final class Game implements Runnable
 	    	// Run until interrupted
 	    	while(!thread.isInterrupted())
 	    	{
-	    		pumpEventQueue();
+	    		eventQueue.pump();
 	    		
 	    		// Execute any commands
 	    		if(gameLoaded && 0 == pauseDepth && null != presentNotify)

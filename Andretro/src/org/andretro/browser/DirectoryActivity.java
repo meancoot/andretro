@@ -3,6 +3,7 @@ package org.andretro.browser;
 import org.andretro.*;
 import org.andretro.emulator.*;
 import org.andretro.settings.*;
+import org.andretro.system.*;
 
 import java.util.*;
 import java.io.*;
@@ -112,7 +113,7 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
         if(null != moduleName)
         {
         	path = getIntent().getStringExtra("path");
-			Game.queueCommand(new Commands.Initialize(this, moduleName, new Commands.Callback(this, new Runnable()
+			Game.queueCommand(new Commands.Initialize(this, moduleName, new CommandQueue.Callback(this, new Runnable()
 			{
 				@Override public void run()
 				{
@@ -146,7 +147,7 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
 		{
 			if(selected.isFile())
 			{
-		    	Game.queueCommand(new Commands.LoadGame(selected, new Commands.Callback(this, new Runnable()
+		    	Game.queueCommand(new Commands.LoadGame(selected, new CommandQueue.Callback(this, new Runnable()
 		        {
 		            @Override public void run()
 		            {
@@ -163,7 +164,7 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
 		}
 		else
 		{
-			Game.queueCommand(new Commands.Initialize(this, selected.getAbsolutePath(), new Commands.Callback(this, new Runnable()
+			Game.queueCommand(new Commands.Initialize(this, selected.getAbsolutePath(), new CommandQueue.Callback(this, new Runnable()
 			{
 				@Override public void run()
 				{

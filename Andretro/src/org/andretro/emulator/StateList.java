@@ -1,6 +1,7 @@
 package org.andretro.emulator;
 
 import org.andretro.*;
+import org.andretro.system.*;
 
 import android.app.*;
 import android.os.*;
@@ -48,7 +49,7 @@ public class StateList extends Activity implements AdapterView.OnItemClickListen
     
 	@Override public void onItemClick(AdapterView<?> aListView, View aView, int aPosition, long aID)
 	{
-		Game.queueCommand(new Commands.StateAction(loading, aPosition, new Commands.Callback(this, new Runnable()
+		Game.queueCommand(new Commands.StateAction(loading, aPosition, new CommandQueue.Callback(this, new Runnable()
 		{
 			@Override public void run()
 			{
