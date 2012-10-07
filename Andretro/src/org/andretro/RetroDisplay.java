@@ -87,7 +87,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 		
 		if(!Game.hasGame())
 		{
-			Game.queueCommand(new Commands.LoadGame(this, moduleName, new File(getIntent().getStringExtra("path")), null));
+			Game.queueCommand(new Commands.LoadGame(this, moduleName, new File(getIntent().getStringExtra("path"))));
 		}
     }
     
@@ -102,7 +102,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 	    	{
 	    		view.requestRender();
 	    	}
-	    }, new CommandQueue.Callback(this, new Runnable()
+	    }).setCallback(new CommandQueue.Callback(this, new Runnable()
         {
             @Override public void run()
             {
@@ -115,7 +115,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     {
     	super.onPause();
     	
-    	Game.queueCommand(new Commands.SetPresentNotify(null, new CommandQueue.Callback(this, new Runnable()
+    	Game.queueCommand(new Commands.SetPresentNotify(null).setCallback(new CommandQueue.Callback(this, new Runnable()
         {
             @Override public void run()
             {
@@ -129,10 +129,10 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     {
     	if(CLOSE_GAME_QUESTION == aID && questionOpen)
     	{
-    		Game.queueCommand(new Commands.Pause(false, null));
+    		Game.queueCommand(new Commands.Pause(false));
     		if(aPositive)
     		{
-    			Game.queueCommand(new Commands.CloseGame(new CommandQueue.Callback(this, new Runnable()
+    			Game.queueCommand(new Commands.CloseGame().setCallback(new CommandQueue.Callback(this, new Runnable()
     			{
     				@Override public void run()
     				{
@@ -189,7 +189,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         {
         	if(!questionOpen)
         	{
-        		Game.queueCommand(new Commands.Pause(true, null));
+        		Game.queueCommand(new Commands.Pause(true));
         		QuestionDialog.newInstance(CLOSE_GAME_QUESTION, "Really Close Game?", "All unsaved data will be lost.", "Yes", "No", null).show(getSupportFragmentManager(), "mainfragment");
         		
         		questionOpen = true;
@@ -239,7 +239,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         
         if(aItem.getItemId() == R.id.reset)
         {
-            Game.queueCommand(new Commands.Reset(new CommandQueue.Callback(this, new Runnable()
+            Game.queueCommand(new Commands.Reset().setCallback(new CommandQueue.Callback(this, new Runnable()
             {
                 @Override public void run()
                 {

@@ -34,7 +34,7 @@ public class InputActivity extends PreferenceActivity
 
 		if(Game.hasGame())
 		{
-			Game.queueCommand(new Commands.RefreshInput(null));
+			Game.queueCommand(new Commands.RefreshInput());
 		}
 	}
 	

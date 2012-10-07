@@ -31,7 +31,7 @@ public class SettingActivity extends PreferenceActivity
 
 		if(Game.hasGame())
 		{
-			Game.queueCommand(new Commands.RefreshSettings(getPreferenceManager().getSharedPreferences(), null));
+			Game.queueCommand(new Commands.RefreshSettings(getPreferenceManager().getSharedPreferences()));
 		}
 	}
 }

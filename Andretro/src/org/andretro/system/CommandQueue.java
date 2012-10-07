@@ -91,11 +91,12 @@ public class CommandQueue
 
 	public static abstract class BaseCommand implements Runnable
 	{
-		private final Callback finishedCallback;
-		
-		public BaseCommand(Callback aFinished)
+		private Callback finishedCallback;
+				
+		public BaseCommand setCallback(Callback aFinished)
 		{
 			finishedCallback = aFinished;
+			return this;
 		}
 		
 		@Override public final void run()

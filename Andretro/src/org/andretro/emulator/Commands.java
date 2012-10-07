@@ -15,9 +15,8 @@ public final class Commands
 		private final String library;
 		private final File file;
 		
-		public LoadGame(Context aContext, String aLibrary, File aFile, CommandQueue.Callback aCallback)
+		public LoadGame(Context aContext, String aLibrary, File aFile)
 		{
-			super(aCallback);
 			context = aContext;
 			library = aLibrary;
 			file = aFile;
@@ -36,11 +35,6 @@ public final class Commands
 	
 	public static final class CloseGame extends CommandQueue.BaseCommand
 	{
-		public CloseGame(CommandQueue.Callback aCallback)
-		{
-			super(aCallback);
-		}
-		
 		@Override protected void perform()
 		{
 			Game.closeGame();
@@ -49,11 +43,6 @@ public final class Commands
 	
 	public static final class Reset extends CommandQueue.BaseCommand
 	{
-	    public Reset(CommandQueue.Callback aCallback)
-	    {
-	        super(aCallback);
-	    }
-	    
 	    @Override protected void perform()
 	    {
 	        LibRetro.reset();
@@ -65,9 +54,8 @@ public final class Commands
 	    private final boolean load;
 	    private final int slot;
 	
-        public StateAction(boolean aLoad, int aSlot, CommandQueue.Callback aCallback)
+        public StateAction(boolean aLoad, int aSlot)
         {
-            super(aCallback);
             load = aLoad;
             
             slot = aSlot;
@@ -94,9 +82,8 @@ public final class Commands
 	{
 		private final boolean pause;
 		
-		public Pause(boolean aPause, CommandQueue.Callback aCallback)
+		public Pause(boolean aPause)
 		{
-			super(aCallback);
 			pause = aPause;
 		}
 		
@@ -115,9 +102,8 @@ public final class Commands
 	{
 		private final Runnable presentNotify;
 		
-		public SetPresentNotify(Runnable aPresentNotify, CommandQueue.Callback aCallback)
+		public SetPresentNotify(Runnable aPresentNotify)
 		{
-			super(aCallback);
 			presentNotify = aPresentNotify;
 		}
 		
@@ -129,11 +115,6 @@ public final class Commands
 	
 	public static final class RefreshInput extends CommandQueue.BaseCommand
 	{
-		public RefreshInput(CommandQueue.Callback aCallback)
-		{
-			super(aCallback);
-		}
-		
 		@Override protected void perform()
 		{
 			// TODO
@@ -145,10 +126,8 @@ public final class Commands
 	{
 		private final SharedPreferences settings;
 		
-		public RefreshSettings(SharedPreferences aSettings, CommandQueue.Callback aCallback)
-		{
-			super(aCallback);
-			
+		public RefreshSettings(SharedPreferences aSettings)
+		{	
 			settings = aSettings;
 			
 			if(null == aSettings)

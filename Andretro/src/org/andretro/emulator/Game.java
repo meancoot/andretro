@@ -106,8 +106,8 @@ public final class Game implements Runnable
     	        	LibRetro.readMemoryRegion(LibRetro.RETRO_MEMORY_RTC, getGameDataName("rtc"));
 
     	        	// Load settings
-    				new Commands.RefreshSettings(aContext.getSharedPreferences(getModuleName(), 0), null).run();
-    	            new Commands.RefreshInput(null).run();
+    				new Commands.RefreshSettings(aContext.getSharedPreferences(getModuleName(), 0)).run();
+    	            new Commands.RefreshInput().run();
     	            
     	            gameLoaded = true;
     			}
