@@ -1,6 +1,7 @@
 package org.andretro.emulator;
 
 import android.content.res.*;
+import android.os.*;
 
 import java.io.*;
 import java.util.*;
@@ -15,14 +16,17 @@ public class ModuleInfo
 	public String name;
 	public String shortName;
 	public String libraryName;
-	public String fileName;
 	public String[] extensions;
+	
+	public String fileName;
+	public String dataPath;
 	
 	public ModuleInfo(final AssetManager aAssets, final File aFile)
 	{
         SAXParserFactory factory = SAXParserFactory.newInstance();
         try
         {
+        	// Read XML
         	final SAXParser parser = factory.newSAXParser();
         	final InputStream file = aAssets.open(aFile.getName() + ".xml");
 
@@ -43,21 +47,31 @@ public class ModuleInfo
         			}
         		}
         	});
+        	
+        	// Quick check
+        	if(null == name || null == shortName || null == libraryName || null == extensions)
+        	{
+        		throw new Exception("Not all elements present in xml");
+        	}
+        	
+        	// Build Directories
+        	dataPath = Environment.getExternalStorageDirectory().getPath() + "/andretro/" + libraryName;
+        	new File(dataPath + "/Games").mkdirs();
         }
         catch(final Exception e)
         {
+        	throw new RuntimeException(e);
         }
-
-        fileName = aFile.getName();
-        name = (null == name) ? aFile.getName() : name;
-        shortName = (null == shortName) ? "UNK" : shortName;
-        extensions = (null == extensions) ? new String[0] : extensions;
-        libraryName = (null == libraryName) ? fileName : libraryName;
 	}
 	
 	public String getDataName()
 	{
-		return fileName;
+		return libraryName;
+	}
+	
+	public String getDataPath()
+	{
+		return dataPath;
 	}
 	
 	public boolean isFileValid(File aFile)
@@ -66,13 +80,6 @@ public class ModuleInfo
         final int dot = path.lastIndexOf(".");
         final String extension = (dot < 0) ? null : path.substring(dot + 1);
 
-        if(0 == extensions.length || aFile.isDirectory())
-        {
-        	return true;
-        }
-        else
-        {
-        	return (null == extension) ? false : (0 <= Arrays.binarySearch(extensions, extension));
-        }
+    	return (null == extension) ? false : (0 <= Arrays.binarySearch(extensions, extension));
 	}
 }

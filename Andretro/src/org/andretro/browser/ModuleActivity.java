@@ -2,6 +2,7 @@ package org.andretro.browser;
 
 import org.andretro.*;
 import org.andretro.emulator.*;
+import org.andretro.system.*;
 
 import java.io.*;
 
@@ -69,7 +70,7 @@ public class ModuleActivity extends Activity implements AdapterView.OnItemClickL
         		}
         		catch(Exception e)
         		{
-        			
+        			Logger.d("Couldn't add module: " + lib.getPath());
         		}
         	}
         }
@@ -78,11 +79,10 @@ public class ModuleActivity extends Activity implements AdapterView.OnItemClickL
 	@Override public void onItemClick(AdapterView<?> aListView, View aView, int aPosition, long aID)
 	{
 		final ModuleWrapper item = adapter.getItem(aPosition);
-		final File selected = item.file;
 
 		startActivity(new Intent(ModuleActivity.this, DirectoryActivity.class)
-			.putExtra("path", Environment.getExternalStorageDirectory().getPath())
-			.putExtra("moduleName", selected.getAbsolutePath()));
+			.putExtra("path", item.getDataPath() + "/Games")
+			.putExtra("moduleName", item.file.getAbsolutePath()));
 	}
 		
     @Override public boolean onCreateOptionsMenu(Menu aMenu)

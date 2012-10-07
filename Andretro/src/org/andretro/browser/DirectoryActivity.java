@@ -16,27 +16,17 @@ import android.view.inputmethod.*;
 
 class FileWrapper implements IconAdapterItem
 {
-    protected final File file;
+    public final File file;
     protected final int typeIndex;
     protected final boolean enabled;
 
     public FileWrapper(File aFile, boolean aIsEnabled)
     {
-    	if(null == aFile)
-    	{
-    		throw new IllegalArgumentException("File object may not be null");
-    	}
-
         file = aFile;
         typeIndex = (file.isDirectory() ? 1 : 0) + (file.isFile() ? 2 : 0);
         enabled = aIsEnabled;
     }
-    
-    public File getFile()
-    {
-    	return file;
-    }
-    
+        
     @Override public boolean isEnabled()
     {
     	return enabled;
@@ -102,7 +92,7 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
     
 	@Override public void onItemClick(AdapterView<?> aListView, View aView, int aPosition, long aID)
 	{
-		final File selected = adapter.getItem(aPosition).getFile();
+		final File selected = adapter.getItem(aPosition).file;
 		
 		final Intent intent = new Intent(this, selected.isFile() ? RetroDisplay.class : DirectoryActivity.class)
 				.putExtra("path", selected.getAbsolutePath())
@@ -163,7 +153,7 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
         // Copy new items
         for(File file: aDirectory.listFiles())
         {
-        	adapter.add(new FileWrapper(file, moduleInfo.isFileValid(file)));
+        	adapter.add(new FileWrapper(file, file.isDirectory() || moduleInfo.isFileValid(file)));
         }
         
         // Sort items
