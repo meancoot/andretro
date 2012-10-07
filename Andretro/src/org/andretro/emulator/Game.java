@@ -6,8 +6,6 @@ import org.libretro.*;
 import java.io.*;
 
 import android.content.*;
-import android.os.*;
-
 
 public final class Game implements Runnable
 {
@@ -37,7 +35,6 @@ public final class Game implements Runnable
     }
 
     // Game Info
-    
     static int pauseDepth;
     static Runnable presentNotify;
     
@@ -53,28 +50,18 @@ public final class Game implements Runnable
     {
     	return inputs;
     }
-    
-    public static String getModuleName()
-    {
-    	return (null == systemInfo) ? null : systemInfo.libraryName;
-    }
-    
-    public static String getModuleSystemDirectory()
-    {
-    	return (null == moduleDirectory) ? null : moduleDirectory.getAbsolutePath();
-    }
-    
+        
     public static String getGameDataName(String aExtension)
     {
     	return dataName + "." + aExtension;
     }
             
     // LIBRARY
+    private static ModuleInfo moduleInfo;
     private static boolean gameLoaded;
     private static boolean gameClosed;
     private static LibRetro.SystemInfo systemInfo = new LibRetro.SystemInfo();
     private static LibRetro.AVInfo avInfo = new LibRetro.AVInfo();
-    private static File moduleDirectory;
     private static Doodads.Set inputs;
     private static String dataName;
 
@@ -84,6 +71,8 @@ public final class Game implements Runnable
     	
     	if(!gameLoaded && !gameClosed && null != aFile && aFile.isFile())
     	{
+    		moduleInfo = new ModuleInfo(aContext.getAssets(), new File(aLibrary));
+    		
     		if(LibRetro.loadLibrary(aLibrary))
     		{
     			LibRetro.init();
@@ -96,17 +85,13 @@ public final class Game implements Runnable
 
     				inputs = new Doodads.Set(aContext.getSharedPreferences("retropad", 0));
     				
-    				// Filesystem stuff
-    				moduleDirectory = new File(Environment.getExternalStorageDirectory().getPath() + "/andretro/" + systemInfo.libraryName);
-    				moduleDirectory.mkdirs();
-    				new File(moduleDirectory.getAbsolutePath() + "/Games").mkdirs();
-    				
-    	        	dataName = getModuleSystemDirectory() + "/" + aFile.getName().split("\\.(?=[^\\.]+$)")[0];
+    				// Filesystem stuff    				
+    	        	dataName = moduleInfo.getDataPath() + "/" + aFile.getName().split("\\.(?=[^\\.]+$)")[0];
     	        	LibRetro.readMemoryRegion(LibRetro.RETRO_MEMORY_SAVE_RAM, getGameDataName("srm"));
     	        	LibRetro.readMemoryRegion(LibRetro.RETRO_MEMORY_RTC, getGameDataName("rtc"));
 
     	        	// Load settings
-    				new Commands.RefreshSettings(aContext.getSharedPreferences(getModuleName(), 0)).run();
+    				new Commands.RefreshSettings(aContext.getSharedPreferences(moduleInfo.getDataName(), 0)).run();
     	            new Commands.RefreshInput().run();
     	            
     	            gameLoaded = true;
