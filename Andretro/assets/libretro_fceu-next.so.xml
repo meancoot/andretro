@@ -1,0 +1,4 @@
+<retro>
+    <system fullname="Nintendo Entertainment System" shortname="NES"/>
+    <module libraryname="FCEUmm" extensions="fds|nes|unif"/>
+</retro>

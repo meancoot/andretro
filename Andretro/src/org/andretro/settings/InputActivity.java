@@ -32,7 +32,10 @@ public class InputActivity extends PreferenceActivity
 	{
 		super.onPause();
 
-		Game.queueCommand(new Commands.RefreshInput(null));
+		if(Game.hasGame())
+		{
+			Game.queueCommand(new Commands.RefreshInput(null));
+		}
 	}
 	
 	private static class Button extends ButtonSetting

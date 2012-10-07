@@ -1,0 +1,4 @@
+<retro>
+    <system fullname="Super Nintendo Entertainment System" shortname="SNES"/>
+    <module libraryname="SNES9x Next" extensions="smc|fig|sfc|gd3|gd7|dx2|bsx|swc"/>
+</retro>

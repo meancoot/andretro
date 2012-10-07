@@ -9,61 +9,28 @@ import org.libretro.LibRetro;
 
 public final class Commands
 {	
-	public static final class Initialize extends CommandQueue.BaseCommand
+	public static final class LoadGame extends CommandQueue.BaseCommand
 	{
 		private final Context context;
 		private final String library;
+		private final File file;
 		
-		public Initialize(Context aContext, String aLibrary, CommandQueue.Callback aCallback)
+		public LoadGame(Context aContext, String aLibrary, File aFile, CommandQueue.Callback aCallback)
 		{
 			super(aCallback);
 			context = aContext;
 			library = aLibrary;
-			
-			if(null == context || null == library)
-			{
-				throw new NullPointerException("Neither aContext nor aLibrary may be null");
-			}
-		}
-		
-		@Override protected void perform()
-		{
-			Game.loadLibrary(context, library);
-		}
-	}
-	
-	public static final class ShutDown extends CommandQueue.BaseCommand
-	{
-		public ShutDown(CommandQueue.Callback aCallback)
-		{
-			super(aCallback);
-		}
-		
-		@Override protected void perform()
-		{
-			Game.closeLibrary();
-		}
-	}
-	
-	public static final class LoadGame extends CommandQueue.BaseCommand
-	{
-		private final File file;
-		
-		public LoadGame(File aFile, CommandQueue.Callback aCallback)
-		{
-			super(aCallback);
-			
-			if(null == aFile)
-			{
-				throw new RuntimeException("aFile may not be null.");
-			}
-			
 			file = aFile;
+			
+			if(null == context || null == library || null == aFile)
+			{
+				throw new NullPointerException("Neither aContext, aLibrary nor aFile may be null");
+			}
 		}
 		
 		@Override protected void perform()
 		{
-			Game.loadFile(file);
+			Game.loadGame(context, library, file);
 		}
 	}
 	
@@ -76,7 +43,7 @@ public final class Commands
 		
 		@Override protected void perform()
 		{
-			Game.closeFile();
+			Game.closeGame();
 		}
 	}
 	

@@ -1,24 +1,27 @@
 package org.andretro.settings;
-import org.andretro.R;
 
+import org.andretro.*;
 import org.andretro.emulator.*;
 
 import android.preference.*;
 import android.os.*;
 
+import java.io.*;
+
 @SuppressWarnings("deprecation")
 public class SettingActivity extends PreferenceActivity
 {
+	private String moduleName;
+	private ModuleInfo moduleInfo; 
+	
 	@Override public void onCreate(Bundle aState)
 	{
 		super.onCreate(aState);
 		
-		if(!Game.hasLibrary())
-		{
-			throw new RuntimeException("No library is loaded");
-		}
+		moduleName = getIntent().getStringExtra("moduleName");
+		moduleInfo = new ModuleInfo(getAssets(), new File(moduleName));
 		
-		getPreferenceManager().setSharedPreferencesName(Game.getModuleName());
+		getPreferenceManager().setSharedPreferencesName(moduleInfo.getDataName());
         addPreferencesFromResource(R.xml.preferences);
 	}
 	
@@ -26,6 +29,9 @@ public class SettingActivity extends PreferenceActivity
 	{
 		super.onPause();
 
-		Game.queueCommand(new Commands.RefreshSettings(getPreferenceManager().getSharedPreferences(), null));
+		if(Game.hasGame())
+		{
+			Game.queueCommand(new Commands.RefreshSettings(getPreferenceManager().getSharedPreferences(), null));
+		}
 	}
 }

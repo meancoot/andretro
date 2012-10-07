@@ -5,6 +5,7 @@ import org.andretro.system.*;
 import org.andretro.input.view.*;
 
 import javax.microedition.khronos.opengles.*;
+import java.io.*;
 
 import android.view.*;
 import android.view.inputmethod.*;
@@ -24,6 +25,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 	private boolean onScreenInput;
 	private boolean showActionBar;
 	private volatile boolean refreshWindowAndInput = true;
+	private String moduleName;
 	
 	class Draw implements GLSurfaceView.Renderer
 	{		
@@ -68,17 +70,11 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         questionOpen = (null == aState) ? false : aState.getBoolean("questionOpen", false);
         onScreenInput = (null == aState) ? true : aState.getBoolean("onScreenInput", true);
         showActionBar = (null == aState) ? true : aState.getBoolean("showActionBar", true);
+        moduleName = getIntent().getStringExtra("moduleName");
         
         // Setup the window
-		// Hide action bar / dim buttons
-        if(android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.HONEYCOMB)
-        {
-        	requestWindowFeature(Window.FEATURE_NO_TITLE);
-        }
-        else
-        {
-        	requestWindowFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
-        }
+        final int feature = (Build.VERSION.SDK_INT <= Build.VERSION_CODES.HONEYCOMB) ? Window.FEATURE_NO_TITLE : Window.FEATURE_ACTION_BAR_OVERLAY;
+        requestWindowFeature(feature);
  
 		// Setup the view
         setContentView(R.layout.retro_display);
@@ -88,6 +84,11 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         view.setRenderer(new Draw());
 		view.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 		view.setKeepScreenOn(true);
+		
+		if(!Game.hasGame())
+		{
+			Game.queueCommand(new Commands.LoadGame(this, moduleName, new File(getIntent().getStringExtra("path")), null));
+		}
     }
     
     @Override public void onResume()
@@ -131,8 +132,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     		Game.queueCommand(new Commands.Pause(false, null));
     		if(aPositive)
     		{
-    			Game.queueCommand(new Commands.CloseGame(null));
-    			Game.queueCommand(new Commands.ShutDown(new CommandQueue.Callback(this, new Runnable()
+    			Game.queueCommand(new Commands.CloseGame(new CommandQueue.Callback(this, new Runnable()
     			{
     				@Override public void run()
     				{
@@ -237,37 +237,36 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         	refreshWindowAndInput = true;
         }
         
-    	if(Game.hasGame())
-    	{
-	        if(aItem.getItemId() == R.id.save_state || aItem.getItemId() == R.id.load_state)
-	        {
-	        	startActivity(new Intent(this, StateList.class).putExtra("loading", aItem.getItemId() == R.id.load_state));
-	            return true;
-	        }
-	        else if(aItem.getItemId() == R.id.input_settings)
-	        {
-	        	startActivity(new Intent(this, InputActivity.class));
-        		return true;
-	        }
-	        else if(aItem.getItemId() == R.id.system_settings)
-	        {
-	        	startActivity(new Intent(this, SettingActivity.class));
-        		return true;
-	        }
-	        else if(aItem.getItemId() == R.id.reset)
-	        {
-	            Game.queueCommand(new Commands.Reset(new CommandQueue.Callback(this, new Runnable()
-	            {
-	                @Override public void run()
-	                {
-	                    Toast.makeText(RetroDisplay.this, "Game Reset", Toast.LENGTH_SHORT).show();
-	                }
-	            })));
+        if(aItem.getItemId() == R.id.reset)
+        {
+            Game.queueCommand(new Commands.Reset(new CommandQueue.Callback(this, new Runnable()
+            {
+                @Override public void run()
+                {
+                    Toast.makeText(RetroDisplay.this, "Game Reset", Toast.LENGTH_SHORT).show();
+                }
+            })));
 
-	            return true;
-	        }
-    	}
-    	
+            return true;
+        }
+    
+        // Start a new activity
+        final Intent intent = new Intent().putExtra("moduleName", moduleName);
+        
+        if(aItem.getItemId() == R.id.save_state || aItem.getItemId() == R.id.load_state)
+        {
+        	intent.setClass(this, StateList.class).putExtra("loading", aItem.getItemId() == R.id.load_state);
+        	startActivity(intent);
+        	return true;
+        }
+        else if(aItem.getItemId() == R.id.input_settings || aItem.getItemId() == R.id.system_settings)
+        {
+        	intent.setClass(this, (aItem.getItemId() == R.id.system_settings) ? SettingActivity.class : InputActivity.class);
+        	startActivity(intent);
+        	return true;
+        }
+        
+        // Unhandled
         return super.onOptionsItemSelected(aItem);
     }
         

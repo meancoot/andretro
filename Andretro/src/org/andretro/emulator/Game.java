@@ -4,7 +4,6 @@ import org.andretro.system.*;
 import org.libretro.*;
 
 import java.io.*;
-import java.util.*;
 
 import android.content.*;
 import android.os.*;
@@ -71,154 +70,80 @@ public final class Game implements Runnable
     }
             
     // LIBRARY
-    private static boolean libraryLoaded;
-    private static String libraryFilename;
-    private static LibRetro.SystemInfo systemInfo;
-    private static String[] extensions;
+    private static boolean gameLoaded;
+    private static boolean gameClosed;
+    private static LibRetro.SystemInfo systemInfo = new LibRetro.SystemInfo();
+    private static LibRetro.AVInfo avInfo = new LibRetro.AVInfo();
     private static File moduleDirectory;
     private static Doodads.Set inputs;
-    
-    static boolean loadLibrary(Context aContext, String aLibrary)
-    {
-    	eventQueue.assertThread();
-    	
-    	// Don't open the library if it's already open!
-    	if(!aLibrary.equals(libraryFilename))
-    	{
-	    	closeLibrary();
-	    	
-			if(LibRetro.loadLibrary(aLibrary))
-			{	
-				LibRetro.init();
-				
-				systemInfo = new LibRetro.SystemInfo();
-				LibRetro.getSystemInfo(systemInfo);
-				
-				extensions = systemInfo.validExtensions.split("\\|");
-				Arrays.sort(extensions);
-				
-				moduleDirectory = new File(Environment.getExternalStorageDirectory().getPath() + "/andretro/" + systemInfo.libraryName);
-				moduleDirectory.mkdirs();
-				
-				new File(moduleDirectory.getAbsolutePath() + "/Games").mkdirs();
-				
-				inputs = new Doodads.Set(aContext.getSharedPreferences("retropad", 0));
-				new Commands.RefreshSettings(aContext.getSharedPreferences(getModuleName(), 0), null).run();
-				
-				libraryLoaded = true;
-				libraryFilename = aLibrary;
-			}
-    	}
-		
-		return libraryLoaded;
-    }
-    
-    static void closeLibrary()
-    {
-    	eventQueue.assertThread();
-    	
-    	if(libraryLoaded)
-    	{
-    		closeFile();
-    		
-    		LibRetro.deinit();
-    		LibRetro.unloadLibrary();
-    		
-    		pauseDepth = 0;
-    		systemInfo = null;
-    		moduleDirectory = null;
-    		inputs = null;
-    		libraryLoaded = false;
-    		libraryFilename = null;
-    	}    	
-    }
-    
-    public static boolean validFile(File aFile)
-    {
-    	final String path = aFile.getAbsolutePath(); 
-        final int dot = path.lastIndexOf(".");
-        final String extension = (dot < 0) ? null : path.substring(dot + 1);
-        
-        // HACK: If blockExtract isn't set, don't allow zip files to be valid.
-        if(!systemInfo.blockExtract && null != extension && 0 == extension.compareToIgnoreCase("zip"))
-        {
-        	return false;
-        }
-
-    	return (null == extension) ? false : (0 <= Arrays.binarySearch(extensions, extension));
-    }
-    
-    public static boolean hasLibrary()
-    {
-    	return libraryLoaded;
-    }
-    
-    // GAME
-    private static boolean gameLoaded;
-    private static LibRetro.AVInfo avInfo;
     private static String dataName;
-	    
-    static void loadFile(File aFile)
+
+    static void loadGame(Context aContext, String aLibrary, File aFile)
     {
     	eventQueue.assertThread();
-
-    	if(!libraryLoaded)
-    	{
-    		throw new RuntimeException("Library isn't loaded");
-    	}
     	
-        // Unload
-    	closeFile();
-        
-        // Load
-        if(null != aFile && aFile.isFile() && LibRetro.loadGame(aFile.getAbsolutePath()))
-        {	
-        	dataName = getModuleSystemDirectory() + "/" + aFile.getName().split("\\.(?=[^\\.]+$)")[0];
-        	
-        	LibRetro.readMemoryRegion(LibRetro.RETRO_MEMORY_SAVE_RAM, getGameDataName("srm"));
-        	LibRetro.readMemoryRegion(LibRetro.RETRO_MEMORY_RTC, getGameDataName("rtc"));
-        	
-        	avInfo = new LibRetro.AVInfo();
-            LibRetro.getSystemAVInfo(avInfo);
+    	if(!gameLoaded && !gameClosed && null != aFile && aFile.isFile())
+    	{
+    		if(LibRetro.loadLibrary(aLibrary))
+    		{
+    			LibRetro.init();
+    			
+    			if(LibRetro.loadGame(aFile.getAbsolutePath()))
+    			{
+    				// System info
+    				LibRetro.getSystemInfo(systemInfo);
+    				LibRetro.getSystemAVInfo(avInfo);
 
-            new Commands.RefreshInput(null).run();
-            
-            gameLoaded = true;
-        }
-        else
-        {
-            throw new RuntimeException("Failed to load game.");
-        }
+    				inputs = new Doodads.Set(aContext.getSharedPreferences("retropad", 0));
+    				
+    				// Filesystem stuff
+    				moduleDirectory = new File(Environment.getExternalStorageDirectory().getPath() + "/andretro/" + systemInfo.libraryName);
+    				moduleDirectory.mkdirs();
+    				new File(moduleDirectory.getAbsolutePath() + "/Games").mkdirs();
+    				
+    	        	dataName = getModuleSystemDirectory() + "/" + aFile.getName().split("\\.(?=[^\\.]+$)")[0];
+    	        	LibRetro.readMemoryRegion(LibRetro.RETRO_MEMORY_SAVE_RAM, getGameDataName("srm"));
+    	        	LibRetro.readMemoryRegion(LibRetro.RETRO_MEMORY_RTC, getGameDataName("rtc"));
+
+    	        	// Load settings
+    				new Commands.RefreshSettings(aContext.getSharedPreferences(getModuleName(), 0), null).run();
+    	            new Commands.RefreshInput(null).run();
+    	            
+    	            gameLoaded = true;
+    			}
+    		}
+    	}
+    	else
+    	{
+    		gameLoaded = true;
+    		gameClosed = true;
+    		throw new RuntimeException("Failed to load game");
+    	}
     }
     
-    static void closeFile()
+    static void closeGame()
     {
     	eventQueue.assertThread();
     	
-    	if(!libraryLoaded)
-    	{
-    		throw new RuntimeException("Library isn't loaded");
-    	}
-
-    	
-    	if(gameLoaded)
+    	if(gameLoaded && !gameClosed)
     	{
         	LibRetro.writeMemoryRegion(LibRetro.RETRO_MEMORY_SAVE_RAM, getGameDataName("srm"));
         	LibRetro.writeMemoryRegion(LibRetro.RETRO_MEMORY_RTC, getGameDataName("rtc"));
 
    			LibRetro.unloadGame();
-			
-			avInfo = null;
-    		gameLoaded = false;
-    		
+    		LibRetro.deinit();
+    		LibRetro.unloadLibrary();
+   			
     		// Shutdown any audio device
     		Audio.close();
-    	}
+    		
+    		gameClosed = true;
+    	}    	
     }
-    
+        
     public static boolean hasGame()
     {
-        return gameLoaded;
+        return gameLoaded && !gameClosed;
     }
 
     // LOOP
@@ -237,7 +162,7 @@ public final class Game implements Runnable
 	    		eventQueue.pump();
 	    		
 	    		// Execute any commands
-	    		if(gameLoaded && 0 == pauseDepth && null != presentNotify)
+	    		if(gameLoaded && !gameClosed && 0 == pauseDepth && null != presentNotify)
 	    		{	
 	    			// Fast forward
 	    			final boolean rewindKeyPressed = Input.isPressed(rewindKey);

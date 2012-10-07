@@ -1,9 +1,8 @@
 package org.andretro.browser;
 
 import org.andretro.*;
-import org.andretro.emulator.*;
 import org.andretro.settings.*;
-import org.andretro.system.*;
+import org.andretro.emulator.*;
 
 import java.util.*;
 import java.io.*;
@@ -19,8 +18,9 @@ class FileWrapper implements IconAdapterItem
 {
     protected final File file;
     protected final int typeIndex;
+    protected final boolean enabled;
 
-    public FileWrapper(File aFile)
+    public FileWrapper(File aFile, boolean aIsEnabled)
     {
     	if(null == aFile)
     	{
@@ -29,6 +29,7 @@ class FileWrapper implements IconAdapterItem
 
         file = aFile;
         typeIndex = (file.isDirectory() ? 1 : 0) + (file.isFile() ? 2 : 0);
+        enabled = aIsEnabled;
     }
     
     public File getFile()
@@ -36,9 +37,9 @@ class FileWrapper implements IconAdapterItem
     	return file;
     }
     
-    public boolean isEnabled()
+    @Override public boolean isEnabled()
     {
-    	return file.isDirectory() || Game.validFile(file);
+    	return enabled;
     }
     
     @Override public String getText()
@@ -70,120 +71,45 @@ class FileWrapper implements IconAdapterItem
     }
 }
 
-final class ModuleWrapper extends FileWrapper
-{
-    public ModuleWrapper(File aFile)
-    {
-    	super(aFile);
-    }
-        
-    public boolean isEnabled()
-    {
-    	return true;
-    }
-}
-
-
 public class DirectoryActivity extends Activity implements AdapterView.OnItemClickListener
 {
-	// HACK: Hard path
-	static final String modulePath = "/data/data/org.andretro/lib/";
-	
     private IconAdapter<FileWrapper> adapter;
     private boolean inRoot;
     private String moduleName;
+    private ModuleInfo moduleInfo;
     
     @Override public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         
         setContentView(R.layout.directory_list);
-        moduleName = getIntent().getStringExtra("moduleName");
-        inRoot = getIntent().getBooleanExtra("inroot", false);
         
-        adapter = new IconAdapter<FileWrapper>(this, R.layout.directory_list_item);
+        inRoot = getIntent().getBooleanExtra("inroot", false);
+        moduleName = getIntent().getStringExtra("moduleName");
+        moduleInfo = new ModuleInfo(getAssets(), new File(moduleName));
         
         // Setup the list
+        adapter = new IconAdapter<FileWrapper>(this, R.layout.directory_list_item);
         ListView list = (ListView)findViewById(R.id.list);
         list.setAdapter(adapter);
         list.setOnItemClickListener(this);
         
         // Load Directory
-        String path;
-        if(null != moduleName)
-        {
-        	path = getIntent().getStringExtra("path");
-			Game.queueCommand(new Commands.Initialize(this, moduleName, new CommandQueue.Callback(this, new Runnable()
-			{
-				@Override public void run()
-				{
-		        	String filePath = getIntent().getStringExtra("path");
-		        	filePath = (filePath == null) ? Environment.getExternalStorageDirectory().getPath() : filePath;
-		            wrapFiles(new File(filePath));
-				}
-			})));
-        }
-        else
-        {
-        	path = "Select Emulator";
-        	
-            for(final File lib: new File(modulePath).listFiles())
-            {
-            	if(lib.getName().startsWith("libretro_"))
-            	{
-            		adapter.add(new ModuleWrapper(lib));
-            	}
-            }
-        }
-
+        final String path = getIntent().getStringExtra("path");;
+        wrapFiles(new File(path));
         setTitle(path);
     }
     
 	@Override public void onItemClick(AdapterView<?> aListView, View aView, int aPosition, long aID)
 	{
 		final File selected = adapter.getItem(aPosition).getFile();
-
-		if(null != moduleName)
-		{
-			if(selected.isFile())
-			{
-		    	Game.queueCommand(new Commands.LoadGame(selected, new CommandQueue.Callback(this, new Runnable()
-		        {
-		            @Override public void run()
-		            {
-		            	startActivity(new Intent(DirectoryActivity.this, RetroDisplay.class));
-		            }
-		        })));
-			}
-			else
-			{
-				startActivity(new Intent(this, DirectoryActivity.class).putExtra("inroot", inRoot)
-						.putExtra("path", selected.getAbsolutePath())
-						.putExtra("moduleName", moduleName));
-			}
-		}
-		else
-		{
-			Game.queueCommand(new Commands.Initialize(this, selected.getAbsolutePath(), new CommandQueue.Callback(this, new Runnable()
-			{
-				@Override public void run()
-				{
-					startActivity(new Intent(DirectoryActivity.this, DirectoryActivity.class)
-						.putExtra("path", Game.getModuleSystemDirectory() + "/Games")
-						.putExtra("moduleName", selected.getAbsolutePath()));
-				}
-			})));
-		}
-	}
-	
-	@Override public void onResume()
-	{
-		super.onResume();
 		
-		if(null != moduleName)
-		{
-			Game.queueCommand(new Commands.Initialize(this, moduleName, null));
-		}
+		final Intent intent = new Intent(this, selected.isFile() ? RetroDisplay.class : DirectoryActivity.class)
+				.putExtra("path", selected.getAbsolutePath())
+				.putExtra("moduleName", moduleName)
+				.putExtra("inRoot", inRoot);
+
+		startActivity(intent);
 	}
 	
     @Override public boolean onCreateOptionsMenu(Menu aMenu)
@@ -194,12 +120,6 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
     	if(inRoot)
     	{
     		aMenu.removeItem(R.id.goto_root);
-    	}
-    	
-    	if(null == moduleName)
-    	{
-    		aMenu.removeItem(R.id.goto_root);
-    		aMenu.removeItem(R.id.system_settings);
     	}
     	
     	return true;
@@ -225,10 +145,10 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
     	
         if(aItem.getItemId() == R.id.system_settings)
         {
-        	startActivity(new Intent(this, SettingActivity.class));
+        	startActivity(new Intent(this, SettingActivity.class)
+        		.putExtra("moduleName", moduleName));
     		return true;
         }
-
         
         return super.onOptionsItemSelected(aItem);
     }
@@ -243,7 +163,7 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
         // Copy new items
         for(File file: aDirectory.listFiles())
         {
-        	adapter.add(new FileWrapper(file));
+        	adapter.add(new FileWrapper(file, moduleInfo.isFileValid(file)));
         }
         
         // Sort items
