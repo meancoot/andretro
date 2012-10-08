@@ -150,13 +150,13 @@ public final class Commands
 			{
 				Present.setForcedAspect(true, 1.3333333f);
 			}
-			else if("1:1".equals(aspectMode))
+			else if("Pixel".equals(aspectMode))
 			{
 				Present.setForcedAspect(true, -1.0f);
 			}
 			else
 			{
-				throw new RuntimeException("Aspect mode not expected");
+				Present.setForcedAspect(false, 0.0f);
 			}
 			
 			// Fast forward
