@@ -197,7 +197,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         }
         else
         {
-        	super.onBackPressed();
+        	System.exit(0);
         }
     }
     

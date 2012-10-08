@@ -74,7 +74,7 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
         
         setContentView(R.layout.directory_list);
         
-        inRoot = getIntent().getBooleanExtra("inroot", false);
+        inRoot = getIntent().getBooleanExtra("inRoot", false);
         moduleName = getIntent().getStringExtra("moduleName");
         moduleInfo = new ModuleInfo(getAssets(), new File(moduleName));
         
@@ -120,7 +120,7 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
     	if(R.id.goto_root == aItem.getItemId())
     	{
     		startActivity(new Intent(this, DirectoryActivity.class)
-    				.putExtra("inroot", true)
+    				.putExtra("inRoot", true)
     				.putExtra("path", Environment.getExternalStorageDirectory().getPath())
     				.putExtra("moduleName", moduleName));
     		return true;
@@ -149,7 +149,7 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
     	{
     		throw new IllegalArgumentException("Directory is not valid.");
     	}
-    	        
+
         // Copy new items
         for(File file: aDirectory.listFiles())
         {

@@ -78,7 +78,7 @@ public class ModuleInfo
 	{
     	final String path = aFile.getAbsolutePath(); 
         final int dot = path.lastIndexOf(".");
-        final String extension = (dot < 0) ? null : path.substring(dot + 1);
+        final String extension = (dot < 0) ? null : path.substring(dot + 1).toLowerCase();
 
     	return (null == extension) ? false : (0 <= Arrays.binarySearch(extensions, extension));
 	}
