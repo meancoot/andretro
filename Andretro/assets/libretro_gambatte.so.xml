@@ -1,0 +1,4 @@
+<retro>
+    <system fullname="Nintendo Gameboy" shortname="GB"/>
+    <module libraryname="gambatte" extensions="gb|gbc|dmg"/>
+</retro>

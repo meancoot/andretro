@@ -1,0 +1,4 @@
+<retro>
+    <system fullname="Atari 2600" shortname="a2600"/>
+    <module libraryname="Stella" extensions="a26|bin"/>
+</retro>

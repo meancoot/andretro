@@ -1,0 +1,4 @@
+<retro>
+    <system fullname="Nintendo Gameboy Advance" shortname="GBA"/>
+    <module libraryname="VBA Next" extensions="gba"/>
+</retro>

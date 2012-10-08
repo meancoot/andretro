@@ -1,0 +1,4 @@
+<retro>
+    <system fullname="DOOM" shortname="doom"/>
+    <module libraryname="prboom" extensions="wad|iwad"/>
+</retro>

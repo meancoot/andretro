@@ -1,0 +1,4 @@
+<retro>
+    <system fullname="Sega Genesis/Megadrive" shortname="MD"/>
+    <module libraryname="Genesis Plus GX" extensions="md|smd|bin|cue|gen|bin|sms|gg|sg"/>
+</retro>
