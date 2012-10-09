@@ -76,7 +76,7 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
         
         inRoot = getIntent().getBooleanExtra("inRoot", false);
         moduleName = getIntent().getStringExtra("moduleName");
-        moduleInfo = new ModuleInfo(getAssets(), new File(moduleName));
+        moduleInfo = ModuleInfo.getInfoAbout(getAssets(), new File(moduleName));
         
         // Setup the list
         adapter = new IconAdapter<FileWrapper>(this, R.layout.directory_list_item);

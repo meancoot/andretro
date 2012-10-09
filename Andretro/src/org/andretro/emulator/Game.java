@@ -71,7 +71,7 @@ public final class Game implements Runnable
     	
     	if(!gameLoaded && !gameClosed && null != aFile && aFile.isFile())
     	{
-    		moduleInfo = new ModuleInfo(aContext.getAssets(), new File(aLibrary));
+    		moduleInfo = ModuleInfo.getInfoAbout(aContext.getAssets(), new File(aLibrary));
     		
     		if(LibRetro.loadLibrary(aLibrary))
     		{

@@ -14,14 +14,15 @@ import android.widget.*;
 import android.view.*;
 import android.view.inputmethod.*;
 
-class ModuleWrapper extends ModuleInfo implements IconAdapterItem
+class ModuleWrapper implements IconAdapterItem
 {
 	public final File file;
+	public final ModuleInfo info;
 	
     public ModuleWrapper(AssetManager aAssets, File aFile) throws IOException
     {
-		super(aAssets, aFile);
 		file = aFile;
+		info = ModuleInfo.getInfoAbout(aAssets, aFile);
     }
     
     @Override public boolean isEnabled()
@@ -31,7 +32,7 @@ class ModuleWrapper extends ModuleInfo implements IconAdapterItem
     
     @Override public String getText()
     {
-    	return name;
+    	return info.name;
     }
     
     @Override public int getIconResourceId()
@@ -81,7 +82,7 @@ public class ModuleActivity extends Activity implements AdapterView.OnItemClickL
 		final ModuleWrapper item = adapter.getItem(aPosition);
 
 		startActivity(new Intent(ModuleActivity.this, DirectoryActivity.class)
-			.putExtra("path", item.getDataPath() + "/Games")
+			.putExtra("path", item.info.getDataPath() + "/Games")
 			.putExtra("moduleName", item.file.getAbsolutePath()));
 	}
 		

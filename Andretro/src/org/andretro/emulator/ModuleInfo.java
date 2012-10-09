@@ -7,48 +7,63 @@ import java.io.*;
 import java.util.*;
 
 import javax.xml.parsers.*;
-
-import org.xml.sax.*;
-import org.xml.sax.helpers.*;
+import javax.xml.xpath.*;
+import org.w3c.dom.*;
 
 public class ModuleInfo
 {
+	// TODO: Make them not public!
 	public String name;
 	public String shortName;
 	public String libraryName;
 	public String[] extensions;
 	
-	public String fileName;
 	public String dataPath;
 	
-	public ModuleInfo(final AssetManager aAssets, final File aFile)
+	private Document document;
+	private Element inputData;
+
+	private static final Map<String, ModuleInfo> cache = new HashMap<String, ModuleInfo>(); 
+	
+	public static ModuleInfo getInfoAbout(final AssetManager aAssets, final File aFile)
 	{
-        SAXParserFactory factory = SAXParserFactory.newInstance();
+		final String key = aFile.getName() + ".xml";
+		
+		if(cache.containsKey(key))
+		{
+			return cache.get(key);
+		}
+		else
+		{
+			ModuleInfo newInfo = new ModuleInfo(aAssets, aFile);
+			cache.put(key, newInfo);
+			return newInfo;
+		}
+	}
+	
+	private ModuleInfo(final AssetManager aAssets, final File aFile)
+	{
         try
         {
-        	// Read XML
-        	final SAXParser parser = factory.newSAXParser();
-        	final InputStream file = aAssets.open(aFile.getName() + ".xml");
+        	// Why does xml have to be so god damned difficult?
+    		document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(aAssets.open(aFile.getName() + ".xml"));
+    		final XPath xpath = XPathFactory.newInstance().newXPath();
+    		
+    		// Read system info
+    		Element system = (Element)xpath.evaluate("/retro/system", document, XPathConstants.NODE);
+    		name = system.getAttribute("fullname");
+    		shortName = system.getAttribute("shortname");
+    		
+    		// Read module info
+    		Element module = (Element)xpath.evaluate("/retro/module", document, XPathConstants.NODE);
+    		libraryName = module.getAttribute("libraryname");
+    		extensions = module.getAttribute("extensions").split("\\|");
+    		Arrays.sort(extensions);
 
-        	parser.parse(file, new DefaultHandler()
-        	{
-        		@Override public void startElement(String aURI, String aName, String aQualifiedName, Attributes aAttributes) throws SAXException
-        		{
-        			if("system".equals(aName))
-        			{
-        				name = aAttributes.getValue("", "fullname");
-        				shortName = aAttributes.getValue("", "shortname");
-        			}
-        			else if("module".equals(aName))
-        			{
-        				libraryName = aAttributes.getValue("", "libraryname");
-        				extensions = aAttributes.getValue("", "extensions").split("\\|");
-        				Arrays.sort(extensions);
-        			}
-        		}
-        	});
-        	
-        	// Quick check
+    		// Read input element
+    		inputData = (Element)xpath.evaluate("/retro/onscreeninput", document, XPathConstants.NODE);
+    		
+        	// Quick check hack
         	if(null == name || null == shortName || null == libraryName || null == extensions)
         	{
         		throw new Exception("Not all elements present in xml");
@@ -81,5 +96,10 @@ public class ModuleInfo
         final String extension = (dot < 0) ? null : path.substring(dot + 1).toLowerCase();
 
     	return (null == extension) ? false : (0 <= Arrays.binarySearch(extensions, extension));
+	}
+	
+	public Element getInputDefinition()
+	{
+		return inputData;
 	}
 }

@@ -26,6 +26,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 	private boolean showActionBar;
 	private volatile boolean refreshWindowAndInput = true;
 	private String moduleName;
+	private ModuleInfo moduleInfo;
 	
 	class Draw implements GLSurfaceView.Renderer
 	{		
@@ -71,6 +72,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         onScreenInput = (null == aState) ? true : aState.getBoolean("onScreenInput", true);
         showActionBar = (null == aState) ? true : aState.getBoolean("showActionBar", true);
         moduleName = getIntent().getStringExtra("moduleName");
+        moduleInfo = ModuleInfo.getInfoAbout(getAssets(), new File(moduleName)); 
         
         // Setup the window
         final int feature = (Build.VERSION.SDK_INT <= Build.VERSION_CODES.HONEYCOMB) ? Window.FEATURE_NO_TITLE : Window.FEATURE_ACTION_BAR_OVERLAY;
@@ -300,7 +302,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 		
     	if(onScreenInput)
     	{
-			inputBase.loadInputLayout(this, getResources().openRawResource(R.raw.default_retro_pad));
+			inputBase.loadInputLayout(this, moduleInfo, getResources().openRawResource(R.raw.default_retro_pad));
     	}
     	
     	Input.setOnScreenInput(onScreenInput ? inputBase : null);

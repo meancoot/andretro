@@ -1,4 +1,5 @@
 package org.andretro.input.view;
+import org.andretro.emulator.*;
 
 import android.util.*;
 import android.view.*;
@@ -7,12 +8,11 @@ import android.widget.*;
 import android.app.*;
 import android.graphics.*;
 
-import javax.xml.parsers.*;
 import java.io.*;
 import java.util.*;
 
-import org.xml.sax.*;
-import org.xml.sax.helpers.*;
+import javax.xml.parsers.*;
+import org.w3c.dom.*;
 
 public class InputGroup extends RelativeLayout
 {
@@ -97,96 +97,104 @@ public class InputGroup extends RelativeLayout
     	handlers.clear();
     }
     
-    public void loadInputLayout(final Activity aContext, final InputStream aFile)
+	int getInt(String aInt)
+	{
+		return (null == aInt || "".equals(aInt)) ? 0 : Integer.parseInt(aInt);        			
+	}
+
+    
+    public void loadInputLayout(final Activity aContext, final ModuleInfo aModule, final InputStream aFile)
     {
-    	removeChildren();
-    	
-        SAXParserFactory factory = SAXParserFactory.newInstance();
-        try
-        {
-        	final SAXParser parser = factory.newSAXParser();
-
-        	parser.parse(aFile, new DefaultHandler()
-        	{
-        		int horizontalAnchor = RelativeLayout.ALIGN_PARENT_LEFT;
-        		int verticalAnchor = RelativeLayout.ALIGN_PARENT_TOP;
-        		        		
-        		int getInt(String aInt)
-        		{
-        			return (null == aInt) ? 0 : Integer.parseInt(aInt);        			
-        		}
-        		
-        		@Override public void startElement(String aURI, String aName, String aQualifiedName, Attributes aAttributes) throws SAXException
-        		{
-        			if("anchor-left".equals(aName))
-        			{
-        				horizontalAnchor = RelativeLayout.ALIGN_PARENT_LEFT;
-        			}
-        			else if("horizontal-center".equals(aName))
-        			{
-        				horizontalAnchor = RelativeLayout.CENTER_HORIZONTAL;
-        			}
-        			else if("anchor-right".equals(aName))
-        			{
-        				horizontalAnchor = RelativeLayout.ALIGN_PARENT_RIGHT;
-        			}
-
-        			if("anchor-top".equals(aName))
-        			{
-        				verticalAnchor = RelativeLayout.ALIGN_PARENT_TOP;
-        			}
-        			else if("vertical-center".equals(aName))
-        			{
-        				verticalAnchor = RelativeLayout.CENTER_VERTICAL;
-        			}
-        			else if("anchor-bottom".equals(aName))
-        			{
-        				verticalAnchor = RelativeLayout.ALIGN_PARENT_BOTTOM;
-        			}        			
-        			
-        			InputHandler inputView = null;
-        			
-        			//nbDips * getResources().getDisplayMetrics().density
-        			
-        			if("ButtonDiamond".equals(aName))
-        			{
-        				final int upbits = getInt(aAttributes.getValue("", "upbits"));
-        				final int downbits = getInt(aAttributes.getValue("", "downbits"));
-        				final int leftbits = getInt(aAttributes.getValue("", "leftbits"));
-        				final int rightbits = getInt(aAttributes.getValue("", "rightbits"));
-        				inputView = new ButtonDiamond(aContext, upbits, downbits, leftbits, rightbits);
-        			}
-        			else if("ButtonDuo".equals(aName))
-        			{
-        				final int leftbits = getInt(aAttributes.getValue("", "leftbits"));
-        				final int rightbits = getInt(aAttributes.getValue("", "rightbits"));
-        				inputView = new ButtonDuo(aContext, leftbits, rightbits);        				        				
-        			}
-        			else if("Button".equals(aName))
-        			{
-        				final int bits = getInt(aAttributes.getValue("", "bits"));
-        				inputView = new Button(aContext, bits);
-        			}
-        			
-    				if(null != inputView)
-    				{
-	    				final int width = getInt(aAttributes.getValue("", "width"));
-	    				final int height = getInt(aAttributes.getValue("", "height"));
-	    				RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(width, height);
+    	try
+    	{
+	    	removeChildren();
+	    	
+	    	Element inputElement = aModule.getInputDefinition();
+	    	if(null == inputElement)
+	    	{
+	    		Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(aFile);
+	    		inputElement = document.getDocumentElement();
+	    	}
+	    	
+			int horizontalAnchor = RelativeLayout.ALIGN_PARENT_LEFT;
+			int verticalAnchor = RelativeLayout.ALIGN_PARENT_TOP;
 	
-						params.topMargin = getInt(aAttributes.getValue("", "topmargin"));
-						params.bottomMargin = getInt(aAttributes.getValue("", "bottommargin"));
-						params.leftMargin = getInt(aAttributes.getValue("", "leftmargin"));
-						params.rightMargin = getInt(aAttributes.getValue("", "rightmargin"));
-	    				params.addRule(horizontalAnchor);
-	    				params.addRule(verticalAnchor);
+	    	NodeList inputs = inputElement.getChildNodes();
+	    	for(int i = 0; i != inputs.getLength(); i ++)
+	    	{
+	    		if(Node.ELEMENT_NODE == inputs.item(i).getNodeType())
+	    		{
+		    		Element input = (Element)inputs.item(i);
+		    		
+					if("anchor-left".equals(input.getNodeName()))
+					{
+						horizontalAnchor = RelativeLayout.ALIGN_PARENT_LEFT;
+					}
+					else if("horizontal-center".equals(input.getNodeName()))
+					{
+						horizontalAnchor = RelativeLayout.CENTER_HORIZONTAL;
+					}
+					else if("anchor-right".equals(input.getNodeName()))
+					{
+						horizontalAnchor = RelativeLayout.ALIGN_PARENT_RIGHT;
+					}
+		
+					if("anchor-top".equals(input.getNodeName()))
+					{
+						verticalAnchor = RelativeLayout.ALIGN_PARENT_TOP;
+					}
+					else if("vertical-center".equals(input.getNodeName()))
+					{
+						verticalAnchor = RelativeLayout.CENTER_VERTICAL;
+					}
+					else if("anchor-bottom".equals(input.getNodeName()))
+					{
+						verticalAnchor = RelativeLayout.ALIGN_PARENT_BOTTOM;
+					}        			
+					
+					InputHandler inputView = null;
+					
+					//nbDips * getResources().getDisplayMetrics().density
+					
+					if("ButtonDiamond".equals(input.getNodeName()))
+					{
+						final int upbits = getInt(input.getAttribute("upbits"));
+						final int downbits = getInt(input.getAttribute("downbits"));
+						final int leftbits = getInt(input.getAttribute("leftbits"));
+						final int rightbits = getInt(input.getAttribute("rightbits"));
+						inputView = new ButtonDiamond(aContext, upbits, downbits, leftbits, rightbits);
+					}
+					else if("ButtonDuo".equals(input.getNodeName()))
+					{
+						final int leftbits = getInt(input.getAttribute("leftbits"));
+						final int rightbits = getInt(input.getAttribute("rightbits"));
+						inputView = new ButtonDuo(aContext, leftbits, rightbits);        				        				
+					}
+					else if("Button".equals(input.getNodeName()))
+					{
+						final int bits = getInt(input.getAttribute("bits"));
+						inputView = new Button(aContext, bits);
+					}
+					
+					if(null != inputView)
+					{
+						final int width = getInt(input.getAttribute("width"));
+						final int height = getInt(input.getAttribute("height"));
+						RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(width, height);
+		
+						params.topMargin = getInt(input.getAttribute("topmargin"));
+						params.bottomMargin = getInt(input.getAttribute("bottommargin"));
+						params.leftMargin = getInt(input.getAttribute("leftmargin"));
+						params.rightMargin = getInt(input.getAttribute("rightmargin"));
+						params.addRule(horizontalAnchor);
+						params.addRule(verticalAnchor);
 						    				
-	    				ImageView handler = (ImageView)inputView;
-	    				addView(handler, params);
-	    				handlers.add(new Handler(handler, inputView));
-    				}        			
-        		}
-        	});
+						ImageView handler = (ImageView)inputView;
+						addView(handler, params);
+						handlers.add(new Handler(handler, inputView));
+					}	    			
+	    		}
+	    	}
         }
         catch(final Exception e)
         {
