@@ -3,6 +3,7 @@ package org.andretro.emulator;
 import java.util.*;
 
 import android.content.*;
+import org.w3c.dom.*;
 
 public final class Doodads
 {
@@ -41,32 +42,25 @@ public final class Doodads
 		 * List of input objects.
 		 */
 		protected final ArrayList<E> inputs;
-				
-		/**
-		 * The number of children in this object.
-		 */
-		public final int count;
 		
 		/**
 		 * Create a new GroupedInput.
 		 * @param aShort Setting name for the input. May not be null.
 		 * @param aFull Display name for the input. May not be null.
 		 * @param aCount Number of devices in this set.
-		 * @param aIndex Index of this item in its parent's set.
 		 */
-		GroupedInput(String aShort, String aFull, int aCount)
+		GroupedInput(String aShort, String aFull)
 		{
 			super(aShort, aFull);
 
-			count = aCount;
-			inputs = new ArrayList<E>(aCount);
-			
-			for(int i = 0; i != aCount; i ++)
-			{
-				inputs.add(null);
-			}
+			inputs = new ArrayList<E>();
 		}
-			
+
+		public int getCount()
+		{
+			return inputs.size();
+		}
+		
 		public ArrayList<E> getAll()
 		{
 			return inputs;
@@ -94,28 +88,34 @@ public final class Doodads
 	public final static class Button extends NamedInput
 	{
 		public final String configKey;
-		public final int order;
-		public final int type;
 		public final int bitOffset;
 	    private int keyCode;
 
-	    public static final String[] names = {"UP", "DOWN", "LEFT", "RIGHT", "A", "B", "X", "Y", "SELECT", "START", "L", "R", "L2", "R2", "L3", "R3"}; 
+	    public static final String[] names = {"UP", "DOWN", "LEFT", "RIGHT", "A", "B", "X", "Y", "SELECT", "START", "L1", "R1", "L2", "R2", "L3", "R3"}; 
 	    public static final int[] offsets = {4, 5, 6, 7, 8, 0, 9, 1, 2, 3, 10, 11, 12, 13, 14, 15};
 	    
-	    Button(SharedPreferences aPreferences, final Port aPort, final Device aDevice, int aButton)
+	    Button(SharedPreferences aPreferences, String aKeyBase, Element aData)
 	    {
-	    	super("button" + aButton, names[aButton]);
+	    	super(aData.getAttribute("shortname"), aData.getAttribute("fullname"));
 
 	    	// Get configKey
-	    	configKey = aPort.name + "_" + aDevice.name + "_" + name;
+	    	configKey = aKeyBase + "_" + name; 
 	    	
 	    	// Get value
 	    	keyCode = aPreferences.getInt(configKey, 0);
 	    	
 	    	// Grab native data
-	    	order = aButton;
-	    	type = 0;
-	    	bitOffset = offsets[aButton];
+	    	final String keyName = aData.getAttribute("mappedkey");
+	    	for(int i = 0; i != 16; i ++)
+	    	{
+	    		if(names[i].equals(keyName))
+	    		{
+	    			bitOffset = offsets[i];
+	    			return;
+	    		}
+	    	}
+	    	
+    		throw new RuntimeException("Mapped key " + keyName + " not found");
 	    }
 	    
 	    public int getKeyCode()
@@ -131,34 +131,33 @@ public final class Doodads
 	
 	public final static class Device extends GroupedInput<Button>
 	{        
-	    Device(SharedPreferences aPreferences, final Port aPort, int aDevice)
+	    Device(SharedPreferences aPreferences, String aKeyBase, Element aData)
 	    {
-	    	super("device" + aDevice, "Device " + aDevice, 16);
+	    	super(aData.getAttribute("shortname"), aData.getAttribute("fullname"));
 
-	    	for(int i = 0; i != 16; i ++)
+	    	final NodeList buttons = aData.getElementsByTagName("button");
+	    	for(int i = 0; i != buttons.getLength(); i ++)
 	    	{
-	    		inputs.set(i, new Button(aPreferences, aPort, this, i));
+	    		inputs.add(i, new Button(aPreferences, aKeyBase + "_" + name, (Element)buttons.item(i)));
 	    	}
 	    }    
 	}
 	
 	public final static class Port extends GroupedInput<Device>
 	{
-		public final String configKey;
 	    public final String defaultDevice;
 	    private final String currentDevice;
 	    
-	    Port(SharedPreferences aPreferences, int aPort)
+	    Port(SharedPreferences aPreferences, String aKeyBase, Element aData)
 	    {
-	    	super("port" + aPort, "Port " + aPort, 1);
-	    
-	    	configKey = "port_" + aPort;
-	    	defaultDevice = "device0";
-	    	currentDevice = aPreferences.getString(configKey, defaultDevice);
+	    	super(aData.getAttribute("shortname"), aData.getAttribute("fullname"));   
+	    	defaultDevice = aData.getAttribute("defaultdevice");
+	    	currentDevice = aPreferences.getString(aKeyBase + "_" + name, defaultDevice);
 	    	
-	    	for(int i = 0; i != count; i ++)
+	    	final NodeList devices = aData.getElementsByTagName("device");
+	    	for(int i = 0; i != devices.getLength(); i ++)
 	    	{
-	    		inputs.set(i, new Device(aPreferences, this, i));
+	    		inputs.add(i, new Device(aPreferences, aKeyBase + "_" + name, (Element)devices.item(i)));
 	    	}
 	    }
 	    
@@ -170,13 +169,14 @@ public final class Doodads
 	
 	public final static class Set extends GroupedInput<Port>
 	{
-	    Set(SharedPreferences aPreferences)
+	    Set(SharedPreferences aPreferences, String aKeyBase, Element aData)
 	    {
-	    	super("root", "root", 1);
+	    	super("root", "root");
 	    	
-	    	for(int i = 0; i != count; i ++)
+	    	final NodeList ports = aData.getElementsByTagName("port");
+	    	for(int i = 0; i != ports.getLength(); i ++)
 	    	{
-	    		inputs.set(i, new Port(aPreferences, i));
+	    		inputs.add(new Port(aPreferences, aKeyBase, (Element)ports.item(i)));
 	    	}
 	    }
 	        

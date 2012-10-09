@@ -83,7 +83,7 @@ public final class Game implements Runnable
     				LibRetro.getSystemInfo(systemInfo);
     				LibRetro.getSystemAVInfo(avInfo);
 
-    				inputs = new Doodads.Set(aContext.getSharedPreferences("retropad", 0));
+    				inputs = new Doodads.Set(aContext.getSharedPreferences("retropad", 0), moduleInfo.getDataName(), moduleInfo.getInputData());
     				
     				// Filesystem stuff    				
     	        	dataName = moduleInfo.getDataPath() + "/" + aFile.getName().split("\\.(?=[^\\.]+$)")[0];

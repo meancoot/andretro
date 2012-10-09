@@ -109,7 +109,7 @@ public class InputGroup extends RelativeLayout
 	    	removeChildren();
 	    	
 	    	// Get the default from the module, if it's null read the default from aFile
-	    	Element inputElement = aModule.getInputDefinition();
+	    	Element inputElement = aModule.getOnScreenInputDefinition();
 	    	if(null == inputElement)
 	    	{
 	    		inputElement = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(aFile).getDocumentElement();

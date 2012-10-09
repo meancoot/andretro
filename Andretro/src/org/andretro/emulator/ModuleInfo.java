@@ -21,6 +21,7 @@ public class ModuleInfo
 	public String dataPath;
 	
 	private Document document;
+	private Element onScreenInputData;
 	private Element inputData;
 
 	private static final Map<String, ModuleInfo> cache = new HashMap<String, ModuleInfo>(); 
@@ -61,7 +62,8 @@ public class ModuleInfo
     		Arrays.sort(extensions);
 
     		// Read input element
-    		inputData = (Element)xpath.evaluate("/retro/onscreeninput", document, XPathConstants.NODE);
+    		onScreenInputData = (Element)xpath.evaluate("/retro/onscreeninput", document, XPathConstants.NODE);
+    		inputData = (Element)xpath.evaluate("/retro/input", document, XPathConstants.NODE);
     		
         	// Quick check hack
         	if(null == name || null == shortName || null == libraryName || null == extensions)
@@ -98,7 +100,12 @@ public class ModuleInfo
     	return (null == extension) ? false : (0 <= Arrays.binarySearch(extensions, extension));
 	}
 	
-	public Element getInputDefinition()
+	public Element getOnScreenInputDefinition()
+	{
+		return onScreenInputData;
+	}
+	
+	public Element getInputData()
 	{
 		return inputData;
 	}
