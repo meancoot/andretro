@@ -1,13 +1,7 @@
 <group>
-    <anchor-bottom/>
-    <ButtonDiamond upbits="16" downbits="32" leftbits="64" rightbits="128" width="200" height="200" leftmargin="20" bottommargin="20"/>
-    <anchor-right/>
-    <ButtonDiamond upbits="512" downbits="1" leftbits="2" rightbits="256" width="200" height="200" rightmargin="20" bottommargin="20"/>
-    <horizontal-center/>
-    <ButtonDuo leftbits="4" rightbits="8" width="200" height="50" bottommargin="20"/>
-    <anchor-right/>
-    <anchor-top/>
-    <Button bits="2048" topmargin="20" rightmargin="20" width="50" height="50"/>
-    <anchor-left/>
-    <Button bits="1024" topmargin="20" leftmargin="20" width="50" height="50"/>
+    <ButtonDiamond horzanchor="left"   vertanchor="bottom" horzmargin="20" vertmargin="20" width="200" height="200" upbits="16" downbits="32" leftbits="64" rightbits="128"/>
+    <ButtonDiamond horzanchor="right"  vertanchor="bottom" horzmargin="20" vertmargin="20" width="200" height="200" upbits="512" downbits="1" leftbits="2" rightbits="256" />
+    <ButtonDuo     horzanchor="center" vertanchor="bottom" horzmargin="20" vertmargin="20" width="200" height="50"  leftbits="4" rightbits="8"/>
+    <Button        horzanchor="right"  vertanchor="top"    horzmargin="20" vertmargin="20" width="50"  height="50"  bits="2048" />
+    <Button        horzanchor="left"   vertanchor="top"	   horzmargin="20" vertmargin="20" width="50"  height="50"  bits="1024" />
 </group>

@@ -1,5 +1,6 @@
 package org.andretro.input.view;
 import org.andretro.*;
+import org.w3c.dom.*;
 
 import android.annotation.*;
 import android.content.*;
@@ -10,15 +11,15 @@ public class ButtonDiamond extends ImageView implements InputGroup.InputHandler
 {
     private final int bits[] = new int[4];   
 
-    public ButtonDiamond(Context aContext, int aUpBits, int aDownBits, int aLeftBits, int aRightBits)
+    public ButtonDiamond(Context aContext, Element aElement)
     {
     	super(aContext);
     	setImageResource(R.drawable.dpad);
     	
-    	bits[0] = aUpBits;
-    	bits[1] = aDownBits;
-    	bits[2] = aLeftBits;
-    	bits[3] = aRightBits;
+    	bits[0] = InputGroup.getInt(aElement, "upbits");
+    	bits[1] = InputGroup.getInt(aElement, "downbits");
+    	bits[2] = InputGroup.getInt(aElement, "leftbits");
+    	bits[3] = InputGroup.getInt(aElement, "rightbits");
     }
 
     @Override public int getBits(int aX, int aY)
