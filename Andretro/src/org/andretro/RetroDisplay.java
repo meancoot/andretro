@@ -1,4 +1,5 @@
 package org.andretro;
+import org.andretro.browser.*;
 import org.andretro.emulator.*;
 import org.andretro.settings.*;
 import org.andretro.system.*;

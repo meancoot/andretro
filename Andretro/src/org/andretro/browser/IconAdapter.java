@@ -4,6 +4,7 @@ import org.andretro.*;
 
 import android.app.*;
 import android.content.*;
+import android.graphics.drawable.*;
 import android.view.*;
 import android.widget.*;
 
@@ -12,6 +13,7 @@ interface IconAdapterItem
 	public abstract boolean isEnabled();
 	public abstract String getText();
 	public abstract int getIconResourceId();
+	public abstract Drawable getIconDrawable();
 }
 
 class IconAdapter<T extends IconAdapterItem> extends ArrayAdapter<T>
@@ -50,7 +52,15 @@ class IconAdapter<T extends IconAdapterItem> extends ArrayAdapter<T>
         {
         	if(enabled)
         	{
-        		imageView.setImageResource(item.getIconResourceId());
+        		final int id = item.getIconResourceId();
+        		if(0 != id)
+        		{
+        			imageView.setImageResource(item.getIconResourceId());	
+        		}
+        		else
+        		{
+        			imageView.setImageDrawable(item.getIconDrawable());
+        		}
         	}
         	else
         	{

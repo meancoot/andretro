@@ -13,6 +13,7 @@ import android.os.*;
 import android.widget.*;
 import android.view.*;
 import android.view.inputmethod.*;
+import android.graphics.drawable.*;
 
 class ModuleWrapper implements IconAdapterItem
 {
@@ -39,6 +40,11 @@ class ModuleWrapper implements IconAdapterItem
     {
     	return 0;
     }
+    
+    @Override public Drawable getIconDrawable()
+    {
+    	return null;
+    }
 }
 
 public class ModuleActivity extends Activity implements AdapterView.OnItemClickListener
@@ -51,10 +57,10 @@ public class ModuleActivity extends Activity implements AdapterView.OnItemClickL
     {
         super.onCreate(savedInstanceState);
         
-        setContentView(R.layout.directory_list);
+        setContentView(R.layout.line_list);
         
         // Setup the list
-        adapter = new IconAdapter<ModuleWrapper>(this, R.layout.directory_list_item);
+        adapter = new IconAdapter<ModuleWrapper>(this, R.layout.line_list_item);
         ListView list = (ListView)findViewById(R.id.list);
         list.setAdapter(adapter);
         list.setOnItemClickListener(this);

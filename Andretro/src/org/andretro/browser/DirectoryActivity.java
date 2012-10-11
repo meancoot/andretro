@@ -13,6 +13,7 @@ import android.os.*;
 import android.widget.*;
 import android.view.*;
 import android.view.inputmethod.*;
+import android.graphics.drawable.*;
 
 class FileWrapper implements IconAdapterItem
 {
@@ -40,6 +41,11 @@ class FileWrapper implements IconAdapterItem
     @Override public int getIconResourceId()
     {
     	return file.isFile() ? R.drawable.file : R.drawable.folder;
+    }
+    
+    @Override public Drawable getIconDrawable()
+    {
+    	return null;
     }
     
     public int compareTo(FileWrapper aOther)
@@ -72,14 +78,14 @@ public class DirectoryActivity extends Activity implements AdapterView.OnItemCli
     {
         super.onCreate(savedInstanceState);
         
-        setContentView(R.layout.directory_list);
+        setContentView(R.layout.line_list);
         
         inRoot = getIntent().getBooleanExtra("inRoot", false);
         moduleName = getIntent().getStringExtra("moduleName");
         moduleInfo = ModuleInfo.getInfoAbout(getAssets(), new File(moduleName));
         
         // Setup the list
-        adapter = new IconAdapter<FileWrapper>(this, R.layout.directory_list_item);
+        adapter = new IconAdapter<FileWrapper>(this, R.layout.line_list_item);
         ListView list = (ListView)findViewById(R.id.list);
         list.setAdapter(adapter);
         list.setOnItemClickListener(this);
