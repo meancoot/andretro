@@ -19,6 +19,7 @@ class SlotWrapper implements IconAdapterItem
     public final int slot;
     public final boolean enabled;
     public final String text;
+    public final Drawable thumbNail;
 
     public SlotWrapper(int aSlot, boolean aLoading)
     {
@@ -30,6 +31,10 @@ class SlotWrapper implements IconAdapterItem
 
     	enabled = !aLoading || hasSlotFile;
     	text = "Slot " + aSlot + " (" + slotFileDate + ")";
+    	
+    	// Get thumb
+    	final File thumbFile = new File(Game.getGameDataName("tb" + aSlot));
+    	thumbNail = thumbFile.isFile() ? Drawable.createFromPath(thumbFile.getAbsolutePath()) : null;
     }
         
     @Override public boolean isEnabled()
@@ -49,7 +54,7 @@ class SlotWrapper implements IconAdapterItem
     
     @Override public Drawable getIconDrawable()
     {
-    	return null;
+    	return thumbNail;
     }
 }
 

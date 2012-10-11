@@ -44,6 +44,7 @@ public final class Game implements Runnable
     static int fastForwardSpeed = 1;
     static boolean fastForwardDefault;
     static int rewindKey;
+    static String screenShotName;
 
     // Functions to retrieve game data, careful as the data may be null, or outdated!    
     public static Doodads.Set getInputs()
@@ -160,6 +161,14 @@ public final class Game implements Runnable
 	    			Present.VideoFrame frame = Present.getFrameBuffer();
     				int len = LibRetro.run(frame.pixels, frame.size, audioSamples, Input.getBits(inputs.getDevice(0, 0)), rewindKeyPressed);
     				
+    				// Write any pending screen shots
+    				if(null != screenShotName)
+    				{
+    					frame.writeToPng(screenShotName);
+    					screenShotName = null;
+    				}
+    				
+    				// Present
     				if((++frameCounter >= frameTarget) && 0 != frame.size[0] && 0 != frame.size[1])
     				{
     	    			frame.aspect = avInfo.aspectRatio;

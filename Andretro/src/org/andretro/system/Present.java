@@ -6,6 +6,7 @@ import java.nio.*;
 import java.util.concurrent.*;
 
 import android.content.*;
+import android.graphics.*;
 
 import static android.opengl.GLES20.*;
 
@@ -41,9 +42,44 @@ public final class Present
     public static class VideoFrame
     {
     	private VideoFrame() {}
-    	public final ByteBuffer pixels = ByteBuffer.allocateDirect(1024 * 1024 * 2);
+    	public final ByteBuffer pixels = ByteBuffer.allocateDirect(1024 * 1024 * 2).order(ByteOrder.nativeOrder());
     	public final int[] size = new int[3];
     	public float aspect;
+    	
+    	public void writeToPng(final String aFileName)
+    	{
+    		// Ugly, but effective
+    		final int width = size[0];
+    		final int height = size[1];
+    		final int total = width * height;
+    		final ShortBuffer spixels = pixels.asShortBuffer();
+    		
+    		// Convert to RGB32 :(
+    		final int[] colors = new int[total];
+    		for(int i = 0; i != total; i ++)
+    		{
+    			final int color = spixels.get(i);
+    			final int r = (color >> 11) & 0x1F;
+    			final int g = (color >> 6) & 0x1F;
+    			final int b = (color >> 1) & 0x1F;
+    			
+    			colors[i] = Color.argb(0xFF, r << 3, g << 3, b << 3);
+    		}
+    		
+    		// Make bitmap
+    		try
+    		{
+    			final Bitmap image = Bitmap.createBitmap(colors, width, height, Bitmap.Config.ARGB_8888);
+    			final FileOutputStream output = new FileOutputStream(aFileName);
+    			image.compress(Bitmap.CompressFormat.PNG, 100, output);
+    			output.close();
+    			image.recycle();
+    		}
+    		catch(Exception e)
+    		{
+    			throw new RuntimeException(e);
+    		}
+    	}
     }
     
     public static VideoFrame getFrameBuffer() throws InterruptedException

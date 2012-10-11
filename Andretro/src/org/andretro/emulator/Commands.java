@@ -74,6 +74,7 @@ public final class Commands
             else
             {
                 LibRetro.serializeToFile(Game.getGameDataName("st" + slot));
+                Game.screenShotName = Game.getGameDataName("tb" + slot);
             }
         }
 	}
