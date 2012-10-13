@@ -1,5 +1,7 @@
 package org.andretro.emulator;
 import java.io.*;
+import java.text.*;
+import java.util.*;
 
 import android.content.*;
 import android.view.*;
@@ -49,6 +51,14 @@ public final class Commands
 	    }
 	}
 	
+	public static final class TakeScreenShot extends CommandQueue.BaseCommand
+	{		
+		@Override protected void perform()
+		{
+			Game.screenShotName = Game.getGameDataName("ScreenShots", DateFormat.getDateTimeInstance().format(new Date()) + ".png");
+		}
+	}
+	
 	public static final class StateAction extends CommandQueue.BaseCommand
 	{
 	    private final boolean load;
@@ -69,12 +79,12 @@ public final class Commands
         {
             if(load)
             {
-                LibRetro.unserializeFromFile(Game.getGameDataName("st" + slot));
+                LibRetro.unserializeFromFile(Game.getGameDataName("SaveStates", "st" + slot));
             }
             else
             {
-                LibRetro.serializeToFile(Game.getGameDataName("st" + slot));
-                Game.screenShotName = Game.getGameDataName("tb" + slot);
+                LibRetro.serializeToFile(Game.getGameDataName("SaveStates", "st" + slot));
+                Game.screenShotName = Game.getGameDataName("SaveStates", "tb" + slot);
             }
         }
 	}

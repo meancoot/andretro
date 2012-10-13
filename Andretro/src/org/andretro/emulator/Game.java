@@ -52,9 +52,15 @@ public final class Game implements Runnable
     	return inputs;
     }
         
-    public static String getGameDataName(String aExtension)
+    public static String getGameDataName(String aSubDirectory, String aExtension)
     {
-    	return dataName + "." + aExtension;
+    	final File dir = new File(moduleInfo.getDataPath() + "/" + aSubDirectory);
+    	if(!dir.exists() && !dir.mkdirs())
+    	{
+    		throw new RuntimeException("Failed to make data directory");
+    	}
+    	
+    	return moduleInfo.getDataPath() + "/" + aSubDirectory + "/" + dataName + "." + aExtension;
     }
             
     // LIBRARY
@@ -87,9 +93,9 @@ public final class Game implements Runnable
     				inputs = new Doodads.Set(aContext.getSharedPreferences("retropad", 0), moduleInfo.getDataName(), moduleInfo.getInputData());
     				
     				// Filesystem stuff    				
-    	        	dataName = moduleInfo.getDataPath() + "/" + aFile.getName().split("\\.(?=[^\\.]+$)")[0];
-    	        	LibRetro.readMemoryRegion(LibRetro.RETRO_MEMORY_SAVE_RAM, getGameDataName("srm"));
-    	        	LibRetro.readMemoryRegion(LibRetro.RETRO_MEMORY_RTC, getGameDataName("rtc"));
+    	        	dataName = aFile.getName().split("\\.(?=[^\\.]+$)")[0];
+    	        	LibRetro.readMemoryRegion(LibRetro.RETRO_MEMORY_SAVE_RAM, getGameDataName("SaveRAM", "srm"));
+    	        	LibRetro.readMemoryRegion(LibRetro.RETRO_MEMORY_RTC, getGameDataName("SaveRAM", "rtc"));
 
     	        	// Load settings
     				new Commands.RefreshSettings(aContext.getSharedPreferences(moduleInfo.getDataName(), 0)).run();
@@ -113,8 +119,8 @@ public final class Game implements Runnable
     	
     	if(gameLoaded && !gameClosed)
     	{
-        	LibRetro.writeMemoryRegion(LibRetro.RETRO_MEMORY_SAVE_RAM, getGameDataName("srm"));
-        	LibRetro.writeMemoryRegion(LibRetro.RETRO_MEMORY_RTC, getGameDataName("rtc"));
+        	LibRetro.writeMemoryRegion(LibRetro.RETRO_MEMORY_SAVE_RAM, getGameDataName("SaveRAM", "srm"));
+        	LibRetro.writeMemoryRegion(LibRetro.RETRO_MEMORY_RTC, getGameDataName("SaveRAM", "rtc"));
 
    			LibRetro.unloadGame();
     		LibRetro.deinit();

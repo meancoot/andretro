@@ -15,5 +15,6 @@
         <item >Pixel Aspect</item>
     </string-array>
         <string name="file_type_icon">File type icon</string>
+        <string name="screenshot">Take Screenshot</string>
 
 </resources>

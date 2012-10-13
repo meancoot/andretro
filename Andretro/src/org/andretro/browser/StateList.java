@@ -25,7 +25,7 @@ class SlotWrapper implements IconAdapterItem
     {
         slot = aSlot;
         
-    	final File slotFile = new File(Game.getGameDataName("st" + aSlot));
+    	final File slotFile = new File(Game.getGameDataName("SaveStates", "st" + aSlot));
     	final boolean hasSlotFile = slotFile.isFile() && slotFile.exists();
     	final String slotFileDate = hasSlotFile ? DateFormat.getDateTimeInstance().format(new Date(slotFile.lastModified())) : "EMPTY";
 
@@ -33,7 +33,7 @@ class SlotWrapper implements IconAdapterItem
     	text = "Slot " + aSlot + " (" + slotFileDate + ")";
     	
     	// Get thumb
-    	final File thumbFile = new File(Game.getGameDataName("tb" + aSlot));
+    	final File thumbFile = new File(Game.getGameDataName("SaveStates", "tb" + aSlot));
     	thumbNail = thumbFile.isFile() ? Drawable.createFromPath(thumbFile.getAbsolutePath()) : null;
     }
         

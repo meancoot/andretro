@@ -6,6 +6,7 @@
     <item android:id="@+id/input_method_select" android:title="@string/input_method" android:showAsAction="always"></item>
     <item android:id="@+id/system_settings" android:title="@string/system_settings"></item><item android:id="@+id/input_settings" android:title="@string/input_settings"></item>
     <item android:id="@+id/show_on_screen_input" android:checkable="true" android:title="@string/show_on_screen_input" android:checked="true"></item>
+    <item android:id="@+id/screenshot" android:title="@string/screenshot"></item>
     
     
 

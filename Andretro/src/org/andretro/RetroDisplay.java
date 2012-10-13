@@ -240,6 +240,17 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         	refreshWindowAndInput = true;
         }
         
+        if(aItem.getItemId() == R.id.screenshot)
+        {
+        	Game.queueCommand(new Commands.TakeScreenShot().setCallback(new CommandQueue.Callback(this, new Runnable()
+            {
+                @Override public void run()
+                {
+                    Toast.makeText(RetroDisplay.this, "Screenshot Saved", Toast.LENGTH_SHORT).show();
+                }
+            })));
+        }
+        
         if(aItem.getItemId() == R.id.reset)
         {
             Game.queueCommand(new Commands.Reset().setCallback(new CommandQueue.Callback(this, new Runnable()
