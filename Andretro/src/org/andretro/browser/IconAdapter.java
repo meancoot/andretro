@@ -55,7 +55,7 @@ class IconAdapter<T extends IconAdapterItem> extends ArrayAdapter<T>
         		final int id = item.getIconResourceId();
         		if(0 != id)
         		{
-        			imageView.setImageResource(item.getIconResourceId());	
+        			imageView.setImageResource(id);	
         		}
         		else
         		{
