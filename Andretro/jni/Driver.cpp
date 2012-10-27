@@ -14,6 +14,8 @@ namespace
     FileReader ROM;
     Rewinder rewinder;
     
+    const char* systemDirectory;
+
     JNIEnv* env;
     jshortArray audioData;
     jint audioLength;
@@ -77,7 +79,8 @@ static bool retro_environment_imp(unsigned cmd, void *data)
 	}
 	else if(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY == cmd)
 	{
-		return false;
+		*(const char**)data = systemDirectory;
+		return true;
 	}
 	else if(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT == cmd)
 	{
@@ -171,7 +174,7 @@ static int16_t retro_input_state_imp(unsigned port, unsigned device, unsigned in
 #define JNIFUNC(RET, FUNCTION) extern "C" RET Java_ ## org_libretro_LibRetro_ ## FUNCTION
 #define JNIARGS JNIEnv* aEnv, jclass aClass
 
-JNIFUNC(jboolean, loadLibrary)(JNIARGS, jstring path)
+JNIFUNC(jboolean, loadLibrary)(JNIARGS, jstring path, jstring systemDir)
 {
     JavaChars libname(aEnv, path);
     
@@ -181,6 +184,7 @@ JNIFUNC(jboolean, loadLibrary)(JNIARGS, jstring path)
     try
     {
         module = new Library(libname);
+        systemDirectory = strdup(JavaChars(aEnv, systemDir));
         return true;
     }
     catch(...)

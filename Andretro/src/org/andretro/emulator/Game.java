@@ -80,7 +80,7 @@ public final class Game implements Runnable
     	{
     		moduleInfo = ModuleInfo.getInfoAbout(aContext.getAssets(), new File(aLibrary));
     		
-    		if(LibRetro.loadLibrary(aLibrary))
+    		if(LibRetro.loadLibrary(aLibrary, moduleInfo.getDataPath()))
     		{
     			LibRetro.init();
     			

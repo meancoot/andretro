@@ -112,7 +112,7 @@ public final class LibRetro
 	    public double sampleRate;
 	}
 	
-	public static native boolean loadLibrary(String aPath);
+	public static native boolean loadLibrary(String aPath, String aSystemDirectory);
 	public static native void unloadLibrary();
 	public static native void init();
 	public static native void deinit();
