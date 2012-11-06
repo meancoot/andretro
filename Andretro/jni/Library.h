@@ -3,7 +3,10 @@
 
 #include <dlfcn.h>
 #include <exception>
+#include <android/log.h>
 #include "libretro.h"
+
+#define LOG(...) __android_log_print(ANDROID_LOG_ERROR, "Andretro", __VA_ARGS__) 
 
 class Library
 {
@@ -82,6 +85,7 @@ class Library
             
             if(!result)
             {
+                LOG("openLib failed: %s\n", dlerror());
                 throw std::exception();
             }
             
@@ -94,6 +98,7 @@ class Library
             
             if(!result)
             {
+                LOG("getFn failed: %s\n", dlerror());
                 throw std::exception();
             }
             
