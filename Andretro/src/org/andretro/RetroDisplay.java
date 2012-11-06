@@ -24,6 +24,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 	private GLSurfaceView view;
 	private boolean questionOpen;
 	private boolean onScreenInput;
+	private boolean isPaused;
 	private boolean showActionBar;
 	private volatile boolean refreshWindowAndInput = true;
 	private String moduleName;
@@ -71,6 +72,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 
         questionOpen = (null == aState) ? false : aState.getBoolean("questionOpen", false);
         onScreenInput = (null == aState) ? true : aState.getBoolean("onScreenInput", true);
+        isPaused = (null == aState) ? false : aState.getBoolean("isPaused", false);
         showActionBar = (null == aState) ? true : aState.getBoolean("showActionBar", true);
         moduleName = getIntent().getStringExtra("moduleName");
         moduleInfo = ModuleInfo.getInfoAbout(getAssets(), new File(moduleName)); 
@@ -209,6 +211,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     	super.onSaveInstanceState(aState);
     	aState.putBoolean("questionOpen", questionOpen);
     	aState.putBoolean("onScreenInput", onScreenInput);
+    	aState.putBoolean("onPause", isPaused);
     	aState.putBoolean("showActionBar", showActionBar);
     }
     
@@ -219,6 +222,8 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     	getMenuInflater().inflate(R.menu.retro_display, aMenu);
     	
     	aMenu.findItem(R.id.show_on_screen_input).setChecked(onScreenInput);
+    	aMenu.findItem(R.id.pause).setChecked(isPaused);
+
     	
         return true;
     }
@@ -262,6 +267,20 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
             })));
 
             return true;
+        }
+        
+        if(aItem.getItemId() == R.id.pause)
+        {
+        	isPaused = !isPaused;
+        	aItem.setChecked(isPaused);
+        	
+        	Game.queueCommand(new Commands.Pause(isPaused).setCallback(new CommandQueue.Callback(this, new Runnable()
+        	{
+        		@Override public void run()
+        		{
+        			Toast.makeText(RetroDisplay.this, "Game " + (isPaused ? "Paused" : "Unpaused"), Toast.LENGTH_SHORT).show();
+        		}
+        	})));
         }
     
         // Start a new activity

@@ -16,5 +16,6 @@
     </string-array>
         <string name="file_type_icon">File type icon</string>
         <string name="screenshot">Take Screenshot</string>
+        <string name="pause">Pause</string>
 
 </resources>
