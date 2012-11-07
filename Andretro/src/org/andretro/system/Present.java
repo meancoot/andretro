@@ -5,13 +5,16 @@ import java.io.*;
 import java.nio.*;
 import java.util.concurrent.*;
 
+import javax.microedition.khronos.opengles.*;
+
 import android.content.*;
 import android.graphics.*;
+import android.opengl.*;
 
 import static android.opengl.GLES20.*;
 
 // NOT THREAD SAFE
-public final class Present
+public final class Present implements GLSurfaceView.Renderer
 {	
     private static final int FRAMESIZE = 1024;
 
@@ -20,6 +23,8 @@ public final class Present
     private static volatile boolean smoothMode = true;
     private static volatile boolean aspectMode = false;
     private static volatile float aspectForce = 0.0f;
+    private static String vertexShader;
+    private static String fragmentShader;
     
     private static final float[] vertexBufferData = new float[]
     {
@@ -103,7 +108,7 @@ public final class Present
     }
     
     // OpenGL Renderer
-    private static int buildShader(int aType, final InputStream aSource)
+    private static String getShaderString(final InputStream aSource)
     {
     	String source = "";
     	
@@ -116,9 +121,14 @@ public final class Present
     	{
     	
     	}
-    	
+
+    	return source;
+    }
+    
+    private static int buildShader(int aType, final String aSource)
+    {
     	int result = glCreateShader(aType);
-    	glShaderSource(result, source);
+    	glShaderSource(result, aSource);
     	glCompileShader(result);
     	
     	int[] state = new int[1];
@@ -131,18 +141,25 @@ public final class Present
     	return result;
     }
     
-    public static void initialize(Context aContext)
-    {    
-    	// Program    	
+    public static GLSurfaceView.Renderer createRenderer(Context aContext)
+    {
+    	vertexShader = getShaderString(aContext.getResources().openRawResource(R.raw.vertex_shader));
+    	fragmentShader = getShaderString(aContext.getResources().openRawResource(R.raw.fragment_shader));
+    	return new Present();
+    }
+    
+    @Override public void onSurfaceCreated(GL10 gl, javax.microedition.khronos.egl.EGLConfig config)
+    {    	
+    	// Program
     	programID = glCreateProgram();
-    	glAttachShader(programID, buildShader(GL_VERTEX_SHADER, aContext.getResources().openRawResource(R.raw.vertex_shader)));
-    	glAttachShader(programID, buildShader(GL_FRAGMENT_SHADER, aContext.getResources().openRawResource(R.raw.fragment_shader)));
+    	glAttachShader(programID, buildShader(GL_VERTEX_SHADER, vertexShader));
+    	glAttachShader(programID, buildShader(GL_FRAGMENT_SHADER, fragmentShader));
     	glBindAttribLocation(programID, 0, "pos");
     	glBindAttribLocation(programID, 1, "tex");
     	
     	glLinkProgram(programID);
     	glUseProgram(programID);
-    	
+
     	id[2] = glGetUniformLocation(programID, "screenWidth");
     	id[3] = glGetUniformLocation(programID, "screenHeight");
     	id[4] = glGetUniformLocation(programID, "imageWidth");
@@ -170,7 +187,7 @@ public final class Present
         glVertexAttribPointer(1, 2, GL_FLOAT, false, 4 * 4, 4 * 2);
     }
     
-    public static void setScreenSize(int aWidth, int aHeight)
+    @Override public void onSurfaceChanged(GL10 gl, int aWidth, int aHeight)
     {
         glViewport(0, 0, aWidth, aHeight);
         
@@ -189,39 +206,46 @@ public final class Present
     	aspectForce = aAspect;
     }
     
-    public static void present() throws InterruptedException
+    @Override public void onDrawFrame(GL10 gl)
     {
-    	VideoFrame next = readyFrames.poll(250, TimeUnit.MILLISECONDS);
-    	
-    	if(null != next)
-    	{	
-    		if((0 < next.size[0]) && (0 < next.size[1]))
-    		{
-    			// Do this first, the emulator is waiting to get the buffer back!
-    	    	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, next.size[0], next.size[1], GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, next.pixels);
-    	    	
-    	    	float width = (float)next.size[0];
-    	    	float height = (float)next.size[1];
-    	    	float aspect = next.aspect;
-    	    	float rotate = (1 == (next.size[2] & 1)) ? 1.0f : 0.0f;
-    	    	
-    	        emptyFrames.put(next);
-    	        
-    	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, smoothMode ? GL_LINEAR : GL_NEAREST);
-    	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, smoothMode ? GL_LINEAR : GL_NEAREST);
-    	        
-    	        // Now send the rest to OpenGL    	        
-    	        glUniform1f(id[4], width);
-    			glUniform1f(id[5], height);
-    			glUniform1f(id[6], !aspectMode ? aspect : ((aspectForce < 0.0f) ? (width / height) : aspectForce));
-    			glUniform1f(id[7], rotate);
-    		
-    			glDrawArrays(GL_TRIANGLE_STRIP, next.size[2] * 4, 4);
-    		}
-    		else
-    		{
-    			emptyFrames.put(next);
-    		}
+    	try
+    	{
+	    	VideoFrame next = readyFrames.poll(250, TimeUnit.MILLISECONDS);
+	    	
+	    	if(null != next)
+	    	{	
+	    		if((0 < next.size[0]) && (0 < next.size[1]))
+	    		{
+	    			// Do this first, the emulator is waiting to get the buffer back!
+	    	    	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, next.size[0], next.size[1], GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, next.pixels);
+	    	    	
+	    	    	float width = (float)next.size[0];
+	    	    	float height = (float)next.size[1];
+	    	    	float aspect = next.aspect;
+	    	    	float rotate = (1 == (next.size[2] & 1)) ? 1.0f : 0.0f;
+	    	    	
+	    	        emptyFrames.put(next);
+	    	        
+	    	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, smoothMode ? GL_LINEAR : GL_NEAREST);
+	    	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, smoothMode ? GL_LINEAR : GL_NEAREST);
+	    	        
+	    	        // Now send the rest to OpenGL    	        
+	    	        glUniform1f(id[4], width);
+	    			glUniform1f(id[5], height);
+	    			glUniform1f(id[6], !aspectMode ? aspect : ((aspectForce < 0.0f) ? (width / height) : aspectForce));
+	    			glUniform1f(id[7], rotate);
+	    		
+	    			glDrawArrays(GL_TRIANGLE_STRIP, next.size[2] * 4, 4);
+	    		}
+	    		else
+	    		{
+	    			emptyFrames.put(next);
+	    		}
+	    	}
+    	}
+    	catch(InterruptedException e)
+    	{
+    		Thread.currentThread().interrupt();
     	}
     }
 }

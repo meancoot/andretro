@@ -5,7 +5,6 @@ import org.andretro.settings.*;
 import org.andretro.system.*;
 import org.andretro.input.view.*;
 
-import javax.microedition.khronos.opengles.*;
 import java.io.*;
 
 import android.view.*;
@@ -26,45 +25,8 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 	private boolean onScreenInput;
 	private boolean isPaused;
 	private boolean showActionBar;
-	private volatile boolean refreshWindowAndInput = true;
 	private String moduleName;
 	private ModuleInfo moduleInfo;
-	
-	class Draw implements GLSurfaceView.Renderer
-	{		
-	    @Override public void onSurfaceCreated(GL10 gl, javax.microedition.khronos.egl.EGLConfig config)
-	    {
-	        Present.initialize(RetroDisplay.this);
-	    }    
-
-	    @Override public void onSurfaceChanged(GL10 gl, int aWidth, int aHeight)
-	    {
-	        Present.setScreenSize(aWidth, aHeight);
-	    }
-
-	    @Override public void onDrawFrame(GL10 gl)
-	    {
-	    	if(refreshWindowAndInput)
-	    	{	    		
-	    		RetroDisplay.this.runOnUiThread(new Runnable()
-	    		{
-	    			@Override public void run()
-	    			{
-	    				setupWindowAndControls();
-	    			}
-	    		});
-	    	}
-	    	
-	    	try
-	    	{
-	    		Present.present();
-	    	}
-	    	catch(InterruptedException e)
-	    	{
-	    		Thread.currentThread().interrupt();
-	    	}
-	    }    		
-	}
 	
     @Override @TargetApi(14) public void onCreate(Bundle aState)
     {	
@@ -86,7 +48,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 
         view = (GLSurfaceView)findViewById(R.id.renderer);
         view.setEGLContextClientVersion(2);
-        view.setRenderer(new Draw());
+        view.setRenderer(Present.createRenderer(this));
 		view.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 		view.setKeepScreenOn(true);
 		
@@ -99,7 +61,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     @Override public void onResume()
     {
     	super.onResume();
-    	refreshWindowAndInput = true;
+    	setupWindowAndControls();
     	
 	    Game.queueCommand(new Commands.SetPresentNotify(new Runnable()
 	    {
@@ -147,7 +109,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     		}
     		
     		questionOpen = false;
-    		refreshWindowAndInput = true;
+    		setupWindowAndControls();
     	}
     }
     
@@ -164,7 +126,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 				if((top && !showActionBar) || (!top && showActionBar))
 				{
 					showActionBar = !showActionBar;
-					refreshWindowAndInput = true;
+					setupWindowAndControls();
 					return true;		
 				}
 			}
@@ -227,86 +189,59 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     	
         return true;
     }
-        
+    
+    private void runCommandWithText(CommandQueue.BaseCommand aCommand, final String aText)
+    {
+    	Game.queueCommand(aCommand.setCallback(new CommandQueue.Callback(this, new Runnable()
+    	{
+    		@Override public void run()
+    		{
+    			Toast.makeText(getApplicationContext(), aText, Toast.LENGTH_SHORT).show();
+    		}
+    	}
+    	)));
+    }
+    
     @Override public boolean onOptionsItemSelected(MenuItem aItem)
     {
-        if(aItem.getItemId() == R.id.input_method_select)
-        {
-        	InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-        	imm.showInputMethodPicker();
-        	return true;
-        }
-
-        if(aItem.getItemId() == R.id.show_on_screen_input)
-        {
-        	onScreenInput = !aItem.isChecked();
-        	aItem.setChecked(onScreenInput);
-        	
-        	refreshWindowAndInput = true;
-        }
-        
-        if(aItem.getItemId() == R.id.screenshot)
-        {
-        	Game.queueCommand(new Commands.TakeScreenShot().setCallback(new CommandQueue.Callback(this, new Runnable()
-            {
-                @Override public void run()
-                {
-                    Toast.makeText(RetroDisplay.this, "Screenshot Saved", Toast.LENGTH_SHORT).show();
-                }
-            })));
-        }
-        
-        if(aItem.getItemId() == R.id.reset)
-        {
-            Game.queueCommand(new Commands.Reset().setCallback(new CommandQueue.Callback(this, new Runnable()
-            {
-                @Override public void run()
-                {
-                    Toast.makeText(RetroDisplay.this, "Game Reset", Toast.LENGTH_SHORT).show();
-                }
-            })));
-
-            return true;
-        }
-        
-        if(aItem.getItemId() == R.id.pause)
-        {
-        	isPaused = !isPaused;
-        	aItem.setChecked(isPaused);
-        	
-        	Game.queueCommand(new Commands.Pause(isPaused).setCallback(new CommandQueue.Callback(this, new Runnable()
-        	{
-        		@Override public void run()
-        		{
-        			Toast.makeText(RetroDisplay.this, "Game " + (isPaused ? "Paused" : "Unpaused"), Toast.LENGTH_SHORT).show();
-        		}
-        	})));
-        }
-    
-        // Start a new activity
-        final Intent intent = new Intent().putExtra("moduleName", moduleName);
-        
-        if(aItem.getItemId() == R.id.save_state || aItem.getItemId() == R.id.load_state)
-        {
-        	intent.setClass(this, StateList.class).putExtra("loading", aItem.getItemId() == R.id.load_state);
-        	startActivity(intent);
-        	return true;
-        }
-        else if(aItem.getItemId() == R.id.input_settings || aItem.getItemId() == R.id.system_settings)
-        {
-        	intent.setClass(this, (aItem.getItemId() == R.id.system_settings) ? SettingActivity.class : InputActivity.class);
-        	startActivity(intent);
-        	return true;
-        }
-        
-        // Unhandled
-        return super.onOptionsItemSelected(aItem);
+    	int itemID = aItem.getItemId();
+    	
+    	switch(itemID)
+    	{	
+    		case R.id.show_on_screen_input:
+    		{
+            	onScreenInput = !aItem.isChecked();
+            	aItem.setChecked(onScreenInput);
+            	
+            	setupWindowAndControls();
+            	return true;
+    		}
+    		
+    		case R.id.pause:
+    		{
+            	isPaused = !isPaused;
+            	aItem.setChecked(isPaused);
+            	
+            	runCommandWithText(new Commands.Pause(isPaused), "Game " + (isPaused ? "Paused" : "Unpaused"));
+            	return true;
+    		}
+    		
+    		case R.id.input_method_select: ((InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE)).showInputMethodPicker(); return true;
+    		
+    		case R.id.screenshot: runCommandWithText(new Commands.TakeScreenShot(), "Screenshot Saved"); return true;
+    		case R.id.reset: runCommandWithText(new Commands.Reset(), "Game Reset"); return true;
+    		
+    		case R.id.save_state: startActivity(new Intent(this, StateList.class).putExtra("moduleName", moduleName).putExtra("loading",  false)); return true;
+    		case R.id.load_state: startActivity(new Intent(this, StateList.class).putExtra("moduleName", moduleName).putExtra("loading",  true)); return true;
+    		case R.id.input_settings: startActivity(new Intent(this, InputActivity.class).putExtra("moduleName", moduleName)); return true;
+    		case R.id.system_settings: startActivity(new Intent(this, SettingActivity.class).putExtra("moduleName", moduleName)); return true;
+    		
+    		default: return super.onOptionsItemSelected(aItem);
+    	}
     }
         
     @TargetApi(14) private void setupWindowAndControls()
     {
-    	refreshWindowAndInput = false;
-    	
     	// Set Window Properties
         if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB)
         {        	
