@@ -13,6 +13,7 @@
     <PreferenceCategory android:title="Scaling">
         <CheckBoxPreference android:title="Linear Filtering" android:persistent="true" android:key="scaling_smooth" android:summary="Use a smoothing effect when scaling the image." android:defaultValue="true"/>
         <ListPreference android:defaultValue="Default" android:entryValues="@array/aspect_mode_values" android:summary="Force an aspect ratio on the game's image." android:persistent="true" android:title="Aspect Ratio" android:key="scaling_aspect_mode" android:entries="@array/aspect_mode_values"/>
+        <ListPreference android:key="scaling_orientation" android:title="Orientation" android:summary="Force a screen orientation" android:persistent="true" android:defaultValue="Sensor" android:entryValues="@array/orientation_modes" android:entries="@array/orientation_modes"/>
     </PreferenceCategory>
     
 

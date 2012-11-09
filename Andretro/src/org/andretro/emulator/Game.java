@@ -5,7 +5,7 @@ import org.libretro.*;
 
 import java.io.*;
 
-import android.content.*;
+import android.app.*;
 
 public final class Game implements Runnable
 {
@@ -64,6 +64,7 @@ public final class Game implements Runnable
     }
             
     // LIBRARY
+    static Activity loadingActivity;
     private static ModuleInfo moduleInfo;
     private static boolean gameLoaded;
     private static boolean gameClosed;
@@ -72,13 +73,13 @@ public final class Game implements Runnable
     private static Doodads.Set inputs;
     private static String dataName;
 
-    static void loadGame(Context aContext, String aLibrary, File aFile)
+    static void loadGame(Activity aActivity, String aLibrary, File aFile)
     {
     	eventQueue.assertThread();
     	
     	if(!gameLoaded && !gameClosed && null != aFile && aFile.isFile())
     	{
-    		moduleInfo = ModuleInfo.getInfoAbout(aContext.getAssets(), new File(aLibrary));
+    		moduleInfo = ModuleInfo.getInfoAbout(aActivity.getAssets(), new File(aLibrary));
     		
     		if(LibRetro.loadLibrary(aLibrary, moduleInfo.getDataPath()))
     		{
@@ -90,7 +91,7 @@ public final class Game implements Runnable
     				LibRetro.getSystemInfo(systemInfo);
     				LibRetro.getSystemAVInfo(avInfo);
 
-    				inputs = new Doodads.Set(aContext.getSharedPreferences("retropad", 0), moduleInfo.getDataName(), moduleInfo.getInputData());
+    				inputs = new Doodads.Set(aActivity.getSharedPreferences("retropad", 0), moduleInfo.getDataName(), moduleInfo.getInputData());
     				
     				// Filesystem stuff    				
     	        	dataName = aFile.getName().split("\\.(?=[^\\.]+$)")[0];
@@ -98,7 +99,8 @@ public final class Game implements Runnable
     	        	LibRetro.readMemoryRegion(LibRetro.RETRO_MEMORY_RTC, getGameDataName("SaveRAM", "rtc"));
 
     	        	// Load settings
-    				new Commands.RefreshSettings(aContext.getSharedPreferences(moduleInfo.getDataName(), 0)).run();
+    	        	loadingActivity = aActivity;
+    				new Commands.RefreshSettings(aActivity.getSharedPreferences(moduleInfo.getDataName(), 0)).run();
     	            new Commands.RefreshInput().run();
     	            
     	            gameLoaded = true;

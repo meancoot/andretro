@@ -4,7 +4,9 @@ import java.text.*;
 import java.util.*;
 
 import android.content.*;
+import android.content.pm.*;
 import android.view.*;
+import android.app.*;
 
 import org.andretro.system.*;
 import org.libretro.LibRetro;
@@ -13,25 +15,25 @@ public final class Commands
 {	
 	public static final class LoadGame extends CommandQueue.BaseCommand
 	{
-		private final Context context;
+		private final Activity activity;
 		private final String library;
 		private final File file;
 		
-		public LoadGame(Context aContext, String aLibrary, File aFile)
+		public LoadGame(Activity aActivity, String aLibrary, File aFile)
 		{
-			context = aContext;
+			activity = aActivity;
 			library = aLibrary;
 			file = aFile;
 			
-			if(null == context || null == library || null == aFile)
+			if(null == activity || null == library || null == aFile)
 			{
-				throw new NullPointerException("Neither aContext, aLibrary nor aFile may be null");
+				throw new NullPointerException("Neither aActivity, aLibrary nor aFile may be null");
 			}
 		}
 		
 		@Override protected void perform()
 		{
-			Game.loadGame(context, library, file);
+			Game.loadGame(activity, library, file);
 		}
 	}
 	
@@ -168,6 +170,21 @@ public final class Commands
 			else
 			{
 				Present.setForcedAspect(false, 0.0f);
+			}
+			
+			// Orientation
+			final String orientMode = settings.getString("scaling_orientation", "Sensor");
+			if("Portrait".equals(orientMode))
+			{
+				Game.loadingActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+			}
+			else if("Landscape".equals(orientMode))
+			{
+				Game.loadingActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+			}
+			else
+			{
+				Game.loadingActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
 			}
 			
 			// Fast forward

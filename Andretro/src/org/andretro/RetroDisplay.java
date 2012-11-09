@@ -118,7 +118,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     	if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB)
     	{
 	    	final ActionBar bar = getActionBar();
-	    	final float barSize = (null == bar) ? 0 : bar.getHeight() * getResources().getDisplayMetrics().density;
+	    	final float barSize = 82;
 	    	
 			if((null != bar) && (aEvent.getActionMasked() == MotionEvent.ACTION_DOWN))
 			{
