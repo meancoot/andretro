@@ -1,5 +1,7 @@
 package org.andretro.settings;
 
+import java.io.*;
+
 import org.andretro.emulator.*;
 
 import android.preference.*;
@@ -13,7 +15,10 @@ public class InputActivity extends PreferenceActivity
 	{
 		super.onCreate(aState);
 		
-		getPreferenceManager().setSharedPreferencesName("retropad");
+		String moduleName = getIntent().getStringExtra("moduleName");
+		ModuleInfo moduleInfo = ModuleInfo.getInfoAbout(getAssets(), new File(moduleName));
+
+		getPreferenceManager().setSharedPreferencesName(moduleInfo.getDataName());
 
 		// Setup the preference list
 		PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(this);

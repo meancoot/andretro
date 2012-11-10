@@ -9,20 +9,15 @@
                 <button shortname="down" fullname="Down" mappedkey="DOWN"/>
                 <button shortname="left" fullname="Left" mappedkey="LEFT"/>
                 <button shortname="right" fullname="Right" mappedkey="RIGHT"/>
-                <button shortname="select" fullname="Select" mappedkey="SELECT"/>
                 <button shortname="start" fullname="Start" mappedkey="START"/>
+                <button shortname="a" fullname="A" mappedkey="Y"/>
                 <button shortname="b" fullname="B" mappedkey="B"/>
-                <button shortname="a" fullname="A" mappedkey="A"/>
-                <button shortname="x" fullname="X" mappedkey="X"/>
-                <button shortname="y" fullname="Y" mappedkey="Y"/>
-                <button shortname="l1" fullname="L1" mappedkey="L1"/>
-                <button shortname="r1" fullname="R1" mappedkey="R1"/>
-                <button shortname="l2" fullname="L2" mappedkey="L2"/>
-                <button shortname="r2" fullname="R2" mappedkey="R2"/>
-                <button shortname="l3" fullname="L3" mappedkey="L3"/>
-                <button shortname="r3" fullname="R3" mappedkey="R3"/>
+                <button shortname="c" fullname="C" mappedkey="A"/>
+                <button shortname="x" fullname="X" mappedkey="L1"/>
+                <button shortname="y" fullname="Y" mappedkey="X"/>
+                <button shortname="z" fullname="Z" mappedkey="R1"/>
+                <button shortname="mode" fullname="Mode" mappedkey="SELECT"/>
             </device>
         </port>
-    </input>
-    
+    </input>    
 </retro>
