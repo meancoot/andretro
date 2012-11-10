@@ -3,7 +3,6 @@ import org.andretro.browser.*;
 import org.andretro.emulator.*;
 import org.andretro.settings.*;
 import org.andretro.system.*;
-import org.andretro.input.view.*;
 
 import java.io.*;
 
@@ -14,35 +13,36 @@ import android.opengl.*;
 import android.os.*;
 import android.content.*;
 import android.widget.*;
-import android.app.*;
 
 public class RetroDisplay extends android.support.v4.app.FragmentActivity implements QuestionDialog.QuestionHandler
 {
 	private static final int CLOSE_GAME_QUESTION = 1;
 	
-	private GLSurfaceView view;
+	private WindowManager windowManager;
+	GLSurfaceView view;
 	private boolean questionOpen;
-	private boolean onScreenInput;
 	private boolean isPaused;
 	private boolean showActionBar;
 	private String moduleName;
-	private ModuleInfo moduleInfo;
+	ModuleInfo moduleInfo;
 	
-    @Override @TargetApi(14) public void onCreate(Bundle aState)
+    @Override public void onCreate(Bundle aState)
     {	
         super.onCreate(aState);
 
+        // Setup window
+        windowManager = WindowManager.createBest();
+        windowManager.setActivity(this);
+        windowManager.windowCreating();
+        
+        // Read state
         questionOpen = (null == aState) ? false : aState.getBoolean("questionOpen", false);
-        onScreenInput = (null == aState) ? true : aState.getBoolean("onScreenInput", true);
+        windowManager.setOnScreenInput((null == aState) ? true : aState.getBoolean("onScreenInput", true));
         isPaused = (null == aState) ? false : aState.getBoolean("isPaused", false);
         showActionBar = (null == aState) ? true : aState.getBoolean("showActionBar", true);
         moduleName = getIntent().getStringExtra("moduleName");
         moduleInfo = ModuleInfo.getInfoAbout(getAssets(), new File(moduleName)); 
         
-        // Setup the window
-        final int feature = (Build.VERSION.SDK_INT <= Build.VERSION_CODES.HONEYCOMB) ? Window.FEATURE_NO_TITLE : Window.FEATURE_ACTION_BAR_OVERLAY;
-        requestWindowFeature(feature);
- 
 		// Setup the view
         setContentView(R.layout.retro_display);
 
@@ -56,12 +56,14 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
 		{
 			Game.queueCommand(new Commands.LoadGame(this, moduleName, new File(getIntent().getStringExtra("path"))));
 		}
+		
+        windowManager.windowCreated();
     }
     
     @Override public void onResume()
     {
     	super.onResume();
-    	setupWindowAndControls();
+		windowManager.setupDisplay();
     	
 	    Game.queueCommand(new Commands.SetPresentNotify(new Runnable()
 	    {
@@ -109,29 +111,17 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     		}
     		
     		questionOpen = false;
-    		setupWindowAndControls();
+    		windowManager.setupDisplay();
     	}
     }
     
-    @Override @TargetApi(11) public boolean dispatchTouchEvent(MotionEvent aEvent)
+    @Override public boolean dispatchTouchEvent(MotionEvent aEvent)
     {	
-    	if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB)
+    	if(aEvent.getActionMasked() == MotionEvent.ACTION_DOWN)
     	{
-	    	final ActionBar bar = getActionBar();
-	    	final float barSize = 82;
-	    	
-			if((null != bar) && (aEvent.getActionMasked() == MotionEvent.ACTION_DOWN))
-			{
-				final boolean top = aEvent.getY() < barSize;
-				if((top && !showActionBar) || (!top && showActionBar))
-				{
-					showActionBar = !showActionBar;
-					setupWindowAndControls();
-					return true;		
-				}
-			}
+    		windowManager.screenTouched(aEvent);
     	}
-		
+    	
 		return super.dispatchTouchEvent(aEvent);
     }
     
@@ -172,7 +162,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     {
     	super.onSaveInstanceState(aState);
     	aState.putBoolean("questionOpen", questionOpen);
-    	aState.putBoolean("onScreenInput", onScreenInput);
+    	aState.putBoolean("onScreenInput", windowManager.getOnScreenInput());
     	aState.putBoolean("onPause", isPaused);
     	aState.putBoolean("showActionBar", showActionBar);
     }
@@ -183,7 +173,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     	super.onCreateOptionsMenu(aMenu);
     	getMenuInflater().inflate(R.menu.retro_display, aMenu);
     	
-    	aMenu.findItem(R.id.show_on_screen_input).setChecked(onScreenInput);
+    	aMenu.findItem(R.id.show_on_screen_input).setChecked(windowManager.getOnScreenInput());
     	aMenu.findItem(R.id.pause).setChecked(isPaused);
 
     	
@@ -210,10 +200,8 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     	{	
     		case R.id.show_on_screen_input:
     		{
-            	onScreenInput = !aItem.isChecked();
-            	aItem.setChecked(onScreenInput);
-            	
-            	setupWindowAndControls();
+            	windowManager.setOnScreenInput(!aItem.isChecked());
+            	aItem.setChecked(windowManager.getOnScreenInput());
             	return true;
     		}
     		
@@ -238,40 +226,6 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     		
     		default: return super.onOptionsItemSelected(aItem);
     	}
-    }
-        
-    @TargetApi(14) private void setupWindowAndControls()
-    {
-    	// Set Window Properties
-        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB)
-        {        	
-        	final ActionBar bar = getActionBar();
-        	
-	        if(null != bar && showActionBar)
-	        {
-	        	bar.show();
-	        }
-	        else if(null != bar && !showActionBar)
-	        {
-	        	bar.hide();
-	        }
-        }
-
-        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-        {
-	        view.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
-        }
-        
-        // Set on screen input
-		InputGroup inputBase = (InputGroup)findViewById(R.id.base);
-    	inputBase.removeChildren();
-		
-    	if(onScreenInput)
-    	{
-			inputBase.loadInputLayout(this, moduleInfo, getResources().openRawResource(R.raw.default_retro_pad));
-    	}
-    	
-    	Input.setOnScreenInput(onScreenInput ? inputBase : null);
     }
 }
 
