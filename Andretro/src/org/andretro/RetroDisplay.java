@@ -220,7 +220,6 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     		
     		case R.id.save_state: startActivity(new Intent(this, StateList.class).putExtra("moduleName", moduleName).putExtra("loading",  false)); return true;
     		case R.id.load_state: startActivity(new Intent(this, StateList.class).putExtra("moduleName", moduleName).putExtra("loading",  true)); return true;
-    		case R.id.input_settings: startActivity(new Intent(this, InputActivity.class).putExtra("moduleName", moduleName)); return true;
     		case R.id.system_settings: startActivity(new Intent(this, SettingActivity.class).putExtra("moduleName", moduleName)); return true;
     		
     		default: return super.onOptionsItemSelected(aItem);
