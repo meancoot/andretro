@@ -8,7 +8,6 @@ import java.io.*;
 
 import android.view.*;
 import android.view.inputmethod.*;
-import android.annotation.*;
 import android.opengl.*;
 import android.os.*;
 import android.content.*;
@@ -41,7 +40,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         isPaused = (null == aState) ? false : aState.getBoolean("isPaused", false);
         showActionBar = (null == aState) ? true : aState.getBoolean("showActionBar", true);
         moduleName = getIntent().getStringExtra("moduleName");
-        moduleInfo = ModuleInfo.getInfoAbout(getAssets(), new File(moduleName)); 
+        moduleInfo = ModuleInfo.getInfoAbout(this, new File(moduleName)); 
         
 		// Setup the view
         setContentView(R.layout.retro_display);

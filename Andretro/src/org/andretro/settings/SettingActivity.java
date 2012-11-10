@@ -19,7 +19,7 @@ public class SettingActivity extends PreferenceActivity
 		super.onCreate(aState);
 		
 		moduleName = getIntent().getStringExtra("moduleName");
-		moduleInfo = ModuleInfo.getInfoAbout(getAssets(), new File(moduleName));
+		moduleInfo = ModuleInfo.getInfoAbout(this, new File(moduleName));
 		
 		getPreferenceManager().setSharedPreferencesName(moduleInfo.getDataName());
         addPreferencesFromResource(R.xml.preferences);

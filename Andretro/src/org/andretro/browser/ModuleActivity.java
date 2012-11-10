@@ -7,7 +7,6 @@ import org.andretro.system.*;
 import java.io.*;
 
 import android.content.*;
-import android.content.res.*;
 import android.app.*;
 import android.os.*;
 import android.widget.*;
@@ -20,10 +19,10 @@ class ModuleWrapper implements IconAdapterItem
 	public final File file;
 	public final ModuleInfo info;
 	
-    public ModuleWrapper(AssetManager aAssets, File aFile) throws IOException
+    public ModuleWrapper(Context aContext, File aFile) throws IOException
     {
 		file = aFile;
-		info = ModuleInfo.getInfoAbout(aAssets, aFile);
+		info = ModuleInfo.getInfoAbout(aContext, aFile);
     }
     
     @Override public boolean isEnabled()
@@ -73,7 +72,7 @@ public class ModuleActivity extends Activity implements AdapterView.OnItemClickL
         	{
         		try
         		{
-        			adapter.add(new ModuleWrapper(getAssets(), lib));;
+        			adapter.add(new ModuleWrapper(this, lib));;
         		}
         		catch(Exception e)
         		{

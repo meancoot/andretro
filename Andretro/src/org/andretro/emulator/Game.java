@@ -46,12 +46,7 @@ public final class Game implements Runnable
     static int rewindKey;
     static String screenShotName;
 
-    // Functions to retrieve game data, careful as the data may be null, or outdated!    
-    public static Doodads.Set getInputs()
-    {
-    	return inputs;
-    }
-        
+    // Functions to retrieve game data, careful as the data may be null, or outdated!            
     public static String getGameDataName(String aSubDirectory, String aExtension)
     {
     	final File dir = new File(moduleInfo.getDataPath() + "/" + aSubDirectory);
@@ -70,7 +65,6 @@ public final class Game implements Runnable
     private static boolean gameClosed;
     private static LibRetro.SystemInfo systemInfo = new LibRetro.SystemInfo();
     private static LibRetro.AVInfo avInfo = new LibRetro.AVInfo();
-    private static Doodads.Set inputs;
     private static String dataName;
 
     static void loadGame(Activity aActivity, String aLibrary, File aFile)
@@ -79,7 +73,7 @@ public final class Game implements Runnable
     	
     	if(!gameLoaded && !gameClosed && null != aFile && aFile.isFile())
     	{
-    		moduleInfo = ModuleInfo.getInfoAbout(aActivity.getAssets(), new File(aLibrary));
+    		moduleInfo = ModuleInfo.getInfoAbout(aActivity, new File(aLibrary));
     		
     		if(LibRetro.loadLibrary(aLibrary, moduleInfo.getDataPath()))
     		{
@@ -90,8 +84,6 @@ public final class Game implements Runnable
     				// System info
     				LibRetro.getSystemInfo(systemInfo);
     				LibRetro.getSystemAVInfo(avInfo);
-
-    				inputs = new Doodads.Set(aActivity.getSharedPreferences("retropad", 0), moduleInfo.getDataName(), moduleInfo.getInputData());
     				
     				// Filesystem stuff    				
     	        	dataName = aFile.getName().split("\\.(?=[^\\.]+$)")[0];
@@ -167,7 +159,7 @@ public final class Game implements Runnable
 	    				    				    			
 	                //Emulate   			
 	    			Present.VideoFrame frame = Present.getFrameBuffer();
-    				int len = LibRetro.run(frame.pixels, frame.size, audioSamples, Input.getBits(inputs.getDevice(0, 0)), rewindKeyPressed);
+    				int len = LibRetro.run(frame.pixels, frame.size, audioSamples, Input.getBits(moduleInfo.inputData.getDevice(0, 0)), rewindKeyPressed);
     				
     				// Write any pending screen shots
     				if(null != screenShotName)

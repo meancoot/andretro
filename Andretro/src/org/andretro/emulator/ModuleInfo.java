@@ -1,6 +1,6 @@
 package org.andretro.emulator;
 
-import android.content.res.*;
+import android.content.*;
 import android.os.*;
 
 import java.io.*;
@@ -22,11 +22,11 @@ public class ModuleInfo
 	
 	private Document document;
 	private Element onScreenInputData;
-	private Element inputData;
+	public final Doodads.Set inputData;
 
 	private static final Map<String, ModuleInfo> cache = new HashMap<String, ModuleInfo>(); 
 	
-	public static ModuleInfo getInfoAbout(final AssetManager aAssets, final File aFile)
+	public static ModuleInfo getInfoAbout(final Context aContext, final File aFile)
 	{
 		final String key = aFile.getName() + ".xml";
 		
@@ -36,18 +36,18 @@ public class ModuleInfo
 		}
 		else
 		{
-			ModuleInfo newInfo = new ModuleInfo(aAssets, aFile);
+			ModuleInfo newInfo = new ModuleInfo(aContext, aFile);
 			cache.put(key, newInfo);
 			return newInfo;
 		}
 	}
 	
-	private ModuleInfo(final AssetManager aAssets, final File aFile)
+	private ModuleInfo(final Context aContext, final File aFile)
 	{
         try
         {
         	// Why does xml have to be so god damned difficult?
-    		document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(aAssets.open(aFile.getName() + ".xml"));
+    		document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(aContext.getAssets().open(aFile.getName() + ".xml"));
     		final XPath xpath = XPathFactory.newInstance().newXPath();
     		
     		// Read system info
@@ -63,7 +63,7 @@ public class ModuleInfo
 
     		// Read input element
     		onScreenInputData = (Element)xpath.evaluate("/retro/onscreeninput", document, XPathConstants.NODE);
-    		inputData = (Element)xpath.evaluate("/retro/input", document, XPathConstants.NODE);
+    		inputData = new Doodads.Set(aContext.getSharedPreferences(libraryName, 0), "input", (Element)xpath.evaluate("/retro/input", document, XPathConstants.NODE));
     		
         	// Quick check hack
         	if(null == name || null == shortName || null == libraryName || null == extensions)
@@ -103,10 +103,5 @@ public class ModuleInfo
 	public Element getOnScreenInputDefinition()
 	{
 		return onScreenInputData;
-	}
-	
-	public Element getInputData()
-	{
-		return inputData;
 	}
 }

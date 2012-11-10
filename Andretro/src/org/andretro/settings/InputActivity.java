@@ -16,7 +16,7 @@ public class InputActivity extends PreferenceActivity
 		super.onCreate(aState);
 		
 		String moduleName = getIntent().getStringExtra("moduleName");
-		ModuleInfo moduleInfo = ModuleInfo.getInfoAbout(getAssets(), new File(moduleName));
+		ModuleInfo moduleInfo = ModuleInfo.getInfoAbout(this, new File(moduleName));
 
 		getPreferenceManager().setSharedPreferencesName(moduleInfo.getDataName());
 
@@ -24,7 +24,7 @@ public class InputActivity extends PreferenceActivity
 		PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(this);
 		
 		// Add port 1's pad
-		Doodads.Device device = Game.getInputs().getDevice(0,  0);
+		Doodads.Device device = moduleInfo.inputData.getDevice(0,  0);
 		for(Doodads.Button i: device.getAll())
 		{
 			screen.addPreference(new Button(this, i));
