@@ -1,5 +1,6 @@
 #include <jni.h>
 #include <dlfcn.h>
+#include <memory>
 
 #include "Common.h"
 #include "libretro.h"
@@ -29,6 +30,10 @@ namespace
 
     retro_system_info systemInfo;
     retro_system_av_info avInfo;
+
+    std::auto_ptr<JavaClass> avInfo_class;
+    std::auto_ptr<JavaClass> systemInfo_class;
+    std::auto_ptr<JavaClass> frame_class;
 }
 
 namespace VIDEO
@@ -212,7 +217,7 @@ static int16_t retro_input_state_imp(unsigned port, unsigned device, unsigned in
 }
 
 //
-#define JNIFUNC(RET, FUNCTION) extern "C" RET Java_ ## org_libretro_LibRetro_ ## FUNCTION
+#define JNIFUNC(RET, FUNCTION) extern "C" RET Java_org_libretro_LibRetro_ ## FUNCTION
 #define JNIARGS JNIEnv* aEnv, jclass aClass
 
 JNIFUNC(jboolean, loadLibrary)(JNIARGS, jstring path, jstring systemDir)
@@ -270,30 +275,22 @@ JNIFUNC(jint, apiVersion)(JNIARGS)
 
 JNIFUNC(void, getSystemInfo)(JNIARGS, jobject aSystemInfo)
 {
-	static const char* const n[] = {"libraryName", "libraryVersion", "validExtensions", "needFullPath", "blockExtract"};
-	static const char* const s[] = {"Ljava/lang/String;", "Ljava/lang/String;", "Ljava/lang/String;", "Z", "Z"};
-	static JavaClass sic(aEnv, aSystemInfo, 5, n, s);
-	
-    aEnv->SetObjectField(aSystemInfo, sic["libraryName"], JavaString(aEnv, systemInfo.library_name));
-    aEnv->SetObjectField(aSystemInfo, sic["libraryVersion"], JavaString(aEnv, systemInfo.library_version));
-    aEnv->SetObjectField(aSystemInfo, sic["validExtensions"], JavaString(aEnv, systemInfo.valid_extensions));
-    aEnv->SetBooleanField(aSystemInfo, sic["needFullPath"], systemInfo.need_fullpath);
-    aEnv->SetBooleanField(aSystemInfo, sic["blockExtract"], systemInfo.block_extract);
+    aEnv->SetObjectField(aSystemInfo, (*systemInfo_class)["libraryName"], JavaString(aEnv, systemInfo.library_name));
+    aEnv->SetObjectField(aSystemInfo, (*systemInfo_class)["libraryVersion"], JavaString(aEnv, systemInfo.library_version));
+    aEnv->SetObjectField(aSystemInfo, (*systemInfo_class)["validExtensions"], JavaString(aEnv, systemInfo.valid_extensions));
+    aEnv->SetBooleanField(aSystemInfo, (*systemInfo_class)["needFullPath"], systemInfo.need_fullpath);
+    aEnv->SetBooleanField(aSystemInfo, (*systemInfo_class)["blockExtract"], systemInfo.block_extract);
 }
 
 JNIFUNC(void, getSystemAVInfo)(JNIARGS, jobject aAVInfo)
 {
-    static const char* const n[] = {"baseWidth", "baseHeight", "maxWidth", "maxHeight", "aspectRatio", "fps", "sampleRate"};
-    static const char* const s[] = {"I", "I", "I", "I", "F", "D", "D"};
-    static JavaClass sic(aEnv, aAVInfo, 7, n, s);
-
-    aEnv->SetIntField(aAVInfo, sic["baseWidth"], avInfo.geometry.base_width);
-    aEnv->SetIntField(aAVInfo, sic["baseHeight"], avInfo.geometry.base_height);
-    aEnv->SetIntField(aAVInfo, sic["maxWidth"], avInfo.geometry.max_width);
-    aEnv->SetIntField(aAVInfo, sic["maxHeight"], avInfo.geometry.max_height);
-    aEnv->SetFloatField(aAVInfo, sic["aspectRatio"], avInfo.geometry.aspect_ratio);
-    aEnv->SetDoubleField(aAVInfo, sic["fps"], avInfo.timing.fps);
-    aEnv->SetDoubleField(aAVInfo, sic["sampleRate"], avInfo.timing.sample_rate);
+    aEnv->SetIntField(aAVInfo, (*avInfo_class)["baseWidth"], avInfo.geometry.base_width);
+    aEnv->SetIntField(aAVInfo, (*avInfo_class)["baseHeight"], avInfo.geometry.base_height);
+    aEnv->SetIntField(aAVInfo, (*avInfo_class)["maxWidth"], avInfo.geometry.max_width);
+    aEnv->SetIntField(aAVInfo, (*avInfo_class)["maxHeight"], avInfo.geometry.max_height);
+    aEnv->SetFloatField(aAVInfo, (*avInfo_class)["aspectRatio"], avInfo.geometry.aspect_ratio);
+    aEnv->SetDoubleField(aAVInfo, (*avInfo_class)["fps"], avInfo.timing.fps);
+    aEnv->SetDoubleField(aAVInfo, (*avInfo_class)["sampleRate"], avInfo.timing.sample_rate);
 }
 
 JNIFUNC(void, setControllerPortDevice)(JNIARGS, jint port, jint device)
@@ -473,4 +470,35 @@ JNIFUNC(jboolean, unserializeFromFile)(JNIARGS, jstring aPath)
     }
 
     return false;
+}
+
+// Preload native class data
+JNIFUNC(jboolean, nativeInit)(JNIARGS)
+{
+    try
+    {
+        {
+            static const char* const n[] = {"libraryName", "libraryVersion", "validExtensions", "needFullPath", "blockExtract"};
+            static const char* const s[] = {"Ljava/lang/String;", "Ljava/lang/String;", "Ljava/lang/String;", "Z", "Z"};
+            systemInfo_class.reset(new JavaClass(aEnv, aEnv->FindClass("org/libretro/LibRetro$SystemInfo"), 5, n, s));
+        }
+    
+        {
+            static const char* const n[] = {"baseWidth", "baseHeight", "maxWidth", "maxHeight", "aspectRatio", "fps", "sampleRate"};
+            static const char* const s[] = {"I", "I", "I", "I", "F", "D", "D"};
+            avInfo_class.reset(new JavaClass(aEnv, aEnv->FindClass("org/libretro/LibRetro$AVInfo"), 7, n, s));
+        }
+        
+        {
+        	static const char* const n[] = {"pixels", "width", "height", "pixelFormat", "rotation", "aspect"};
+        	static const char* const s[] = {"Ljava/nio/ByteBuffer;", "I", "I", "I", "I", "F"};
+        	frame_class.reset(new JavaClass(aEnv, aEnv->FindClass("org/libretro/LibRetro$VideoFrame"), 6, n, s));
+        }
+
+        return true;
+    }
+    catch(...)
+    {
+        return false;
+    }
 }

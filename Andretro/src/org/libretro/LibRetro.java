@@ -1,6 +1,6 @@
 package org.libretro;
 
-import java.nio.ByteBuffer;
+import java.nio.*;
 
 public final class LibRetro
 {
@@ -112,6 +112,16 @@ public final class LibRetro
 	    public double sampleRate;
 	}
 	
+    public static class VideoFrame
+    {
+    	public final ByteBuffer pixels = ByteBuffer.allocateDirect(1024 * 1024 * 2).order(ByteOrder.nativeOrder());
+    	int width;
+    	int height;
+    	int pixelFormat;
+    	int rotation;
+    	float aspect;
+    }
+	
 	public static native boolean loadLibrary(String aPath, String aSystemDirectory);
 	public static native void unloadLibrary();
 	public static native void init();
@@ -141,4 +151,6 @@ public final class LibRetro
 
 	public static native boolean serializeToFile(String aPath);
 	public static native boolean unserializeFromFile(String aPath);
+	
+	public static native boolean nativeInit();
 }

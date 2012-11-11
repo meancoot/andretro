@@ -13,6 +13,11 @@ public final class Game implements Runnable
     static
     {
     	System.loadLibrary("retroiface");
+    	
+    	if(!LibRetro.nativeInit())
+    	{
+    		throw new RuntimeException("Failed to initialize JNI classes.");
+    	}
     }
  
     // Thread

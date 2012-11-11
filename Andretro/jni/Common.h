@@ -7,6 +7,7 @@
 #include <jni.h>
 #include <android/log.h>
 #include <fstream>
+#include <exception>
 
 #define Log(...) __android_log_print(ANDROID_LOG_INFO, "andretro", __VA_ARGS__);
 
@@ -103,16 +104,23 @@ bool DumpFile(const char* aPath, const void* aData, size_t aLength)
 
 struct JavaClass
 {
-	jclass classID;
 	std::map<std::string, jfieldID> fields;
 
-	JavaClass(JNIEnv* aEnv, jobject aObject, int aFieldCount, const char* const* aNames, const char* const* aSigs)
+	JavaClass(JNIEnv* aEnv, jclass aClass, int aFieldCount, const char* const* aNames, const char* const* aSigs)
 	{
-		classID = aEnv->GetObjectClass(aObject);
+		if(!aEnv || !aClass || !aNames || !aSigs || !aFieldCount)
+		{
+			throw std::exception();
+		}
 
 		for(int i = 0; i != aFieldCount; i ++)
 		{
-			fields[aNames[i]] = aEnv->GetFieldID(classID, aNames[i], aSigs[i]);
+			fields[aNames[i]] = aEnv->GetFieldID(aClass, aNames[i], aSigs[i]);
+
+			if(fields[aNames[i]] == 0)
+			{
+				throw std::exception();
+			}
 		}
 	}
 
@@ -156,7 +164,14 @@ private:
 // Build a string with checking (later anyway)
 inline jstring JavaString(JNIEnv* aEnv, const char* aString)
 {
-	return aEnv->NewStringUTF(aString);
+	jstring string = aEnv->NewStringUTF(aString ? aString : "(NULL)");
+
+	if(string)
+	{
+		return string;
+	}
+
+	throw std::exception();
 }
 
 #endif
