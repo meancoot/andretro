@@ -15,6 +15,51 @@ import static android.opengl.GLES20.*;
 // NOT THREAD SAFE
 public final class Present implements GLSurfaceView.Renderer
 {	
+	// Frame Queue
+	public static class FrameQueue
+	{
+	    private static final ArrayBlockingQueue<VideoFrame> emptyFrames = new ArrayBlockingQueue<VideoFrame>(1);
+	    private static final ArrayBlockingQueue<VideoFrame> readyFrames = new ArrayBlockingQueue<VideoFrame>(1);
+	    
+	    static
+	    {
+	    	emptyFrames.offer(new VideoFrame());
+	    }
+	    
+	    private static VideoFrame getFrom(ArrayBlockingQueue<VideoFrame> aQueue)
+	    {
+	    	try
+	    	{
+	    		return aQueue.poll(100, TimeUnit.MILLISECONDS);
+	    	}
+	    	catch(InterruptedException e)
+	    	{
+	    		Thread.currentThread().interrupt();
+	    		return null;
+	    	}	    	
+	    }
+	    
+	    public static VideoFrame getEmpty()
+	    {
+	    	return getFrom(emptyFrames);
+	    }
+	    
+	    public static VideoFrame getFull()
+	    {
+	    	return getFrom(readyFrames);
+	    }
+	    
+	    public static void putEmpty(VideoFrame aFrame)
+	    {
+	    	emptyFrames.add(aFrame);
+	    }
+
+	    public static void putFull(VideoFrame aFrame)
+	    {
+	    	readyFrames.add(aFrame);
+	    }
+	}
+	
     private static final int FRAMESIZE = 1024;
 
     private static int programID;
@@ -35,13 +80,6 @@ public final class Present implements GLSurfaceView.Renderer
 
     
     // Frame buffer queue
-    private static final ArrayBlockingQueue<VideoFrame> emptyFrames = new ArrayBlockingQueue<VideoFrame>(1);
-    private static final ArrayBlockingQueue<VideoFrame> readyFrames = new ArrayBlockingQueue<VideoFrame>(1);
-    
-    static
-    {
-    	emptyFrames.offer(new VideoFrame());
-    }
 
     public static class VideoFrame
     {
@@ -49,26 +87,6 @@ public final class Present implements GLSurfaceView.Renderer
     	public final ByteBuffer pixels = ByteBuffer.allocateDirect(1024 * 1024 * 2).order(ByteOrder.nativeOrder());
     	public final int[] size = new int[3];
     	public float aspect;
-    }
-    
-    public static VideoFrame getFrameBuffer() throws InterruptedException
-    {
-		return emptyFrames.take();
-    }
-    
-    public static void putNextBuffer(VideoFrame aFrame) throws InterruptedException
-    {
-    	readyFrames.put(aFrame);
-    }
-    
-    /**
-     * Put a frame back into rotation without showing it.
-     * @param aFrame
-     * @throws InterruptedException
-     */
-    public static void cancel(VideoFrame aFrame) throws InterruptedException
-    {
-    	emptyFrames.put(aFrame);
     }
     
     // OpenGL Renderer
@@ -172,44 +190,37 @@ public final class Present implements GLSurfaceView.Renderer
     
     @Override public void onDrawFrame(GL10 gl)
     {
-    	try
-    	{
-	    	VideoFrame next = readyFrames.poll(250, TimeUnit.MILLISECONDS);
-	    	
-	    	if(null != next)
-	    	{	
-	    		if((0 < next.size[0]) && (0 < next.size[1]))
-	    		{
-	    			// Do this first, the emulator is waiting to get the buffer back!
-	    	    	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, next.size[0], next.size[1], GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, next.pixels);
-	    	    	
-	    	    	float width = (float)next.size[0];
-	    	    	float height = (float)next.size[1];
-	    	    	float aspect = next.aspect;
-	    	    	float rotate = (1 == (next.size[2] & 1)) ? 1.0f : 0.0f;
-	    	    	
-	    	        emptyFrames.put(next);
-	    	        
-	    	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, smoothMode ? GL_LINEAR : GL_NEAREST);
-	    	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, smoothMode ? GL_LINEAR : GL_NEAREST);
-	    	        
-	    	        // Now send the rest to OpenGL    	        
-	    	        glUniform1f(id[4], width);
-	    			glUniform1f(id[5], height);
-	    			glUniform1f(id[6], !aspectMode ? aspect : ((aspectForce < 0.0f) ? (width / height) : aspectForce));
-	    			glUniform1f(id[7], rotate);
-	    		
-	    			glDrawArrays(GL_TRIANGLE_STRIP, next.size[2] * 4, 4);
-	    		}
-	    		else
-	    		{
-	    			emptyFrames.put(next);
-	    		}
-	    	}
-    	}
-    	catch(InterruptedException e)
-    	{
-    		Thread.currentThread().interrupt();
+    	VideoFrame next = FrameQueue.getFull();
+    	
+    	if(null != next)
+    	{	
+    		if((0 < next.size[0]) && (0 < next.size[1]))
+    		{
+    			// Do this first, the emulator is waiting to get the buffer back!
+    	    	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, next.size[0], next.size[1], GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, next.pixels);
+    	    	
+    	    	float width = (float)next.size[0];
+    	    	float height = (float)next.size[1];
+    	    	float aspect = next.aspect;
+    	    	float rotate = (1 == (next.size[2] & 1)) ? 1.0f : 0.0f;
+    	    	
+    	    	FrameQueue.putEmpty(next);
+    	        
+    	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, smoothMode ? GL_LINEAR : GL_NEAREST);
+    	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, smoothMode ? GL_LINEAR : GL_NEAREST);
+    	        
+    	        // Now send the rest to OpenGL    	        
+    	        glUniform1f(id[4], width);
+    			glUniform1f(id[5], height);
+    			glUniform1f(id[6], !aspectMode ? aspect : ((aspectForce < 0.0f) ? (width / height) : aspectForce));
+    			glUniform1f(id[7], rotate);
+    		
+    			glDrawArrays(GL_TRIANGLE_STRIP, next.size[2] * 4, 4);
+    		}
+    		else
+    		{
+    			FrameQueue.putEmpty(next);
+    		}
     	}
     }
 }

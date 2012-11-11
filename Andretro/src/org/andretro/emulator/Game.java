@@ -158,7 +158,7 @@ public final class Game implements Runnable
 	    			frameTarget = (fastKeyPressed) ? frameToggle : frameTarget;
 	    				    				    			
 	                //Emulate   			
-	    			Present.VideoFrame frame = Present.getFrameBuffer();
+	    			Present.VideoFrame frame = Present.FrameQueue.getEmpty();
     				int len = LibRetro.run(frame.pixels, frame.size, audioSamples, Input.getBits(moduleInfo.inputData.getDevice(0, 0)), rewindKeyPressed);
     				
     				// Write any pending screen shots
@@ -172,7 +172,7 @@ public final class Game implements Runnable
     				if((++frameCounter >= frameTarget) && 0 != frame.size[0] && 0 != frame.size[1])
     				{
     	    			frame.aspect = avInfo.aspectRatio;
-    					Present.putNextBuffer(frame);
+    					Present.FrameQueue.putFull(frame);
     					presentNotify.run();
     					
         				if(0 != len)
@@ -184,7 +184,7 @@ public final class Game implements Runnable
     				}
     				else
     				{
-    					Present.cancel(frame);
+    					Present.FrameQueue.putEmpty(frame);
     				}
    	    		}
 	    		else
