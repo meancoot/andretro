@@ -164,7 +164,7 @@ public final class Game implements Runnable
     				// Write any pending screen shots
     				if(null != screenShotName)
     				{
-    					PngWriter.write(screenShotName, frame.pixels, frame.size[0], frame.size[1], 0);
+    					PngWriter.write(screenShotName, frame.pixels, frame.size[0], frame.size[1], frame.size[3]);
     					screenShotName = null;
     				}
     				

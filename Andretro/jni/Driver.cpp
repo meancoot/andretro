@@ -31,6 +31,46 @@ namespace
     retro_system_av_info avInfo;
 }
 
+namespace VIDEO
+{
+    template<typename T>
+    static void refresh_noconv(const void *data, unsigned width, unsigned height, size_t pitch)
+    {
+        T* outPixels = (T*)env->GetDirectBufferAddress(videoFrame);
+        const T* inPixels = (const T*)data;
+        const unsigned pixelPitch = pitch / sizeof(T);
+
+        for(int i = 0; i != height; i ++, outPixels += width, inPixels += pixelPitch)
+        {
+            memcpy(outPixels, inPixels, width * sizeof(T));
+        }
+    }
+
+    // retro_video_refresh for 0RGB1555: deprecated
+    static void refresh_15(const void *data, unsigned width, unsigned height, size_t pitch)
+    {
+        const unsigned pixelPitch = pitch / 2;
+
+        uint16_t* outPixels = (uint16_t*)env->GetDirectBufferAddress(videoFrame);
+        const uint16_t* inPixels = (const uint16_t*)data;
+
+        for(int i = 0; i != height; i ++)
+        {
+            for(int j = 0; j != width; j ++)
+            {
+                *outPixels++ = (*inPixels++) << 1;
+            }
+
+            inPixels += (pixelPitch - width);
+        }
+    }
+
+    unsigned pixelFormat;
+
+    const retro_video_refresh_t refreshByMode[3] = {&refresh_15, &refresh_noconv<uint32_t>, &refresh_noconv<uint16_t>};
+    retro_video_refresh_t refresher = refresh_15;
+}
+
 // Callbacks
 //
 // Environment callback. Gives implementations a way of performing uncommon tasks. Extensible.
@@ -84,6 +124,15 @@ static bool retro_environment_imp(unsigned cmd, void *data)
 	}
 	else if(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT == cmd)
 	{
+		unsigned newFormat = *(unsigned*)data;
+
+		if(newFormat == 0 || newFormat == 2)
+		{
+			VIDEO::pixelFormat = newFormat;
+			VIDEO::refresher = VIDEO::refreshByMode[VIDEO::pixelFormat];
+			return true;
+		}
+
 		return false;
 	}
 
@@ -114,20 +163,12 @@ void blizzit(const void* data, unsigned width, unsigned height, size_t pitch)
 
 static void retro_video_refresh_imp(const void *data, unsigned width, unsigned height, size_t pitch)
 {
-	// TODO: Handle SIGBUS is not 16 or 32 bit aligned!
-	// TODO: Maybe use NEON instructions?
-
-	haveFrame = true;
-
-	if(0 != (pitch & 3) || 0 != (((uintptr_t)data) & 3) || 0 != (width & 3))
+	if(data)
 	{
-		blizzit<uint16_t>(data, width, height, pitch);
-	}
-	else
-	{
-		blizzit<uint32_t>(data, width, height, pitch);
+		VIDEO::refresher(data, width, height, pitch);
 	}
     
+	haveFrame = true;
     lastWidth = width;
     lastHeight = height;
 }
@@ -288,9 +329,9 @@ JNIFUNC(jint, run)(JNIARGS, jobject aVideo, jintArray aSize, jshortArray aAudio,
     }
 
     // Upload video size (done here in case of dupe)
-    const jint size[3] = {lastWidth, lastHeight, rotation};
-    static const jint zeroSize[3] = {0};
-    env->SetIntArrayRegion(aSize, 0, 3, haveFrame ? size : zeroSize);
+    const jint size[4] = {lastWidth, lastHeight, rotation, VIDEO::pixelFormat};
+    static const jint zeroSize[4] = {0};
+    env->SetIntArrayRegion(aSize, 0, 4, haveFrame ? size : zeroSize);
 
     return audioLength;
 }

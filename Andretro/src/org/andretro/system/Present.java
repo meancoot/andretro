@@ -60,7 +60,53 @@ public final class Present implements GLSurfaceView.Renderer
 	    }
 	}
 	
-    private static final int FRAMESIZE = 1024;
+	public static class Texture
+	{
+		private static final int FRAMESIZE = 1024;
+	    private static final int[] textureFormats = {GL_RGBA, GL_RGB, GL_RGB};
+	    private static final int[] textureTypes = {GL_UNSIGNED_SHORT_5_5_5_1, GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT_5_6_5};
+
+		private static final int id[] = new int[1];
+
+	    private static int textureFormat;
+	    private static int textureType;
+	    private static int lastPixelFormat;		
+		
+		private static void create()
+		{
+	    	glGenTextures(1, id, 0);
+	        glBindTexture(GL_TEXTURE_2D, id[0]);
+	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, FRAMESIZE, FRAMESIZE, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, null);
+	        
+	        lastPixelFormat = -1;
+		}
+		
+	    private static void setColorMode(int aPixelFormat)
+	    {
+	    	if(aPixelFormat != lastPixelFormat)
+	    	{
+	    		lastPixelFormat = aPixelFormat;
+	    		textureFormat = textureFormats[lastPixelFormat];
+	    		textureType = textureTypes[lastPixelFormat];
+	    		
+	            glTexImage2D(GL_TEXTURE_2D, 0, textureFormat, FRAMESIZE, FRAMESIZE, 0, textureFormat, textureType, null);
+	    	}
+	    }
+	    
+	    private static void upload(ByteBuffer aPixels, int aWidth, int aHeight, int aColorMode)
+	    {
+	    	setColorMode(aColorMode);
+	    	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, aWidth, aHeight, textureFormat, textureType, aPixels);
+	    	
+	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, smoothMode ? GL_LINEAR : GL_NEAREST);
+	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, smoothMode ? GL_LINEAR : GL_NEAREST);
+	    }
+	}
+	
+	
+    
 
     private static int programID;
     private static final int id[] = new int[8];
@@ -85,7 +131,7 @@ public final class Present implements GLSurfaceView.Renderer
     {
     	private VideoFrame() {}
     	public final ByteBuffer pixels = ByteBuffer.allocateDirect(1024 * 1024 * 2).order(ByteOrder.nativeOrder());
-    	public final int[] size = new int[3];
+    	public final int[] size = new int[4];
     	public float aspect;
     }
     
@@ -150,12 +196,8 @@ public final class Present implements GLSurfaceView.Renderer
     	id[7] = glGetUniformLocation(programID, "imageAspectInvert");
     	
         // Texture
-    	glGenTextures(1, id, 0);
-        glBindTexture(GL_TEXTURE_2D, id[0]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, FRAMESIZE, FRAMESIZE, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, null);
-               
+        Texture.create();
+        
         // Vertex Buffer
         FloatBuffer vertexData = ByteBuffer.allocateDirect(vertexBufferData.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer().put(vertexBufferData);
         glGenBuffers(1, id, 1);        
@@ -188,6 +230,7 @@ public final class Present implements GLSurfaceView.Renderer
     	aspectForce = aAspect;
     }
     
+
     @Override public void onDrawFrame(GL10 gl)
     {
     	VideoFrame next = FrameQueue.getFull();
@@ -196,26 +239,23 @@ public final class Present implements GLSurfaceView.Renderer
     	{	
     		if((0 < next.size[0]) && (0 < next.size[1]))
     		{
-    			// Do this first, the emulator is waiting to get the buffer back!
-    	    	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, next.size[0], next.size[1], GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, next.pixels);
-    	    	
     	    	float width = (float)next.size[0];
     	    	float height = (float)next.size[1];
     	    	float aspect = next.aspect;
     	    	float rotate = (1 == (next.size[2] & 1)) ? 1.0f : 0.0f;
-    	    	
+    	    	int rotateMode = next.size[2];
+
+    	    	// Upload texture
+    	    	Texture.upload(next.pixels, next.size[0], next.size[1], next.size[3]);
     	    	FrameQueue.putEmpty(next);
-    	        
-    	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, smoothMode ? GL_LINEAR : GL_NEAREST);
-    	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, smoothMode ? GL_LINEAR : GL_NEAREST);
-    	        
+    	            	        
     	        // Now send the rest to OpenGL    	        
     	        glUniform1f(id[4], width);
     			glUniform1f(id[5], height);
     			glUniform1f(id[6], !aspectMode ? aspect : ((aspectForce < 0.0f) ? (width / height) : aspectForce));
     			glUniform1f(id[7], rotate);
     		
-    			glDrawArrays(GL_TRIANGLE_STRIP, next.size[2] * 4, 4);
+    			glDrawArrays(GL_TRIANGLE_STRIP, rotateMode * 4, 4);
     		}
     		else
     		{
