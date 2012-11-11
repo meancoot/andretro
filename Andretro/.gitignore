@@ -1,6 +1,6 @@
 /gen
 /bin
-/libs
+/libs/*/*
 /obj
 /jni/modules/*.so
 /jni/modules_src
