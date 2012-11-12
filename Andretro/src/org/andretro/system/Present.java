@@ -1,5 +1,6 @@
 package org.andretro.system;
 import org.andretro.R;
+import org.libretro.*;
 
 import java.io.*;
 import java.nio.*;
@@ -18,15 +19,15 @@ public final class Present implements GLSurfaceView.Renderer
 	// Frame Queue
 	public static class FrameQueue
 	{
-	    private static final ArrayBlockingQueue<VideoFrame> emptyFrames = new ArrayBlockingQueue<VideoFrame>(1);
-	    private static final ArrayBlockingQueue<VideoFrame> readyFrames = new ArrayBlockingQueue<VideoFrame>(1);
+	    private static final ArrayBlockingQueue<LibRetro.VideoFrame> emptyFrames = new ArrayBlockingQueue<LibRetro.VideoFrame>(1);
+	    private static final ArrayBlockingQueue<LibRetro.VideoFrame> readyFrames = new ArrayBlockingQueue<LibRetro.VideoFrame>(1);
 	    
 	    static
 	    {
-	    	emptyFrames.offer(new VideoFrame());
+	    	emptyFrames.offer(new LibRetro.VideoFrame());
 	    }
 	    
-	    private static VideoFrame getFrom(ArrayBlockingQueue<VideoFrame> aQueue)
+	    private static LibRetro.VideoFrame getFrom(ArrayBlockingQueue<LibRetro.VideoFrame> aQueue)
 	    {
 	    	try
 	    	{
@@ -39,22 +40,22 @@ public final class Present implements GLSurfaceView.Renderer
 	    	}	    	
 	    }
 	    
-	    public static VideoFrame getEmpty()
+	    public static LibRetro.VideoFrame getEmpty()
 	    {
 	    	return getFrom(emptyFrames);
 	    }
 	    
-	    public static VideoFrame getFull()
+	    public static LibRetro.VideoFrame getFull()
 	    {
 	    	return getFrom(readyFrames);
 	    }
 	    
-	    public static void putEmpty(VideoFrame aFrame)
+	    public static void putEmpty(LibRetro.VideoFrame aFrame)
 	    {
 	    	emptyFrames.add(aFrame);
 	    }
 
-	    public static void putFull(VideoFrame aFrame)
+	    public static void putFull(LibRetro.VideoFrame aFrame)
 	    {
 	    	readyFrames.add(aFrame);
 	    }
@@ -123,17 +124,6 @@ public final class Present implements GLSurfaceView.Renderer
     	-1, 1, 1, 1, 1, 1, 0, 1, -1, -1, 1, 0, 1, -1, 0, 0,
     	-1, 1, 0, 1, 1, 1, 0, 0, -1, -1, 1, 1, 1, -1, 1, 0
     };
-
-    
-    // Frame buffer queue
-
-    public static class VideoFrame
-    {
-    	private VideoFrame() {}
-    	public final ByteBuffer pixels = ByteBuffer.allocateDirect(1024 * 1024 * 2).order(ByteOrder.nativeOrder());
-    	public final int[] size = new int[4];
-    	public float aspect;
-    }
     
     // OpenGL Renderer
     private static String getShaderString(final InputStream aSource)
@@ -233,20 +223,20 @@ public final class Present implements GLSurfaceView.Renderer
 
     @Override public void onDrawFrame(GL10 gl)
     {
-    	VideoFrame next = FrameQueue.getFull();
+    	LibRetro.VideoFrame next = FrameQueue.getFull();
     	
     	if(null != next)
     	{	
-    		if((0 < next.size[0]) && (0 < next.size[1]))
+    		if((next.width > 0) && (next.height > 0))
     		{
-    	    	float width = (float)next.size[0];
-    	    	float height = (float)next.size[1];
-    	    	float aspect = next.aspect;
-    	    	float rotate = (1 == (next.size[2] & 1)) ? 1.0f : 0.0f;
-    	    	int rotateMode = next.size[2];
+    	    	final float width = next.width;
+    	    	final float height = next.height;
+    	    	final float aspect = next.aspect;
+    	    	final float rotate = (1 == (next.rotation & 1)) ? 1.0f : 0.0f;
+    	    	final int rotateMode = next.rotation;
 
     	    	// Upload texture
-    	    	Texture.upload(next.pixels, next.size[0], next.size[1], next.size[3]);
+    	    	Texture.upload(next.pixels, next.width, next.height, next.pixelFormat);
     	    	FrameQueue.putEmpty(next);
     	            	        
     	        // Now send the rest to OpenGL    	        

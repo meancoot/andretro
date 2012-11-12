@@ -115,11 +115,11 @@ public final class LibRetro
     public static class VideoFrame
     {
     	public final ByteBuffer pixels = ByteBuffer.allocateDirect(1024 * 1024 * 2).order(ByteOrder.nativeOrder());
-    	int width;
-    	int height;
-    	int pixelFormat;
-    	int rotation;
-    	float aspect;
+    	public int width;
+    	public int height;
+    	public int pixelFormat;
+    	public int rotation;
+    	public float aspect;
     }
 	
 	public static native boolean loadLibrary(String aPath, String aSystemDirectory);
@@ -131,7 +131,7 @@ public final class LibRetro
 	public static native void getSystemAVInfo(AVInfo aInfo);
 	public static native void setControllerPortDevice(int aPort, int aDevice);
 	public static native void reset();
-	public static native int run(Object aVideo, int[] aSize, short[] aAudio, int aJoypad, boolean aRewind);
+	public static native int run(VideoFrame aVideo, short[] aAudio, int aJoypad, boolean aRewind);
 	public static native int serializeSize();
 //	public static native boolean serialize(byte[] aData, int aSize);
 //	public static native boolean unserialize(byte[] aData, int aSize);

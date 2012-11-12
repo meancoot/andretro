@@ -163,20 +163,19 @@ public final class Game implements Runnable
 	    			frameTarget = (fastKeyPressed) ? frameToggle : frameTarget;
 	    				    				    			
 	                //Emulate   			
-	    			Present.VideoFrame frame = Present.FrameQueue.getEmpty();
-    				int len = LibRetro.run(frame.pixels, frame.size, audioSamples, Input.getBits(moduleInfo.inputData.getDevice(0, 0)), rewindKeyPressed);
+	    			LibRetro.VideoFrame frame = Present.FrameQueue.getEmpty();
+    				int len = LibRetro.run(frame, audioSamples, Input.getBits(moduleInfo.inputData.getDevice(0, 0)), rewindKeyPressed);
     				
     				// Write any pending screen shots
     				if(null != screenShotName)
     				{
-    					PngWriter.write(screenShotName, frame.pixels, frame.size[0], frame.size[1], frame.size[3]);
+    					PngWriter.write(screenShotName, frame.pixels, frame.width, frame.height, frame.pixelFormat);
     					screenShotName = null;
     				}
     				
     				// Present
-    				if((++frameCounter >= frameTarget) && 0 != frame.size[0] && 0 != frame.size[1])
+    				if(++frameCounter >= frameTarget)
     				{
-    	    			frame.aspect = avInfo.aspectRatio;
     					Present.FrameQueue.putFull(frame);
     					presentNotify.run();
     					

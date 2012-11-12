@@ -23,10 +23,7 @@ namespace
     jint joypad;
 
     jobject videoFrame;
-    jint lastWidth;
-    jint lastHeight;
     jint rotation;
-    jboolean haveFrame;
 
     retro_system_info systemInfo;
     retro_system_av_info avInfo;
@@ -39,9 +36,9 @@ namespace
 namespace VIDEO
 {
     template<typename T>
-    static void refresh_noconv(const void *data, unsigned width, unsigned height, size_t pitch)
+    static void refresh_noconv(void* aOut, const void *data, unsigned width, unsigned height, size_t pitch)
     {
-        T* outPixels = (T*)env->GetDirectBufferAddress(videoFrame);
+        T* outPixels = (T*)aOut;
         const T* inPixels = (const T*)data;
         const unsigned pixelPitch = pitch / sizeof(T);
 
@@ -52,11 +49,11 @@ namespace VIDEO
     }
 
     // retro_video_refresh for 0RGB1555: deprecated
-    static void refresh_15(const void *data, unsigned width, unsigned height, size_t pitch)
+    static void refresh_15(void* aOut, const void *data, unsigned width, unsigned height, size_t pitch)
     {
         const unsigned pixelPitch = pitch / 2;
 
-        uint16_t* outPixels = (uint16_t*)env->GetDirectBufferAddress(videoFrame);
+        uint16_t* outPixels = (uint16_t*)aOut;
         const uint16_t* inPixels = (const uint16_t*)data;
 
         for(int i = 0; i != height; i ++)
@@ -72,8 +69,10 @@ namespace VIDEO
 
     unsigned pixelFormat;
 
-    const retro_video_refresh_t refreshByMode[3] = {&refresh_15, &refresh_noconv<uint32_t>, &refresh_noconv<uint16_t>};
-    retro_video_refresh_t refresher = refresh_15;
+    typedef void (*andretro_video_refresh)(void* aOut, const void* data, unsigned width, unsigned height, size_t pitch);
+
+    const andretro_video_refresh refreshByMode[3] = {&refresh_15, &refresh_noconv<uint32_t>, &refresh_noconv<uint16_t>};
+    andretro_video_refresh refresher = refresh_15;
 }
 
 // Callbacks
@@ -147,35 +146,19 @@ static bool retro_environment_imp(unsigned cmd, void *data)
 // Render a frame. Pixel format is 15-bit 0RGB1555 native endian unless changed (see RETRO_ENVIRONMENT_SET_PIXEL_FORMAT).
 // Width and height specify dimensions of buffer.
 // Pitch specifices length in bytes between two lines in buffer.
-template<typename T>
-void blizzit(const void* data, unsigned width, unsigned height, size_t pitch)
-{
-	const unsigned itersPerLine = width / (sizeof(T) / 2);
-
-	T* outPixels = (T*)env->GetDirectBufferAddress(videoFrame);
-	const uint8_t* inPixels = (uint8_t*)data;
-
-	for(int i = 0; i != height; i ++)
-	{
-		const T* line = (const T*)&inPixels[i * pitch];
-
-		for(int j = 0; j != itersPerLine; j ++)
-		{
-			*outPixels++ = *line++ << 1;
-		}
-	}
-}
-
 static void retro_video_refresh_imp(const void *data, unsigned width, unsigned height, size_t pitch)
 {
 	if(data)
 	{
-		VIDEO::refresher(data, width, height, pitch);
+		void* outData = (void*)env->GetDirectBufferAddress(env->GetObjectField(videoFrame, (*frame_class)["pixels"]));
+		VIDEO::refresher(outData, data, width, height, pitch);
 	}
-    
-	haveFrame = true;
-    lastWidth = width;
-    lastHeight = height;
+
+	env->SetIntField(videoFrame, (*frame_class)["width"], width);
+	env->SetIntField(videoFrame, (*frame_class)["height"], height);
+	env->SetIntField(videoFrame, (*frame_class)["pixelFormat"], VIDEO::pixelFormat);
+	env->SetIntField(videoFrame, (*frame_class)["rotation"], rotation);
+	env->SetFloatField(videoFrame, (*frame_class)["aspect"], avInfo.geometry.aspect_ratio);
 }
 
 // Renders a single audio frame. Should only be used if implementation generates a single sample at a time.
@@ -303,15 +286,15 @@ JNIFUNC(void, reset)(JNIARGS)
     module->reset();
 }
 
-JNIFUNC(jint, run)(JNIARGS, jobject aVideo, jintArray aSize, jshortArray aAudio, jint aJoypad, jboolean aRewind)
+JNIFUNC(jint, run)(JNIARGS, jobject aVideo, jshortArray aAudio, jint aJoypad, jboolean aRewind)
 {
     // TODO
     env = aEnv;
+
     videoFrame = aVideo;
     audioData = aAudio;
     audioLength = 0;
     joypad = aJoypad;
-    haveFrame = false;
     
     const bool rewound = aRewind && rewinder.eatFrame(module);
 
@@ -324,11 +307,6 @@ JNIFUNC(jint, run)(JNIARGS, jobject aVideo, jintArray aSize, jshortArray aAudio,
     		rewinder.stashFrame(module);
     	}
     }
-
-    // Upload video size (done here in case of dupe)
-    const jint size[4] = {lastWidth, lastHeight, rotation, VIDEO::pixelFormat};
-    static const jint zeroSize[4] = {0};
-    env->SetIntArrayRegion(aSize, 0, 4, haveFrame ? size : zeroSize);
 
     return audioLength;
 }
