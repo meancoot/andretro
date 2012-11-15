@@ -264,6 +264,8 @@ public final class LibRetro
     	public int pixelFormat;
     	public int rotation;
     	public float aspect;
+    	
+    	public final int[] keyboard = new int[RETROK_LAST];
     }
 	
 	public static native boolean loadLibrary(String aPath, String aSystemDirectory);

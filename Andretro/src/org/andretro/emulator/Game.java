@@ -164,6 +164,7 @@ public final class Game implements Runnable
 	    				    				    			
 	                //Emulate   			
 	    			LibRetro.VideoFrame frame = Present.FrameQueue.getEmpty();
+	    			Input.poolKeyboard(frame.keyboard);
     				int len = LibRetro.run(frame, audioSamples, Input.getBits(moduleInfo.inputData.getDevice(0, 0)), rewindKeyPressed);
     				
     				// Write any pending screen shots

@@ -195,6 +195,14 @@ static int16_t retro_input_state_imp(unsigned port, unsigned device, unsigned in
 	{
 		return (joypad >> id) & 1;
 	}
+	else if(RETRO_DEVICE_KEYBOARD == device && id < RETROK_LAST)
+	{
+		// TODO: Optimize
+		jintArray kbd = (jintArray)env->GetObjectField(videoFrame, (*frame_class)["keyboard"]);
+		int res;
+		env->GetIntArrayRegion(kbd, id, 1, &res);
+		return res;
+	}
 
     return 0;
 }
@@ -468,9 +476,9 @@ JNIFUNC(jboolean, nativeInit)(JNIARGS)
         }
         
         {
-        	static const char* const n[] = {"pixels", "width", "height", "pixelFormat", "rotation", "aspect"};
-        	static const char* const s[] = {"Ljava/nio/ByteBuffer;", "I", "I", "I", "I", "F"};
-        	frame_class.reset(new JavaClass(aEnv, aEnv->FindClass("org/libretro/LibRetro$VideoFrame"), 6, n, s));
+        	static const char* const n[] = {"pixels", "width", "height", "pixelFormat", "rotation", "aspect", "keyboard"};
+        	static const char* const s[] = {"Ljava/nio/ByteBuffer;", "I", "I", "I", "I", "F", "[I"};
+        	frame_class.reset(new JavaClass(aEnv, aEnv->FindClass("org/libretro/LibRetro$VideoFrame"), 7, n, s));
         }
 
         return true;
