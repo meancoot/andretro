@@ -6,60 +6,20 @@ import android.app.*;
 public class CommandQueue
 {
     private final BlockingQueue<BaseCommand> eventQueue = new ArrayBlockingQueue<BaseCommand>(8);
-	private Thread thread;
 	
     /**
      * Must be called before any other function
      * @param aThread
      */
-    public void setThread(Thread aThread)
-    {
-    	if(null != thread)
-    	{
-    		throw new RuntimeException("setThread must be called once and only once.");
-    	}
-    	
-    	thread = aThread;
-    }
-    
-    public Thread getThread()
-    {
-    	return thread;
-    }
-	
-    public void assertThread()
-    {
-    	if(null == thread || Thread.currentThread() != thread)
-    	{
-    		throw new RuntimeException("This function must only be called on the specified thread.");
-    	}
-    }
-
-    public void assertNotThread()
-    {
-    	if(null == thread || Thread.currentThread() == thread)
-    	{
-    		throw new RuntimeException("This function must not be called on the specified thread.");
-    	}
-    }
             
     public void queueCommand(final BaseCommand aCommand)
     {
-    	assertNotThread();
-    	
 		// Put the event in the queue and notify any waiting clients that it's present. (This will wake the waiting emulator if needed.)
 		eventQueue.add(aCommand);
-		
-		synchronized(thread)
-		{
-			thread.notifyAll();
-		}
     }
 
     public void pump()
     {
-    	assertThread();    	
-
     	// Run all events
     	for(BaseCommand i = eventQueue.poll(); null != i; i = eventQueue.poll())
     	{

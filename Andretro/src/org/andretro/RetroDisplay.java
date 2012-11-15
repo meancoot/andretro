@@ -48,7 +48,7 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
         view = (GLSurfaceView)findViewById(R.id.renderer);
         view.setEGLContextClientVersion(2);
         view.setRenderer(Present.createRenderer(this));
-		view.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+		view.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
 		view.setKeepScreenOn(true);
 		
 		if(!Game.hasGame())
@@ -63,33 +63,13 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     {
     	super.onResume();
 		windowManager.setupDisplay();
-    	
-	    Game.queueCommand(new Commands.SetPresentNotify(new Runnable()
-	    {
-	    	@Override public void run()
-	    	{
-	    		view.requestRender();
-	    	}
-	    }).setCallback(new CommandQueue.Callback(this, new Runnable()
-        {
-            @Override public void run()
-            {
-                view.onResume();
-            }
-        })));
+		view.onResume();
     }
     
     @Override public void onPause()
     {
     	super.onPause();
-    	
-    	Game.queueCommand(new Commands.SetPresentNotify(null).setCallback(new CommandQueue.Callback(this, new Runnable()
-        {
-            @Override public void run()
-            {
-                view.onPause();
-            }
-        })));
+    	view.onPause();
     }
             
     // QuestionDialog.QuestionHandler	

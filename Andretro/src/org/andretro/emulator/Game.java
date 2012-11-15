@@ -7,7 +7,7 @@ import java.io.*;
 
 import android.app.*;
 
-public final class Game implements Runnable
+public final class Game
 {
     // Singleton
     static
@@ -21,27 +21,15 @@ public final class Game implements Runnable
     }
  
     // Thread
-    private static Thread thread;
     private static final CommandQueue eventQueue = new CommandQueue();
     
     public static void queueCommand(final CommandQueue.BaseCommand aCommand)
     {
-    	// Sanity
-    	if(null == thread || !thread.isAlive())
-    	{
-    		Logger.d("No thread running, start new one");
-    		thread = new Thread(new Game());
-    		thread.start();
-    		eventQueue.setThread(thread);
-    	}
-    	
-		// Put the event in the queue and notify any waiting clients that it's present. (This will wake the waiting emulator if needed.)
 		eventQueue.queueCommand(aCommand);
     }
 
     // Game Info
     static int pauseDepth;
-    static Runnable presentNotify;
     
     // Fast forward
     private static int frameCounter;
@@ -73,9 +61,7 @@ public final class Game implements Runnable
     private static String dataName;
 
     static void loadGame(Activity aActivity, String aLibrary, File aFile)
-    {
-    	eventQueue.assertThread();
-    	
+    {	
     	if(!gameLoaded && !gameClosed && null != aFile && aFile.isFile())
     	{
     		moduleInfo = ModuleInfo.getInfoAbout(aActivity, new File(aLibrary));
@@ -114,8 +100,6 @@ public final class Game implements Runnable
     
     static void closeGame()
     {
-    	eventQueue.assertThread();
-    	
     	if(gameLoaded && !gameClosed)
     	{
         	LibRetro.writeMemoryRegion(LibRetro.RETRO_MEMORY_SAVE_RAM, getGameDataName("SaveRAM", "srm"));
@@ -138,71 +122,46 @@ public final class Game implements Runnable
     }
 
     // LOOP
-    @Override public void run()
+    public static boolean doFrame(LibRetro.VideoFrame aFrame)
     {
-    	eventQueue.assertThread();
-    	
-    	try
-    	{        	
-	    	// Run until interrupted
-	    	while(!thread.isInterrupted())
-	    	{
-	    		eventQueue.pump();
-	    		
-	    		// Execute any commands
-	    		if(gameLoaded && !gameClosed && 0 == pauseDepth && null != presentNotify)
-	    		{	
-	    			// Fast forward
-	    			final boolean rewindKeyPressed = Input.isPressed(rewindKey);
-	    			final boolean fastKeyPressed = Input.isPressed(fastForwardKey);
-	    			final int frameToggle = fastForwardDefault ? 1 : fastForwardSpeed;
-	    			int frameTarget = fastForwardDefault ? fastForwardSpeed : 1;
-	    			frameTarget = (fastKeyPressed) ? frameToggle : frameTarget;
-	    				    				    			
-	                //Emulate   			
-	    			LibRetro.VideoFrame frame = Present.FrameQueue.getEmpty();
-	    			Input.poolKeyboard(frame.keyboard);
-	    			frame.buttons[0] = Input.getBits(moduleInfo.inputData.getDevice(0,  0));
-    				LibRetro.run(frame, rewindKeyPressed);
-    				
-    				// Write any pending screen shots
-    				if(null != screenShotName)
-    				{
-    					PngWriter.write(screenShotName, frame.pixels, frame.width, frame.height, frame.pixelFormat);
-    					screenShotName = null;
-    				}
-    				
-    				// Present
-    				if(++frameCounter >= frameTarget)
-    				{
-    					Present.FrameQueue.putFull(frame);
-    					presentNotify.run();
-    					
-        				if(0 != frame.audioSamples)
-        				{
-        					Audio.write((int)avInfo.sampleRate, frame.audio, frame.audioSamples);
-        				}
-        				
-        				frameCounter = 0;
-    				}
-    				else
-    				{
-    					Present.FrameQueue.putEmpty(frame);
-    				}
-   	    		}
-	    		else
-	    		{
-	    			synchronized(thread)
-	    			{
-	    				thread.wait();
-	    			}
-	    		}
-	    	}
-	    }
-    	catch(InterruptedException e)
-    	{
-
-    	}
+		eventQueue.pump();
+		
+		if(gameLoaded && !gameClosed && 0 == pauseDepth)
+		{	
+			// Fast forward
+			final boolean rewindKeyPressed = Input.isPressed(rewindKey);
+			final boolean fastKeyPressed = Input.isPressed(fastForwardKey);
+			final int frameToggle = fastForwardDefault ? 1 : fastForwardSpeed;
+			int frameTarget = fastForwardDefault ? fastForwardSpeed : 1;
+			frameTarget = (fastKeyPressed) ? frameToggle : frameTarget;
+				    				    			
+            //Emulate   			
+			Input.poolKeyboard(aFrame.keyboard);
+			aFrame.buttons[0] = Input.getBits(moduleInfo.inputData.getDevice(0,  0));
+			LibRetro.run(aFrame, rewindKeyPressed);
+			
+			// Write any pending screen shots
+			if(null != screenShotName)
+			{
+				PngWriter.write(screenShotName, aFrame.pixels, aFrame.width, aFrame.height, aFrame.pixelFormat);
+				screenShotName = null;
+			}
+			
+			// Present
+			if(++frameCounter >= frameTarget)
+			{
+				if(0 != aFrame.audioSamples)
+				{
+					Audio.write((int)avInfo.sampleRate, aFrame.audio, aFrame.audioSamples);
+				}
+			
+				frameCounter = 0;
+				
+				return true;
+			}
+		}
+		
+		return false;
     }
 }
 

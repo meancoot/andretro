@@ -110,22 +110,7 @@ public final class Commands
 			Game.pauseDepth += pause ? 1 : -1;			
 		}
 	}
-	
-	public static final class SetPresentNotify extends CommandQueue.BaseCommand
-	{
-		private final Runnable presentNotify;
 		
-		public SetPresentNotify(Runnable aPresentNotify)
-		{
-			presentNotify = aPresentNotify;
-		}
-		
-		@Override protected void perform()
-		{
-			Game.presentNotify = presentNotify;
-		}
-	}
-	
 	public static final class RefreshInput extends CommandQueue.BaseCommand
 	{
 		@Override protected void perform()
@@ -152,7 +137,7 @@ public final class Commands
 		@Override protected void perform()
 		{
 			// Scaling
-			Present.setSmoothingMode(settings.getBoolean("scaling_smooth", true));
+			Present.Texture.setSmoothMode(settings.getBoolean("scaling_smooth", true));
 			
 			final String aspectMode = settings.getString("scaling_aspect_mode", "Default");
 			if("Default".equals(aspectMode))

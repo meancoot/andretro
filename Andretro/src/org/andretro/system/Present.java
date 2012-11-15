@@ -1,10 +1,10 @@
 package org.andretro.system;
 import org.andretro.R;
+import org.andretro.emulator.*;
 import org.libretro.*;
 
 import java.io.*;
 import java.nio.*;
-import java.util.concurrent.*;
 
 import javax.microedition.khronos.opengles.*;
 
@@ -16,50 +16,7 @@ import static android.opengl.GLES20.*;
 // NOT THREAD SAFE
 public final class Present implements GLSurfaceView.Renderer
 {	
-	// Frame Queue
-	public static class FrameQueue
-	{
-	    private static final ArrayBlockingQueue<LibRetro.VideoFrame> emptyFrames = new ArrayBlockingQueue<LibRetro.VideoFrame>(1);
-	    private static final ArrayBlockingQueue<LibRetro.VideoFrame> readyFrames = new ArrayBlockingQueue<LibRetro.VideoFrame>(1);
-	    
-	    static
-	    {
-	    	emptyFrames.offer(new LibRetro.VideoFrame());
-	    }
-	    
-	    private static LibRetro.VideoFrame getFrom(ArrayBlockingQueue<LibRetro.VideoFrame> aQueue)
-	    {
-	    	try
-	    	{
-	    		return aQueue.poll(100, TimeUnit.MILLISECONDS);
-	    	}
-	    	catch(InterruptedException e)
-	    	{
-	    		Thread.currentThread().interrupt();
-	    		return null;
-	    	}	    	
-	    }
-	    
-	    public static LibRetro.VideoFrame getEmpty()
-	    {
-	    	return getFrom(emptyFrames);
-	    }
-	    
-	    public static LibRetro.VideoFrame getFull()
-	    {
-	    	return getFrom(readyFrames);
-	    }
-	    
-	    public static void putEmpty(LibRetro.VideoFrame aFrame)
-	    {
-	    	emptyFrames.add(aFrame);
-	    }
-
-	    public static void putFull(LibRetro.VideoFrame aFrame)
-	    {
-	    	readyFrames.add(aFrame);
-	    }
-	}
+	final LibRetro.VideoFrame frame = new LibRetro.VideoFrame();
 	
 	public static class Texture
 	{
@@ -100,9 +57,12 @@ public final class Present implements GLSurfaceView.Renderer
 	    {
 	    	setColorMode(aColorMode);
 	    	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, aWidth, aHeight, textureFormat, textureType, aPixels);
-	    	
-	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, smoothMode ? GL_LINEAR : GL_NEAREST);
-	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, smoothMode ? GL_LINEAR : GL_NEAREST);
+	    }
+	    
+	    public static void setSmoothMode(boolean aEnable)
+	    {
+	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, aEnable ? GL_LINEAR : GL_NEAREST);
+	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, aEnable ? GL_LINEAR : GL_NEAREST);	    	
 	    }
 	}
 	
@@ -111,7 +71,6 @@ public final class Present implements GLSurfaceView.Renderer
 
     private static int programID;
     private static final int id[] = new int[8];
-    private static volatile boolean smoothMode = true;
     private static volatile boolean aspectMode = false;
     private static volatile float aspectForce = 0.0f;
     private static String vertexShader;
@@ -208,49 +167,33 @@ public final class Present implements GLSurfaceView.Renderer
         glUniform1f(id[2], aWidth);
         glUniform1f(id[3], aHeight);
     }
-    
-    public static void setSmoothingMode(boolean aEnable)
-    {
-    	smoothMode = aEnable;
-    }
-    
+        
     public static void setForcedAspect(boolean aUseCustom, float aAspect)
     {
     	aspectMode = aUseCustom;
     	aspectForce = aAspect;
     }
-    
 
     @Override public void onDrawFrame(GL10 gl)
     {
-    	LibRetro.VideoFrame next = FrameQueue.getFull();
-    	
-    	if(null != next)
-    	{	
-    		if((next.width > 0) && (next.height > 0))
-    		{
-    	    	final float width = next.width;
-    	    	final float height = next.height;
-    	    	final float aspect = next.aspect;
-    	    	final float rotate = (1 == (next.rotation & 1)) ? 1.0f : 0.0f;
-    	    	final int rotateMode = next.rotation;
+    	if(Game.doFrame(frame))
+    	{
+	    	final float width = frame.width;
+	    	final float height = frame.height;
+	    	final float aspect = frame.aspect;
+	    	final float rotate = (1 == (frame.rotation & 1)) ? 1.0f : 0.0f;
+	    	final int rotateMode = frame.rotation;
 
-    	    	// Upload texture
-    	    	Texture.upload(next.pixels, next.width, next.height, next.pixelFormat);
-    	    	FrameQueue.putEmpty(next);
-    	            	        
-    	        // Now send the rest to OpenGL    	        
-    	        glUniform1f(id[4], width);
-    			glUniform1f(id[5], height);
-    			glUniform1f(id[6], !aspectMode ? aspect : ((aspectForce < 0.0f) ? (width / height) : aspectForce));
-    			glUniform1f(id[7], rotate);
-    		
-    			glDrawArrays(GL_TRIANGLE_STRIP, rotateMode * 4, 4);
-    		}
-    		else
-    		{
-    			FrameQueue.putEmpty(next);
-    		}
+	    	// Upload texture
+	    	Texture.upload(frame.pixels, frame.width, frame.height, frame.pixelFormat);
+	            	        
+	        // Now send the rest to OpenGL    	        
+	        glUniform1f(id[4], width);
+			glUniform1f(id[5], height);
+			glUniform1f(id[6], !aspectMode ? aspect : ((aspectForce < 0.0f) ? (width / height) : aspectForce));
+			glUniform1f(id[7], rotate);
+		
+			glDrawArrays(GL_TRIANGLE_STRIP, rotateMode * 4, 4);
     	}
     }
 }
