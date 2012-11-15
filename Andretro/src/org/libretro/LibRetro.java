@@ -266,6 +266,10 @@ public final class LibRetro
     	public float aspect;
     	
     	public final int[] keyboard = new int[RETROK_LAST];
+    	public final int[] buttons = new int[8];
+    	
+    	public final short[] audio = new short[48000];
+    	public int audioSamples;
     }
 	
 	public static native boolean loadLibrary(String aPath, String aSystemDirectory);
@@ -277,7 +281,7 @@ public final class LibRetro
 	public static native void getSystemAVInfo(AVInfo aInfo);
 	public static native void setControllerPortDevice(int aPort, int aDevice);
 	public static native void reset();
-	public static native int run(VideoFrame aVideo, short[] aAudio, int aJoypad, boolean aRewind);
+	public static native void run(VideoFrame aVideo, boolean aRewind);
 	public static native int serializeSize();
 //	public static native boolean serialize(byte[] aData, int aSize);
 //	public static native boolean unserialize(byte[] aData, int aSize);

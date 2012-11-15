@@ -142,9 +142,6 @@ public final class Game implements Runnable
     {
     	eventQueue.assertThread();
     	
-    	// Buffer for audio samples
-    	final short[] audioSamples = new short[48000];
-    	
     	try
     	{        	
 	    	// Run until interrupted
@@ -165,7 +162,8 @@ public final class Game implements Runnable
 	                //Emulate   			
 	    			LibRetro.VideoFrame frame = Present.FrameQueue.getEmpty();
 	    			Input.poolKeyboard(frame.keyboard);
-    				int len = LibRetro.run(frame, audioSamples, Input.getBits(moduleInfo.inputData.getDevice(0, 0)), rewindKeyPressed);
+	    			frame.buttons[0] = Input.getBits(moduleInfo.inputData.getDevice(0,  0));
+    				LibRetro.run(frame, rewindKeyPressed);
     				
     				// Write any pending screen shots
     				if(null != screenShotName)
@@ -180,9 +178,9 @@ public final class Game implements Runnable
     					Present.FrameQueue.putFull(frame);
     					presentNotify.run();
     					
-        				if(0 != len)
+        				if(0 != frame.audioSamples)
         				{
-        					Audio.write((int)avInfo.sampleRate, audioSamples, len);
+        					Audio.write((int)avInfo.sampleRate, frame.audio, frame.audioSamples);
         				}
         				
         				frameCounter = 0;

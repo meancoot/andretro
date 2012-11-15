@@ -18,9 +18,6 @@ namespace
     const char* systemDirectory;
 
     JNIEnv* env;
-    jshortArray audioData;
-    jint audioLength;
-    jint joypad;
 
     jobject videoFrame;
     jint rotation;
@@ -35,6 +32,9 @@ namespace
 
 namespace VIDEO
 {
+	typedef void (*andretro_video_refresh)(void* aOut, const void* data, unsigned width, unsigned height, size_t pitch);
+	unsigned pixelFormat;
+
     template<typename T>
     static void refresh_noconv(void* aOut, const void *data, unsigned width, unsigned height, size_t pitch)
     {
@@ -67,12 +67,92 @@ namespace VIDEO
         }
     }
 
-    unsigned pixelFormat;
+    static void retro_video_refresh_imp(const void *data, unsigned width, unsigned height, size_t pitch)
+    {
+    	static const andretro_video_refresh refreshByMode[3] = {&refresh_15, &refresh_noconv<uint32_t>, &refresh_noconv<uint16_t>};
 
-    typedef void (*andretro_video_refresh)(void* aOut, const void* data, unsigned width, unsigned height, size_t pitch);
+    	if(data)
+    	{
+    		void* outData = (void*)env->GetDirectBufferAddress(env->GetObjectField(videoFrame, (*frame_class)["pixels"]));
+    		refreshByMode[pixelFormat](outData, data, width, height, pitch);
+    	}
 
-    const andretro_video_refresh refreshByMode[3] = {&refresh_15, &refresh_noconv<uint32_t>, &refresh_noconv<uint16_t>};
-    andretro_video_refresh refresher = refresh_15;
+    	env->SetIntField(videoFrame, (*frame_class)["width"], width);
+    	env->SetIntField(videoFrame, (*frame_class)["height"], height);
+    	env->SetIntField(videoFrame, (*frame_class)["pixelFormat"], VIDEO::pixelFormat);
+    	env->SetIntField(videoFrame, (*frame_class)["rotation"], rotation);
+    	env->SetFloatField(videoFrame, (*frame_class)["aspect"], avInfo.geometry.aspect_ratio);
+    }
+}
+
+namespace INPUT
+{
+	jint keyboard[RETROK_LAST];
+	jint joypads[8];
+
+	static void retro_input_poll_imp(void)
+	{
+		// Joystick
+		jintArray js = (jintArray)env->GetObjectField(videoFrame, (*frame_class)["buttons"]);
+		env->GetIntArrayRegion(js, 0, 8, joypads);
+
+		// Keyboard
+		jintArray kbd = (jintArray)env->GetObjectField(videoFrame, (*frame_class)["keyboard"]);
+		env->GetIntArrayRegion(kbd, 0, RETROK_LAST, keyboard);
+	}
+
+	static int16_t retro_input_state_imp(unsigned port, unsigned device, unsigned index, unsigned id)
+	{
+		switch(device)
+		{
+			case RETRO_DEVICE_JOYPAD:
+			{
+				return (joypads[port] >> id) & 1;
+			}
+
+			case RETRO_DEVICE_KEYBOARD:
+			{
+				return keyboard[id];
+			}
+
+			default:
+			{
+				return 0;
+			}
+		}
+	}
+}
+
+namespace AUDIO
+{
+	jshortArray audioData;
+	jint audioLength;
+
+	void prepareFrame()
+	{
+		audioData = (jshortArray)env->GetObjectField(videoFrame, (*frame_class)["audio"]);
+		audioLength = 0;
+	}
+
+	void endFrame()
+	{
+		env->SetShortField(videoFrame, (*frame_class)["audioSamples"], audioLength);
+		audioLength = 0;
+	}
+
+	void retro_audio_sample_imp(int16_t left, int16_t right)
+	{
+		int16_t data[] = {left, right};
+	    env->SetShortArrayRegion(audioData, audioLength, 2, data);
+		audioLength += 2;
+	}
+
+	static size_t retro_audio_sample_batch_imp(const int16_t *data, size_t frames)
+	{
+	    env->SetShortArrayRegion(audioData, audioLength, frames * 2, data);
+		audioLength += frames * 2;
+		return frames; //TODO: ?
+	}
 }
 
 // Callbacks
@@ -133,7 +213,6 @@ static bool retro_environment_imp(unsigned cmd, void *data)
 		if(newFormat == 0 || newFormat == 2)
 		{
 			VIDEO::pixelFormat = newFormat;
-			VIDEO::refresher = VIDEO::refreshByMode[VIDEO::pixelFormat];
 			return true;
 		}
 
@@ -143,69 +222,8 @@ static bool retro_environment_imp(unsigned cmd, void *data)
 	return false;
 }
 
-// Render a frame. Pixel format is 15-bit 0RGB1555 native endian unless changed (see RETRO_ENVIRONMENT_SET_PIXEL_FORMAT).
-// Width and height specify dimensions of buffer.
-// Pitch specifices length in bytes between two lines in buffer.
-static void retro_video_refresh_imp(const void *data, unsigned width, unsigned height, size_t pitch)
-{
-	if(data)
-	{
-		void* outData = (void*)env->GetDirectBufferAddress(env->GetObjectField(videoFrame, (*frame_class)["pixels"]));
-		VIDEO::refresher(outData, data, width, height, pitch);
-	}
-
-	env->SetIntField(videoFrame, (*frame_class)["width"], width);
-	env->SetIntField(videoFrame, (*frame_class)["height"], height);
-	env->SetIntField(videoFrame, (*frame_class)["pixelFormat"], VIDEO::pixelFormat);
-	env->SetIntField(videoFrame, (*frame_class)["rotation"], rotation);
-	env->SetFloatField(videoFrame, (*frame_class)["aspect"], avInfo.geometry.aspect_ratio);
-}
-
 // Renders a single audio frame. Should only be used if implementation generates a single sample at a time.
 // Format is signed 16-bit native endian.
-void retro_audio_sample_imp(int16_t left, int16_t right)
-{
-	int16_t data[] = {left, right};
-    env->SetShortArrayRegion(audioData, audioLength, 2, data);
-	audioLength += 2;
-}
-
-// Renders multiple audio frames in one go. One frame is defined as a sample of left and right channels, interleaved.
-// I.e. int16_t buf[4] = { l, r, l, r }; would be 2 frames.
-// Only one of the audio callbacks must ever be used.
-static size_t retro_audio_sample_batch_imp(const int16_t *data, size_t frames)
-{
-    env->SetShortArrayRegion(audioData, audioLength, frames * 2, data);
-	audioLength += frames * 2;
-	return frames; //< ?
-}
-
-// Polls input.
-static void retro_input_poll_imp(void)
-{
-
-}
-
-// Queries for input for player 'port'. device will be masked with RETRO_DEVICE_MASK.
-// Specialization of devices such as RETRO_DEVICE_JOYPAD_MULTITAP that have been set with retro_set_controller_port_device()
-// will still use the higher level RETRO_DEVICE_JOYPAD to request input.
-static int16_t retro_input_state_imp(unsigned port, unsigned device, unsigned index, unsigned id)
-{
-	if(0 == port && 1 == device)
-	{
-		return (joypad >> id) & 1;
-	}
-	else if(RETRO_DEVICE_KEYBOARD == device && id < RETROK_LAST)
-	{
-		// TODO: Optimize
-		jintArray kbd = (jintArray)env->GetObjectField(videoFrame, (*frame_class)["keyboard"]);
-		int res;
-		env->GetIntArrayRegion(kbd, id, 1, &res);
-		return res;
-	}
-
-    return 0;
-}
 
 //
 #define JNIFUNC(RET, FUNCTION) extern "C" RET Java_org_libretro_LibRetro_ ## FUNCTION
@@ -243,11 +261,11 @@ JNIFUNC(void, unloadLibrary)(JNIARGS)
 JNIFUNC(void, init)(JNIARGS)
 {
     module->set_environment(retro_environment_imp);
-    module->set_video_refresh(retro_video_refresh_imp);
-    module->set_audio_sample(retro_audio_sample_imp);
-    module->set_audio_sample_batch(retro_audio_sample_batch_imp);
-    module->set_input_poll(retro_input_poll_imp);
-    module->set_input_state(retro_input_state_imp);
+    module->set_video_refresh(VIDEO::retro_video_refresh_imp);
+    module->set_audio_sample(AUDIO::retro_audio_sample_imp);
+    module->set_audio_sample_batch(AUDIO::retro_audio_sample_batch_imp);
+    module->set_input_poll(INPUT::retro_input_poll_imp);
+    module->set_input_state(INPUT::retro_input_state_imp);
 
     module->init();
 
@@ -294,16 +312,15 @@ JNIFUNC(void, reset)(JNIARGS)
     module->reset();
 }
 
-JNIFUNC(jint, run)(JNIARGS, jobject aVideo, jshortArray aAudio, jint aJoypad, jboolean aRewind)
+JNIFUNC(void, run)(JNIARGS, jobject aVideo, jboolean aRewind)
 {
     // TODO
     env = aEnv;
 
     videoFrame = aVideo;
-    audioData = aAudio;
-    audioLength = 0;
-    joypad = aJoypad;
     
+    AUDIO::prepareFrame();
+
     const bool rewound = aRewind && rewinder.eatFrame(module);
 
     if(!aRewind || rewound)
@@ -316,7 +333,7 @@ JNIFUNC(jint, run)(JNIARGS, jobject aVideo, jshortArray aAudio, jint aJoypad, jb
     	}
     }
 
-    return audioLength;
+    AUDIO::endFrame();
 }
 
 JNIFUNC(jint, serializeSize)(JNIARGS)
@@ -466,19 +483,19 @@ JNIFUNC(jboolean, nativeInit)(JNIARGS)
         {
             static const char* const n[] = {"libraryName", "libraryVersion", "validExtensions", "needFullPath", "blockExtract"};
             static const char* const s[] = {"Ljava/lang/String;", "Ljava/lang/String;", "Ljava/lang/String;", "Z", "Z"};
-            systemInfo_class.reset(new JavaClass(aEnv, aEnv->FindClass("org/libretro/LibRetro$SystemInfo"), 5, n, s));
+            systemInfo_class.reset(new JavaClass(aEnv, aEnv->FindClass("org/libretro/LibRetro$SystemInfo"), sizeof(n) / sizeof(n[0]), n, s));
         }
     
         {
             static const char* const n[] = {"baseWidth", "baseHeight", "maxWidth", "maxHeight", "aspectRatio", "fps", "sampleRate"};
             static const char* const s[] = {"I", "I", "I", "I", "F", "D", "D"};
-            avInfo_class.reset(new JavaClass(aEnv, aEnv->FindClass("org/libretro/LibRetro$AVInfo"), 7, n, s));
+            avInfo_class.reset(new JavaClass(aEnv, aEnv->FindClass("org/libretro/LibRetro$AVInfo"), sizeof(n) / sizeof(n[0]), n, s));
         }
         
         {
-        	static const char* const n[] = {"pixels", "width", "height", "pixelFormat", "rotation", "aspect", "keyboard"};
-        	static const char* const s[] = {"Ljava/nio/ByteBuffer;", "I", "I", "I", "I", "F", "[I"};
-        	frame_class.reset(new JavaClass(aEnv, aEnv->FindClass("org/libretro/LibRetro$VideoFrame"), 7, n, s));
+        	static const char* const n[] = {"pixels", "width", "height", "pixelFormat", "rotation", "aspect", "keyboard", "buttons", "audio", "audioSamples"};
+        	static const char* const s[] = {"Ljava/nio/ByteBuffer;", "I", "I", "I", "I", "F", "[I", "[I", "[S", "I"};
+        	frame_class.reset(new JavaClass(aEnv, aEnv->FindClass("org/libretro/LibRetro$VideoFrame"), sizeof(n) / sizeof(n[0]), n, s));
         }
 
         return true;
