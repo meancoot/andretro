@@ -1,5 +1,6 @@
 #include <jni.h>
 #include <dlfcn.h>
+#include <GLES2/gl2.h>
 #include <memory>
 
 #include "Common.h"
@@ -32,49 +33,59 @@ namespace
 
 namespace VIDEO
 {
-	typedef void (*andretro_video_refresh)(void* aOut, const void* data, unsigned width, unsigned height, size_t pitch);
+	typedef void (*andretro_video_refresh)(const void* data, unsigned width, unsigned height, size_t pitch);
 	unsigned pixelFormat;
 
-    template<typename T>
-    static void refresh_noconv(void* aOut, const void *data, unsigned width, unsigned height, size_t pitch)
+    template<typename T, int FORMAT, int TYPE>
+    static void refresh_noconv(const void *data, unsigned width, unsigned height, size_t pitch)
     {
-        T* outPixels = (T*)aOut;
-        const T* inPixels = (const T*)data;
         const unsigned pixelPitch = pitch / sizeof(T);
 
-        for(int i = 0; i != height; i ++, outPixels += width, inPixels += pixelPitch)
+        if(pixelPitch == width)
         {
-            memcpy(outPixels, inPixels, width * sizeof(T));
+        	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, FORMAT, TYPE, data);
+        }
+        else
+        {
+        	T outPixels[width * height];
+        	T* outPixels_t = outPixels;
+            const T* inPixels = (const T*)data;
+
+        	for(int i = 0; i != height; i ++, inPixels += pixelPitch, outPixels_t += width)
+        	{
+        		memcpy(outPixels_t, inPixels, width * sizeof(T));
+        	}
+
+        	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, FORMAT, TYPE, outPixels);
         }
     }
 
     // retro_video_refresh for 0RGB1555: deprecated
-    static void refresh_15(void* aOut, const void *data, unsigned width, unsigned height, size_t pitch)
+    static void refresh_15(const void *data, unsigned width, unsigned height, size_t pitch)
     {
+    	uint16_t outPixels[width * height];
+    	uint16_t* outPixels_t = outPixels;
+        const uint16_t* inPixels = (const uint16_t*)data;
         const unsigned pixelPitch = pitch / 2;
 
-        uint16_t* outPixels = (uint16_t*)aOut;
-        const uint16_t* inPixels = (const uint16_t*)data;
+    	for(int i = 0; i != height; i ++, inPixels += pixelPitch - width)
+    	{
+    		for(int j = 0; j != width; j ++)
+    		{
+    			(*outPixels_t++) = (*inPixels++) << 1;
+    		}
+    	}
 
-        for(int i = 0; i != height; i ++)
-        {
-            for(int j = 0; j != width; j ++)
-            {
-                *outPixels++ = (*inPixels++) << 1;
-            }
-
-            inPixels += (pixelPitch - width);
-        }
+    	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, outPixels);
     }
 
     static void retro_video_refresh_imp(const void *data, unsigned width, unsigned height, size_t pitch)
     {
-    	static const andretro_video_refresh refreshByMode[3] = {&refresh_15, &refresh_noconv<uint32_t>, &refresh_noconv<uint16_t>};
+    	static const andretro_video_refresh refreshByMode[3] = {&refresh_15, &refresh_noconv<uint32_t, GL_RGBA, GL_UNSIGNED_BYTE>, &refresh_noconv<uint16_t, GL_RGB, GL_UNSIGNED_SHORT_5_6_5>};
 
     	if(data)
     	{
-    		void* outData = (void*)env->GetDirectBufferAddress(env->GetObjectField(videoFrame, (*frame_class)["pixels"]));
-    		refreshByMode[pixelFormat](outData, data, width, height, pitch);
+    		refreshByMode[pixelFormat](data, width, height, pitch);
     	}
 
     	env->SetIntField(videoFrame, (*frame_class)["width"], width);
@@ -82,6 +93,17 @@ namespace VIDEO
     	env->SetIntField(videoFrame, (*frame_class)["pixelFormat"], VIDEO::pixelFormat);
     	env->SetIntField(videoFrame, (*frame_class)["rotation"], rotation);
     	env->SetFloatField(videoFrame, (*frame_class)["aspect"], avInfo.geometry.aspect_ratio);
+    }
+
+    static void createTexture()
+    {
+    	const GLenum formats[3] = {GL_RGBA, GL_RGBA, GL_RGB};
+    	const GLenum types[3] = {GL_UNSIGNED_SHORT_5_5_5_1, GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT_5_6_5};
+
+    	if(pixelFormat < 3)
+    	{
+    		glTexImage2D(GL_TEXTURE_2D, 0, formats[pixelFormat], 1024, 1024, 0, formats[pixelFormat], types[pixelFormat], 0);
+    	}
     }
 }
 
@@ -105,53 +127,41 @@ namespace INPUT
 	{
 		switch(device)
 		{
-			case RETRO_DEVICE_JOYPAD:
-			{
-				return (joypads[port] >> id) & 1;
-			}
-
-			case RETRO_DEVICE_KEYBOARD:
-			{
-				return keyboard[id];
-			}
-
-			default:
-			{
-				return 0;
-			}
+			case RETRO_DEVICE_JOYPAD:    return (joypads[port] >> id) & 1;
+			case RETRO_DEVICE_KEYBOARD:  return (id < RETROK_LAST) ? keyboard[id] : 0;
 		}
 	}
 }
 
 namespace AUDIO
 {
-	jshortArray audioData;
-	jint audioLength;
+	static uint32_t audioLength;
+	static int16_t buffer[48000];
 
-	void prepareFrame()
+	static inline void prepareFrame()
 	{
-		audioData = (jshortArray)env->GetObjectField(videoFrame, (*frame_class)["audio"]);
 		audioLength = 0;
 	}
 
-	void endFrame()
+	static inline void endFrame()
 	{
-		env->SetShortField(videoFrame, (*frame_class)["audioSamples"], audioLength);
-		audioLength = 0;
+		jshortArray audioData = (jshortArray)env->GetObjectField(videoFrame, (*frame_class)["audio"]);
+		env->SetShortArrayRegion(audioData, 0, audioLength, buffer);
+
+		env->SetIntField(videoFrame, (*frame_class)["audioSamples"], audioLength);
 	}
 
-	void retro_audio_sample_imp(int16_t left, int16_t right)
+	static void retro_audio_sample_imp(int16_t left, int16_t right)
 	{
-		int16_t data[] = {left, right};
-	    env->SetShortArrayRegion(audioData, audioLength, 2, data);
-		audioLength += 2;
+		buffer[audioLength++] = left;
+		buffer[audioLength++] = right;
 	}
 
 	static size_t retro_audio_sample_batch_imp(const int16_t *data, size_t frames)
 	{
-	    env->SetShortArrayRegion(audioData, audioLength, frames * 2, data);
+		memcpy(&buffer[audioLength], data, frames * 4);
 		audioLength += frames * 2;
-		return frames; //TODO: ?
+		return frames;
 	}
 }
 
@@ -213,6 +223,7 @@ static bool retro_environment_imp(unsigned cmd, void *data)
 		if(newFormat < 3)
 		{
 			VIDEO::pixelFormat = newFormat;
+			VIDEO::createTexture();
 			return true;
 		}
 
@@ -267,6 +278,9 @@ JNIFUNC(void, init)(JNIARGS)
     module->set_input_poll(INPUT::retro_input_poll_imp);
     module->set_input_state(INPUT::retro_input_state_imp);
 
+    VIDEO::pixelFormat = 0;
+	VIDEO::createTexture();
+
     module->init();
 
     module->get_system_info(&systemInfo);
@@ -316,9 +330,14 @@ JNIFUNC(void, run)(JNIARGS, jobject aVideo, jboolean aRewind)
 {
     // TODO
     env = aEnv;
-
     videoFrame = aVideo;
     
+    if(env->GetBooleanField(videoFrame, (*frame_class)["restarted"]))
+    {
+    	VIDEO::createTexture();
+    	env->SetBooleanField(videoFrame, (*frame_class)["restarted"], false);
+    }
+
     AUDIO::prepareFrame();
 
     const bool rewound = aRewind && rewinder.eatFrame(module);
@@ -493,8 +512,8 @@ JNIFUNC(jboolean, nativeInit)(JNIARGS)
         }
         
         {
-        	static const char* const n[] = {"pixels", "width", "height", "pixelFormat", "rotation", "aspect", "keyboard", "buttons", "audio", "audioSamples"};
-        	static const char* const s[] = {"Ljava/nio/ByteBuffer;", "I", "I", "I", "I", "F", "[I", "[I", "[S", "I"};
+        	static const char* const n[] = {"restarted", "width", "height", "pixelFormat", "rotation", "aspect", "keyboard", "buttons", "audio", "audioSamples"};
+        	static const char* const s[] = {"Z", "I", "I", "I", "I", "F", "[I", "[I", "[S", "I"};
         	frame_class.reset(new JavaClass(aEnv, aEnv->FindClass("org/libretro/LibRetro$VideoFrame"), sizeof(n) / sizeof(n[0]), n, s));
         }
 

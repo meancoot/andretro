@@ -20,15 +20,7 @@ public final class Present implements GLSurfaceView.Renderer
 	
 	public static class Texture
 	{
-		private static final int FRAMESIZE = 1024;
-	    private static final int[] textureFormats = {GL_RGBA, GL_RGBA, GL_RGB};
-	    private static final int[] textureTypes = {GL_UNSIGNED_SHORT_5_5_5_1, GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT_5_6_5};
-
 		private static final int id[] = new int[1];
-
-	    private static int textureFormat;
-	    private static int textureType;
-	    private static int lastPixelFormat;		
 		
 		private static void create()
 		{
@@ -36,29 +28,8 @@ public final class Present implements GLSurfaceView.Renderer
 	        glBindTexture(GL_TEXTURE_2D, id[0]);
 	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, FRAMESIZE, FRAMESIZE, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, null);
-	        
-	        lastPixelFormat = -1;
 		}
-		
-	    private static void setColorMode(int aPixelFormat)
-	    {
-	    	if(aPixelFormat != lastPixelFormat)
-	    	{
-	    		lastPixelFormat = aPixelFormat;
-	    		textureFormat = textureFormats[lastPixelFormat];
-	    		textureType = textureTypes[lastPixelFormat];
-	    		
-	            glTexImage2D(GL_TEXTURE_2D, 0, textureFormat, FRAMESIZE, FRAMESIZE, 0, textureFormat, textureType, null);
-	    	}
-	    }
-	    
-	    private static void upload(ByteBuffer aPixels, int aWidth, int aHeight, int aColorMode)
-	    {
-	    	setColorMode(aColorMode);
-	    	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, aWidth, aHeight, textureFormat, textureType, aPixels);
-	    }
-	    
+			    	    
 	    public static void setSmoothMode(boolean aEnable)
 	    {
 	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, aEnable ? GL_LINEAR : GL_NEAREST);
@@ -166,6 +137,8 @@ public final class Present implements GLSurfaceView.Renderer
         
         glUniform1f(id[2], aWidth);
         glUniform1f(id[3], aHeight);
+        
+        frame.restarted = true;
     }
         
     public static void setForcedAspect(boolean aUseCustom, float aAspect)
@@ -183,9 +156,6 @@ public final class Present implements GLSurfaceView.Renderer
 	    	final float aspect = frame.aspect;
 	    	final float rotate = (1 == (frame.rotation & 1)) ? 1.0f : 0.0f;
 	    	final int rotateMode = frame.rotation;
-
-	    	// Upload texture
-	    	Texture.upload(frame.pixels, frame.width, frame.height, frame.pixelFormat);
 	            	        
 	        // Now send the rest to OpenGL    	        
 	        glUniform1f(id[4], width);

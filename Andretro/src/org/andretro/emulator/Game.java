@@ -143,7 +143,7 @@ public final class Game
 			// Write any pending screen shots
 			if(null != screenShotName)
 			{
-				PngWriter.write(screenShotName, aFrame.pixels, aFrame.width, aFrame.height, aFrame.pixelFormat);
+//				PngWriter.write(screenShotName, aFrame.pixels, aFrame.width, aFrame.height, aFrame.pixelFormat);
 				screenShotName = null;
 			}
 			

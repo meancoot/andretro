@@ -262,7 +262,8 @@ public final class LibRetro
 	
     public static class VideoFrame
     {
-    	public final ByteBuffer pixels = ByteBuffer.allocateDirect(1024 * 1024 * 2).order(ByteOrder.nativeOrder());
+    	public boolean restarted = true;
+    	
     	public int width;
     	public int height;
     	public int pixelFormat;
