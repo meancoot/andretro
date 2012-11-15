@@ -142,19 +142,19 @@ public final class Commands
 			final String aspectMode = settings.getString("scaling_aspect_mode", "Default");
 			if("Default".equals(aspectMode))
 			{
-				Present.setForcedAspect(false, 0.0f);
+				Present.VertexData.setForcedAspect(false, 0.0f);
 			}
 			else if("4:3".equals(aspectMode))
 			{
-				Present.setForcedAspect(true, 1.3333333f);
+				Present.VertexData.setForcedAspect(true, 1.3333333f);
 			}
 			else if("Pixel".equals(aspectMode))
 			{
-				Present.setForcedAspect(true, -1.0f);
+				Present.VertexData.setForcedAspect(true, -1.0f);
 			}
 			else
 			{
-				Present.setForcedAspect(false, 0.0f);
+				Present.VertexData.setForcedAspect(false, 0.0f);
 			}
 			
 			// Orientation
