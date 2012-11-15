@@ -9,6 +9,7 @@ import android.view.*;
 import android.app.*;
 
 import org.andretro.system.*;
+import org.andretro.system.video.*;
 import org.libretro.LibRetro;
 
 public final class Commands
@@ -142,19 +143,19 @@ public final class Commands
 			final String aspectMode = settings.getString("scaling_aspect_mode", "Default");
 			if("Default".equals(aspectMode))
 			{
-				Present.VertexData.setForcedAspect(false, 0.0f);
+				VertexData.setForcedAspect(false, 0.0f);
 			}
 			else if("4:3".equals(aspectMode))
 			{
-				Present.VertexData.setForcedAspect(true, 1.3333333f);
+				VertexData.setForcedAspect(true, 1.3333333f);
 			}
 			else if("Pixel".equals(aspectMode))
 			{
-				Present.VertexData.setForcedAspect(true, -1.0f);
+				VertexData.setForcedAspect(true, -1.0f);
 			}
 			else
 			{
-				Present.VertexData.setForcedAspect(false, 0.0f);
+				VertexData.setForcedAspect(false, 0.0f);
 			}
 			
 			// Orientation
