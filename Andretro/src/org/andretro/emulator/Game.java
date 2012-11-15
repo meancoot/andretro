@@ -134,19 +134,21 @@ public final class Game
 			final int frameToggle = fastForwardDefault ? 1 : fastForwardSpeed;
 			final int frameTarget = fastForwardDefault ? fastForwardSpeed : 1;
 			aFrame.framesToRun = (fastKeyPressed) ? frameToggle : frameTarget;
-				    				    			
+			
+			// Write any pending screen shots
+			if(null != screenShotName && !aFrame.restarted)
+			{
+//				PngWriter.write(screenShotName, aFrame.pixels, aFrame.width, aFrame.height, aFrame.pixelFormat);
+				PngWriter.write(screenShotName, 0, 0, 256, 256);
+				screenShotName = null;
+			}
+
+			
             //Emulate   			
 			Input.poolKeyboard(aFrame.keyboard);
 			aFrame.buttons[0] = Input.getBits(moduleInfo.inputData.getDevice(0,  0));
 			LibRetro.run(aFrame);
-			
-			// Write any pending screen shots
-			if(null != screenShotName)
-			{
-//				PngWriter.write(screenShotName, aFrame.pixels, aFrame.width, aFrame.height, aFrame.pixelFormat);
-				screenShotName = null;
-			}
-			
+						
 			// Present
 			if(0 != aFrame.audioSamples)
 			{

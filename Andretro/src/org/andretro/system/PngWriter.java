@@ -3,49 +3,18 @@ package org.andretro.system;
 import java.io.*;
 import java.nio.*;
 
-import org.libretro.*;
-
 import android.graphics.*;
+
+import static android.opengl.GLES20.*;
 
 public class PngWriter
 {	
-	public static boolean write(final String aFileName, final ByteBuffer aPixels, final int aWidth, final int aHeight, final int aPixelFormat)
+	public static boolean write(final String aFileName, final int aX, final int aY, final int aWidth, final int aHeight)
 	{
 		final int total = aWidth * aHeight;
 		final int[] colors = new int[total];
-		
-		switch(aPixelFormat)
-		{
-			case LibRetro.RETRO_PIXEL_FORMAT_0RGB1555:
-			case LibRetro.RETRO_PIXEL_FORMAT_RGB565:
-			{
-				final ShortBuffer spixels = aPixels.asShortBuffer();
-				final int less = (LibRetro.RETRO_PIXEL_FORMAT_0RGB1555 == aPixelFormat) ? 0 : 1;
-			
-				for(int i = 0; i != total; i ++)
-				{
-					final int color = spixels.get(i);
-					final int r = (color >> 11) & 0x1F;
-					final int g = (color >> 6) & 0x1F;
-					final int b = (color >> (1 - less)) & 0x1F;
-					
-					colors[i] = Color.argb(0xFF, r << 3, g << 3, b << 3);
-				}
-				
-				break;
-			}
-			
-			case LibRetro.RETRO_PIXEL_FORMAT_XRGB8888:
-			{
-				final IntBuffer pixels = aPixels.asIntBuffer();
-				for(int i = 0; i != total; i ++)
-				{
-					pixels.get(colors, 0, total);
-				}
-				
-				break;
-			}
-		}
+
+		glReadPixels(0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, IntBuffer.wrap(colors));
 		
 		// Write bitmap
 		try

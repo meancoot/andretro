@@ -135,6 +135,8 @@ namespace INPUT
 			case RETRO_DEVICE_JOYPAD:    return (joypads[port] >> id) & 1;
 			case RETRO_DEVICE_KEYBOARD:  return (id < RETROK_LAST) ? keyboard[id] : 0;
 		}
+
+		return 0;
 	}
 }
 
@@ -247,9 +249,6 @@ static bool retro_environment_imp(unsigned cmd, void *data)
 	return false;
 }
 
-// Renders a single audio frame. Should only be used if implementation generates a single sample at a time.
-// Format is signed 16-bit native endian.
-
 //
 #define JNIFUNC(RET, FUNCTION) extern "C" RET Java_org_libretro_LibRetro_ ## FUNCTION
 #define JNIARGS JNIEnv* aEnv, jclass aClass
@@ -277,6 +276,9 @@ JNIFUNC(void, unloadLibrary)(JNIARGS)
 {
     delete module;
     module = 0;
+
+    free(systemDirectory);
+    systemDirectory = 0;
 
     memset(&systemInfo, 0, sizeof(systemInfo));
 

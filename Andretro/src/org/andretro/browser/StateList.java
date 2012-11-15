@@ -2,7 +2,6 @@ package org.andretro.browser;
 
 import org.andretro.*;
 import org.andretro.emulator.*;
-import org.andretro.system.*;
 
 import android.app.*;
 import android.graphics.drawable.*;
@@ -89,12 +88,7 @@ public class StateList extends Activity implements AdapterView.OnItemClickListen
     
 	@Override public void onItemClick(AdapterView<?> aListView, View aView, int aPosition, long aID)
 	{
-		Game.queueCommand(new Commands.StateAction(loading, aPosition).setCallback(new CommandQueue.Callback(this, new Runnable()
-		{
-			@Override public void run()
-			{
-				finish();
-			}
-		})));
+		Game.queueCommand(new Commands.StateAction(loading, aPosition));
+		finish();
 	}
 }

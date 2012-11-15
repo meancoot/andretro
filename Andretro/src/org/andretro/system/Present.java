@@ -21,6 +21,7 @@ public final class Present implements GLSurfaceView.Renderer
 	public static class Texture
 	{
 		private static final int id[] = new int[1];
+		private static boolean smoothMode = true;
 		
 		private static void create()
 		{
@@ -28,18 +29,19 @@ public final class Present implements GLSurfaceView.Renderer
 	        glBindTexture(GL_TEXTURE_2D, id[0]);
 	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	        
+	        setSmoothMode(smoothMode);
 		}
 			    	    
 	    public static void setSmoothMode(boolean aEnable)
 	    {
+	    	smoothMode = aEnable;
+	    	
 	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, aEnable ? GL_LINEAR : GL_NEAREST);
 	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, aEnable ? GL_LINEAR : GL_NEAREST);	    	
 	    }
 	}
 	
-	
-    
-
     private static int programID;
     private static final int id[] = new int[8];
     private static volatile boolean aspectMode = false;
