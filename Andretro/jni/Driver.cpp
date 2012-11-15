@@ -210,7 +210,7 @@ static bool retro_environment_imp(unsigned cmd, void *data)
 	{
 		unsigned newFormat = *(unsigned*)data;
 
-		if(newFormat == 0 || newFormat == 2)
+		if(newFormat < 3)
 		{
 			VIDEO::pixelFormat = newFormat;
 			return true;

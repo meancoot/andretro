@@ -75,6 +75,10 @@ public final class LibRetro
 	public static final int  RETRO_GAME_TYPE_SUFAMI_TURBO = 0x103;
 	public static final int  RETRO_GAME_TYPE_SUPER_GAME_BOY = 0x104;
 
+	public static final int  RETRO_PIXEL_FORMAT_0RGB1555 = 0;
+	public static final int  RETRO_PIXEL_FORMAT_XRGB8888 = 1;
+	public static final int  RETRO_PIXEL_FORMAT_RGB565 = 2;
+	
 	public static final int  RETROK_UNKNOWN        = 0;
 	public static final int  RETROK_FIRST          = 0;
 	public static final int  RETROK_BACKSPACE      = 8;

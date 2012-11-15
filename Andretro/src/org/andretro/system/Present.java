@@ -64,7 +64,7 @@ public final class Present implements GLSurfaceView.Renderer
 	public static class Texture
 	{
 		private static final int FRAMESIZE = 1024;
-	    private static final int[] textureFormats = {GL_RGBA, GL_RGB, GL_RGB};
+	    private static final int[] textureFormats = {GL_RGBA, GL_RGBA, GL_RGB};
 	    private static final int[] textureTypes = {GL_UNSIGNED_SHORT_5_5_5_1, GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT_5_6_5};
 
 		private static final int id[] = new int[1];
