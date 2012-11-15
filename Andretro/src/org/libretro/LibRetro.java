@@ -264,6 +264,9 @@ public final class LibRetro
     {
     	public boolean restarted = true;
     	
+    	public int framesToRun;
+    	public boolean rewind;
+    	
     	public int width;
     	public int height;
     	public int pixelFormat;
@@ -286,7 +289,7 @@ public final class LibRetro
 	public static native void getSystemAVInfo(AVInfo aInfo);
 	public static native void setControllerPortDevice(int aPort, int aDevice);
 	public static native void reset();
-	public static native void run(VideoFrame aVideo, boolean aRewind);
+	public static native void run(VideoFrame aVideo);
 	public static native int serializeSize();
 //	public static native boolean serialize(byte[] aData, int aSize);
 //	public static native boolean unserialize(byte[] aData, int aSize);

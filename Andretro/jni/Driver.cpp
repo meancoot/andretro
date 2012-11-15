@@ -16,6 +16,8 @@ namespace
     FileReader ROM;
     Rewinder rewinder;
     
+    bool dontProcess;
+
     const char* systemDirectory;
 
     JNIEnv* env;
@@ -81,18 +83,21 @@ namespace VIDEO
 
     static void retro_video_refresh_imp(const void *data, unsigned width, unsigned height, size_t pitch)
     {
-    	static const andretro_video_refresh refreshByMode[3] = {&refresh_15, &refresh_noconv<uint32_t, GL_RGBA, GL_UNSIGNED_BYTE>, &refresh_noconv<uint16_t, GL_RGB, GL_UNSIGNED_SHORT_5_6_5>};
-
-    	if(data)
+    	if(!dontProcess)
     	{
-    		refreshByMode[pixelFormat](data, width, height, pitch);
-    	}
+			static const andretro_video_refresh refreshByMode[3] = {&refresh_15, &refresh_noconv<uint32_t, GL_RGBA, GL_UNSIGNED_BYTE>, &refresh_noconv<uint16_t, GL_RGB, GL_UNSIGNED_SHORT_5_6_5>};
 
-    	env->SetIntField(videoFrame, (*frame_class)["width"], width);
-    	env->SetIntField(videoFrame, (*frame_class)["height"], height);
-    	env->SetIntField(videoFrame, (*frame_class)["pixelFormat"], VIDEO::pixelFormat);
-    	env->SetIntField(videoFrame, (*frame_class)["rotation"], rotation);
-    	env->SetFloatField(videoFrame, (*frame_class)["aspect"], avInfo.geometry.aspect_ratio);
+			if(data)
+			{
+				refreshByMode[pixelFormat](data, width, height, pitch);
+			}
+
+			env->SetIntField(videoFrame, (*frame_class)["width"], width);
+			env->SetIntField(videoFrame, (*frame_class)["height"], height);
+			env->SetIntField(videoFrame, (*frame_class)["pixelFormat"], VIDEO::pixelFormat);
+			env->SetIntField(videoFrame, (*frame_class)["rotation"], rotation);
+			env->SetFloatField(videoFrame, (*frame_class)["aspect"], avInfo.geometry.aspect_ratio);
+    	}
     }
 
     static void createTexture()
@@ -145,22 +150,31 @@ namespace AUDIO
 
 	static inline void endFrame()
 	{
-		jshortArray audioData = (jshortArray)env->GetObjectField(videoFrame, (*frame_class)["audio"]);
-		env->SetShortArrayRegion(audioData, 0, audioLength, buffer);
+		if(!dontProcess)
+		{
+			jshortArray audioData = (jshortArray)env->GetObjectField(videoFrame, (*frame_class)["audio"]);
+			env->SetShortArrayRegion(audioData, 0, audioLength, buffer);
 
-		env->SetIntField(videoFrame, (*frame_class)["audioSamples"], audioLength);
+			env->SetIntField(videoFrame, (*frame_class)["audioSamples"], audioLength);
+		}
 	}
 
 	static void retro_audio_sample_imp(int16_t left, int16_t right)
 	{
-		buffer[audioLength++] = left;
-		buffer[audioLength++] = right;
+		if(!dontProcess)
+		{
+			buffer[audioLength++] = left;
+			buffer[audioLength++] = right;
+		}
 	}
 
 	static size_t retro_audio_sample_batch_imp(const int16_t *data, size_t frames)
 	{
-		memcpy(&buffer[audioLength], data, frames * 4);
-		audioLength += frames * 2;
+		if(!dontProcess)
+		{
+			memcpy(&buffer[audioLength], data, frames * 4);
+			audioLength += frames * 2;
+		}
 		return frames;
 	}
 }
@@ -326,7 +340,7 @@ JNIFUNC(void, reset)(JNIARGS)
     module->reset();
 }
 
-JNIFUNC(void, run)(JNIARGS, jobject aVideo, jboolean aRewind)
+JNIFUNC(void, run)(JNIARGS, jobject aVideo)
 {
     // TODO
     env = aEnv;
@@ -338,21 +352,27 @@ JNIFUNC(void, run)(JNIARGS, jobject aVideo, jboolean aRewind)
     	env->SetBooleanField(videoFrame, (*frame_class)["restarted"], false);
     }
 
-    AUDIO::prepareFrame();
+    const int count = env->GetIntField(videoFrame, (*frame_class)["framesToRun"]);
+    const bool rewind = env->GetBooleanField(videoFrame, (*frame_class)["rewind"]);
 
-    const bool rewound = aRewind && rewinder.eatFrame(module);
-
-    if(!aRewind || rewound)
+    for(int i = 0; i < count; i ++)
     {
-    	module->run();
+    	dontProcess = !(i == (count - 1));
 
-    	if(!aRewind)
-    	{
-    		rewinder.stashFrame(module);
-    	}
+        const bool rewound = rewind && rewinder.eatFrame(module);
+
+        if(!rewind || rewound)
+        {
+            AUDIO::prepareFrame();
+        	module->run();
+        	AUDIO::endFrame();
+
+        	if(!rewind)
+        	{
+        		rewinder.stashFrame(module);
+        	}
+        }
     }
-
-    AUDIO::endFrame();
 }
 
 JNIFUNC(jint, serializeSize)(JNIARGS)
@@ -512,8 +532,8 @@ JNIFUNC(jboolean, nativeInit)(JNIARGS)
         }
         
         {
-        	static const char* const n[] = {"restarted", "width", "height", "pixelFormat", "rotation", "aspect", "keyboard", "buttons", "audio", "audioSamples"};
-        	static const char* const s[] = {"Z", "I", "I", "I", "I", "F", "[I", "[I", "[S", "I"};
+        	static const char* const n[] = {"restarted", "framesToRun", "rewind", "width", "height", "pixelFormat", "rotation", "aspect", "keyboard", "buttons", "audio", "audioSamples"};
+        	static const char* const s[] = {"Z", "I", "Z", "I", "I", "I", "I", "F", "[I", "[I", "[S", "I"};
         	frame_class.reset(new JavaClass(aEnv, aEnv->FindClass("org/libretro/LibRetro$VideoFrame"), sizeof(n) / sizeof(n[0]), n, s));
         }
 

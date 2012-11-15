@@ -32,7 +32,6 @@ public final class Game
     static int pauseDepth;
     
     // Fast forward
-    private static int frameCounter;
     static int fastForwardKey;
     static int fastForwardSpeed = 1;
     static boolean fastForwardDefault;
@@ -129,16 +128,17 @@ public final class Game
 		if(gameLoaded && !gameClosed && 0 == pauseDepth)
 		{	
 			// Fast forward
-			final boolean rewindKeyPressed = Input.isPressed(rewindKey);
+			aFrame.rewind = Input.isPressed(rewindKey);
+
 			final boolean fastKeyPressed = Input.isPressed(fastForwardKey);
 			final int frameToggle = fastForwardDefault ? 1 : fastForwardSpeed;
-			int frameTarget = fastForwardDefault ? fastForwardSpeed : 1;
-			frameTarget = (fastKeyPressed) ? frameToggle : frameTarget;
+			final int frameTarget = fastForwardDefault ? fastForwardSpeed : 1;
+			aFrame.framesToRun = (fastKeyPressed) ? frameToggle : frameTarget;
 				    				    			
             //Emulate   			
 			Input.poolKeyboard(aFrame.keyboard);
 			aFrame.buttons[0] = Input.getBits(moduleInfo.inputData.getDevice(0,  0));
-			LibRetro.run(aFrame, rewindKeyPressed);
+			LibRetro.run(aFrame);
 			
 			// Write any pending screen shots
 			if(null != screenShotName)
@@ -148,17 +148,12 @@ public final class Game
 			}
 			
 			// Present
-			if(++frameCounter >= frameTarget)
+			if(0 != aFrame.audioSamples)
 			{
-				if(0 != aFrame.audioSamples)
-				{
-					Audio.write((int)avInfo.sampleRate, aFrame.audio, aFrame.audioSamples);
-				}
-			
-				frameCounter = 0;
-				
-				return true;
+				Audio.write((int)avInfo.sampleRate, aFrame.audio, aFrame.audioSamples);
 			}
+			
+			return true;
 		}
 		
 		return false;
