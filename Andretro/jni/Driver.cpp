@@ -18,7 +18,7 @@ namespace
     
     bool dontProcess;
 
-    const char* systemDirectory;
+    char* systemDirectory;
 
     JNIEnv* env;
 
