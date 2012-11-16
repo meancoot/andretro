@@ -288,11 +288,6 @@ JNIFUNC(void, unloadLibrary)(JNIARGS)
 JNIFUNC(void, init)(JNIARGS)
 {
     module->set_environment(retro_environment_imp);
-    module->set_video_refresh(VIDEO::retro_video_refresh_imp);
-    module->set_audio_sample(AUDIO::retro_audio_sample_imp);
-    module->set_audio_sample_batch(AUDIO::retro_audio_sample_batch_imp);
-    module->set_input_poll(INPUT::retro_input_poll_imp);
-    module->set_input_state(INPUT::retro_input_state_imp);
 
     VIDEO::pixelFormat = 0;
 	VIDEO::createTexture();
@@ -415,6 +410,12 @@ JNIFUNC(bool, loadGame)(JNIARGS, jstring path)
     if(module->load_game(&info))
     {
         module->get_system_av_info(&avInfo);
+
+        module->set_video_refresh(VIDEO::retro_video_refresh_imp);
+        module->set_audio_sample(AUDIO::retro_audio_sample_imp);
+        module->set_audio_sample_batch(AUDIO::retro_audio_sample_batch_imp);
+        module->set_input_poll(INPUT::retro_input_poll_imp);
+        module->set_input_state(INPUT::retro_input_state_imp);
 
         rewinder.gameLoaded(module);
         return true;
