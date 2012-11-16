@@ -55,6 +55,7 @@ public class VertexData
         glVertexAttribPointer(0, 2, GL_FLOAT, false, 4 * 4, 0);
         glVertexAttribPointer(1, 2, GL_FLOAT, false, 4 * 4, 4 * 2);
 
+        needUpdate = true;
     }
         
     public static void setScreenSize(int aWidth, int aHeight)
