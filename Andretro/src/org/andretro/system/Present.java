@@ -117,7 +117,8 @@ public final class Present implements GLSurfaceView.Renderer
     	if(Game.doFrame(frame))
     	{
     		VertexData.setImageData(frame.width, frame.height, frame.aspect, frame.rotation);
-    		VertexData.draw();
     	}
+    	
+		VertexData.draw();
     }
 }
