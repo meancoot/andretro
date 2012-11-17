@@ -75,12 +75,6 @@ public class VertexData
     	    
     public static void setForcedAspect(boolean aUseCustom, float aAspect)
     {
-    	if(aAspect < 0.00001f)
-    	{
-    		aUseCustom = false;
-    		aAspect = 0.0f;
-    	}
-    	
 		needUpdate = needUpdate || (aUseCustom != aspectMode) || (aUseCustom && (aAspect != aspectForce));
     	
     	aspectMode = aUseCustom;
@@ -101,14 +95,11 @@ public class VertexData
     private static void update()
     {    	
     	final FloatBuffer vertexBuffer = ByteBuffer.allocateDirect(BUFFERSIZE).order(ByteOrder.nativeOrder()).asFloatBuffer();
-    	final boolean invertAspect = (rotate & 1) == 1;
 
     	final Size scrS = new Size(screenSize);
     	final Size imgS = new Size(imageSize);    	
     	
-    	float inputAspect = (aspect <= 0.00001f) ? imgS.aspect : aspect;
-    	inputAspect = aspectMode ? aspectForce : inputAspect;
-    	inputAspect = !invertAspect ? inputAspect : 1.0f / inputAspect;
+    	float inputAspect = getBestImageAspect(imgS, (rotate & 1) == 1);
     	
     	float width = (!(scrS.aspect < inputAspect)) ? scrS.h * inputAspect : scrS.w;
     	float height = (scrS.aspect < inputAspect) ? scrS.w / inputAspect : scrS.h;
@@ -124,5 +115,15 @@ public class VertexData
     	}
     	
     	glBufferData(GL_ARRAY_BUFFER, BUFFERSIZE, vertexBuffer.position(0), GL_STATIC_DRAW);
+    }
+    
+    private static float getBestImageAspect(Size aImageSize, boolean aInvert)
+    {
+    	float result = aImageSize.aspect;
+    	
+    	if(aspectMode && aspectForce > 0.0f)	result = aspectForce;
+    	else if(!aspectMode && aspect > 0.0f) 	result = aspect;
+    	
+    	return aInvert ? (1.0f / result) : result;
     }
 }
