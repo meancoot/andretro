@@ -236,7 +236,7 @@ static bool retro_environment_imp(unsigned cmd, void *data)
 	{
 		unsigned newFormat = *(unsigned*)data;
 
-		if(newFormat < 3)
+		if(newFormat < 3 && newFormat != 1)
 		{
 			VIDEO::pixelFormat = newFormat;
 			VIDEO::createTexture();
