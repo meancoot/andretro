@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <limits.h>
 
 // Hack applied for MSVC when compiling in C89 mode as it isn't C99 compliant.
 #ifdef __cplusplus
@@ -18,7 +19,7 @@ extern "C" {
 #endif
 
 // Used for checking API/ABI mismatches that can break libretro implementations.
-// It is not incremented for compatible changes.
+// It is not incremented for compatible changes to the API.
 #define RETRO_API_VERSION         1
 
 // Libretro's fundamental device abstractions.
@@ -48,6 +49,23 @@ extern "C" {
 // of [-0x8000, 0x7fff]. Positive X axis is right. Positive Y axis is down.
 // Only use ANALOG type when polling for analog values of the axes.
 #define RETRO_DEVICE_ANALOG       5
+
+// Abstracts the concept of a pointing mechanism, e.g. touch.
+// This allows libretro to query in absolute coordinates where on the screen a mouse (or something similar) is being placed.
+// For a touch centric device, coordinates reported are the coordinates of the press.
+//
+// Coordinates in X and Y are reported as:
+// [-0x7fff, 0x7fff]: -0x7fff corresponds to the far left/top of the screen,
+// and 0x7fff corresponds to the far right/bottom of the screen.
+// The "screen" is here defined as area that is passed to the frontend and later displayed on the monitor.
+// The frontend is free to scale/resize this screen as it sees fit, however,
+// (X, Y) = (-0x7fff, -0x7fff) will correspond to the top-left pixel of the game image, etc.
+//
+// To check if the pointer coordinates are valid (e.g. a touch display actually being touched),
+// PRESSED returns 1 or 0.
+// If using a mouse, PRESSED will usually correspond to the left mouse button.
+// PRESSED will only return 1 if the pointer is inside the game screen.
+#define RETRO_DEVICE_POINTER      6
 
 // These device types are specializations of the base types above.
 // They should only be used in retro_set_controller_type() to inform libretro implementations
@@ -99,6 +117,11 @@ extern "C" {
 #define RETRO_DEVICE_ID_LIGHTGUN_TURBO    4
 #define RETRO_DEVICE_ID_LIGHTGUN_PAUSE    5
 #define RETRO_DEVICE_ID_LIGHTGUN_START    6
+
+// Id values for POINTER.
+#define RETRO_DEVICE_ID_POINTER_X         0
+#define RETRO_DEVICE_ID_POINTER_Y         1
+#define RETRO_DEVICE_ID_POINTER_PRESSED   2
 
 // Returned from retro_get_region().
 #define RETRO_REGION_NTSC  0
@@ -298,7 +321,7 @@ enum retro_key
                                            // Boolean value whether or not the implementation should use overscan, or crop away overscan.
                                            //
 #define RETRO_ENVIRONMENT_GET_CAN_DUPE  3  // bool * --
-                                           // Boolean value whether or not RetroArch supports frame duping,
+                                           // Boolean value whether or not frontend supports frame duping,
                                            // passing NULL to video frame callback.
                                            //
 #define RETRO_ENVIRONMENT_GET_VARIABLE  4  // struct retro_variable * --
@@ -354,14 +377,36 @@ enum retro_key
 #define RETRO_ENVIRONMENT_SET_PIXEL_FORMAT 10
                                            // const enum retro_pixel_format * --
                                            // Sets the internal pixel format used by the implementation.
-                                           // The default pixel format is RETRO_PIXEL_FORMAT_XRGB1555.
+                                           // The default pixel format is RETRO_PIXEL_FORMAT_0RGB1555.
+                                           // This pixel format however, is deprecated (see enum retro_pixel_format).
                                            // If the call returns false, the frontend does not support this pixel format.
                                            // This function should be called inside retro_load_game() or retro_get_system_av_info().
+                                           //
+#define RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS 11
+                                           // const struct retro_input_descriptor * --
+                                           // Sets an array of retro_input_descriptors.
+                                           // It is up to the frontend to present this in a usable way.
+                                           // The array is terminated by retro_input_descriptor::description being set to NULL.
+                                           // This function can be called at any time, but it is recommended to call it as early as possible.
+
 
 enum retro_pixel_format
 {
-   RETRO_PIXEL_FORMAT_0RGB1555 = 0, // 0RGB1555, native endian. 0 bit must be set to 0.
-   RETRO_PIXEL_FORMAT_XRGB8888      // XRGB8888, native endian. X bits are ignored.
+   // 0RGB1555, native endian. 0 bit must be set to 0.
+   // This pixel format is default for compatibility concerns only.
+   // If a 15/16-bit pixel format is desired, consider using RGB565.
+   RETRO_PIXEL_FORMAT_0RGB1555 = 0,
+
+   // XRGB8888, native endian. X bits are ignored.
+   RETRO_PIXEL_FORMAT_XRGB8888 = 1,
+
+   // RGB565, native endian. This pixel format is the recommended format to use if a 15/16-bit format is desired
+   // as it is the pixel format that is typically available on a wide range of low-power devices.
+   // It is also natively supported in APIs like OpenGL ES.
+   RETRO_PIXEL_FORMAT_RGB565   = 2,
+
+   // Ensure sizeof() == sizeof(int).
+   RETRO_PIXEL_FORMAT_UNKNOWN  = INT_MAX
 };
 
 struct retro_message
@@ -370,8 +415,25 @@ struct retro_message
    unsigned    frames;     // Duration in frames of message.
 };
 
+// Describes how the libretro implementation maps a libretro input bind
+// to its internal input system through a human readable string.
+// This string can be used to better let a user configure input.
+struct retro_input_descriptor
+{
+   // Associates given parameters with a description.
+   unsigned port;
+   unsigned device;
+   unsigned index;
+   unsigned id;
+
+   const char *description; // Human readable description for parameters.
+                            // The pointer must remain valid until retro_unload_game() is called.
+};
+
 struct retro_system_info
 {
+   // All pointers are owned by libretro implementation, and pointers must remain valid until retro_deinit() is called.
+
    const char *library_name;      // Descriptive name of library. Should not contain any version numbers, etc.
    const char *library_version;   // Descriptive version of core.
 
@@ -440,6 +502,8 @@ typedef bool (*retro_environment_t)(unsigned cmd, void *data);
 // Render a frame. Pixel format is 15-bit 0RGB1555 native endian unless changed (see RETRO_ENVIRONMENT_SET_PIXEL_FORMAT).
 // Width and height specify dimensions of buffer.
 // Pitch specifices length in bytes between two lines in buffer.
+// For performance reasons, it is highly recommended to have a frame that is packed in memory, i.e. pitch == width * byte_per_pixel.
+// Certain graphic APIs, such as OpenGL ES, do not like textures that are not packed in memory.
 typedef void (*retro_video_refresh_t)(const void *data, unsigned width, unsigned height, size_t pitch);
 
 // Renders a single audio frame. Should only be used if implementation generates a single sample at a time.
@@ -479,6 +543,8 @@ void retro_get_system_info(struct retro_system_info *info);
 
 // Gets information about system audio/video timings and geometry.
 // Can be called only after retro_load_game() has successfully completed.
+// NOTE: The implementation of this function might not initialize every variable if needed.
+// E.g. geom.aspect_ratio might not be initialized if core doesn't desire a particular aspect ratio.
 void retro_get_system_av_info(struct retro_system_av_info *info);
 
 // Sets device to be used for player 'port'.

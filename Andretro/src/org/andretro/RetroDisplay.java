@@ -3,6 +3,7 @@ import org.andretro.browser.*;
 import org.andretro.emulator.*;
 import org.andretro.settings.*;
 import org.andretro.system.*;
+import org.andretro.system.video.*;
 
 import java.io.*;
 
@@ -12,6 +13,7 @@ import android.opengl.*;
 import android.os.*;
 import android.content.*;
 import android.widget.*;
+import android.graphics.*;
 
 public class RetroDisplay extends android.support.v4.app.FragmentActivity implements QuestionDialog.QuestionHandler
 {
@@ -100,6 +102,20 @@ public class RetroDisplay extends android.support.v4.app.FragmentActivity implem
     	{
     		windowManager.screenTouched(aEvent);
     	}
+    	
+//    	if(aEvent.getActionMasked() == MotionEvent.ACTION_DOWN || aEvent.getActionMasked() == MotionEvent.ACTION_MOVE)
+//		{
+//   		final Rect imageArea = VertexData.getImageArea();
+//    		
+//    		final float xBase = (float)(aEvent.getX() - imageArea.left) / (float)imageArea.width();
+//    		final float yBase = (float)(aEvent.getY() - imageArea.top) / (float)imageArea.height();
+//  
+//    		Input.setTouchData((short)(((xBase - .5f) * 2.0f) * 32767.0f), (short)(((yBase - .5f) * 2.0f) * 32767.0f), true);
+//		}
+//   	else if(aEvent.getActionMasked() == MotionEvent.ACTION_UP)
+//    	{
+//    		Input.setTouchData((short)0, (short)0, false);
+//    	}
     	
 		return super.dispatchTouchEvent(aEvent);
     }

@@ -117,6 +117,8 @@ namespace INPUT
 	jint keyboard[RETROK_LAST];
 	jint joypads[8];
 
+	int16_t touchData[3];
+
 	static void retro_input_poll_imp(void)
 	{
 		// Joystick
@@ -126,6 +128,11 @@ namespace INPUT
 		// Keyboard
 		jintArray kbd = (jintArray)env->GetObjectField(videoFrame, (*frame_class)["keyboard"]);
 		env->GetIntArrayRegion(kbd, 0, RETROK_LAST, keyboard);
+
+		// Pointer
+		touchData[0] = env->GetShortField(videoFrame, (*frame_class)["touchX"]);
+		touchData[1] = env->GetShortField(videoFrame, (*frame_class)["touchY"]);
+		touchData[2] = env->GetShortField(videoFrame, (*frame_class)["touched"]) ? 1 : 0;
 	}
 
 	static int16_t retro_input_state_imp(unsigned port, unsigned device, unsigned index, unsigned id)
@@ -134,6 +141,7 @@ namespace INPUT
 		{
 			case RETRO_DEVICE_JOYPAD:    return (joypads[port] >> id) & 1;
 			case RETRO_DEVICE_KEYBOARD:  return (id < RETROK_LAST) ? keyboard[id] : 0;
+			case RETRO_DEVICE_POINTER:   return (id < 3) ? touchData[id] : 0;
 		}
 
 		return 0;
@@ -535,8 +543,8 @@ JNIFUNC(jboolean, nativeInit)(JNIARGS)
         }
         
         {
-        	static const char* const n[] = {"restarted", "framesToRun", "rewind", "width", "height", "pixelFormat", "rotation", "aspect", "keyboard", "buttons", "audio", "audioSamples"};
-        	static const char* const s[] = {"Z", "I", "Z", "I", "I", "I", "I", "F", "[I", "[I", "[S", "I"};
+        	static const char* const n[] = {"restarted", "framesToRun", "rewind", "width", "height", "pixelFormat", "rotation", "aspect", "keyboard", "buttons", "touchX", "touchY", "touched", "audio", "audioSamples"};
+        	static const char* const s[] = {"Z", "I", "Z", "I", "I", "I", "I", "F", "[I", "[I", "S", "S", "Z", "[S", "I"};
         	frame_class.reset(new JavaClass(aEnv, aEnv->FindClass("org/libretro/LibRetro$VideoFrame"), sizeof(n) / sizeof(n[0]), n, s));
         }
 

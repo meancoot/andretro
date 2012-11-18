@@ -19,6 +19,10 @@ public final class Input
 	private static Set<Integer> keys = new TreeSet<Integer>();
 	private static InputGroup onscreenInput;
 	
+	private static short touchX;
+	private static short touchY;
+	private static boolean touched;
+	
     // Called by UI
 	public synchronized static void processEvent(KeyEvent aEvent)
 	{
@@ -40,6 +44,13 @@ public final class Input
 	public synchronized static void setOnScreenInput(InputGroup aInput)
 	{
 		onscreenInput = aInput;
+	}
+	
+	public synchronized static void setTouchData(short aX, short aY, boolean aTouched)
+	{
+		touchX = aX;
+		touchY = aY;
+		touched = aTouched; 
 	}
 	
 	// Called by emulator
@@ -73,6 +84,23 @@ public final class Input
 		}
 	}
 	
+	public static synchronized short getTouchX()
+	{
+		return touchX;
+	}
+	
+	public static synchronized short getTouchY()
+	{
+		return touchY;
+	}
+
+	public static synchronized boolean getTouched()
+	{
+		return touched;
+	}
+
+	
+
 	// KEYBOARD
 	private static final int[] mappingTable = 
 	{

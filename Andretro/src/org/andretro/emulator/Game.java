@@ -142,10 +142,14 @@ public final class Game
 				screenShotName = null;
 			}
 
-			
-            //Emulate   			
+			// Get input data
 			Input.poolKeyboard(aFrame.keyboard);
 			aFrame.buttons[0] = Input.getBits(moduleInfo.inputData.getDevice(0,  0));
+			aFrame.touchX = Input.getTouchX();
+			aFrame.touchY = Input.getTouchY();
+			aFrame.touched = Input.getTouched();
+						
+            //Emulate
 			LibRetro.run(aFrame);
 						
 			// Present

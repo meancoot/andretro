@@ -34,8 +34,9 @@ public class VertexData
     	-1, 1, 0, 1, 1, 1, 0, 0, -1, -1, 1, 1, 1, -1, 1, 0
     };
     
-    private static Point screenSize = new Point();
-    private static Point imageSize = new Point();
+    private static final Point screenSize = new Point();
+    private static final Point imageSize = new Point();
+    private static final Rect imageArea = new Rect();
     
     private static float aspect;
     private static int rotate;
@@ -81,6 +82,18 @@ public class VertexData
     	aspectForce = aAspect;
     }
 	
+    public static Point getScreenSize()
+    {
+    	// TODO: Ensure it can't be changed!
+    	return screenSize;
+    }
+    
+    public static Rect getImageArea()
+    {
+    	// TODO: Ensure it can't be changed!
+    	return imageArea;
+    }
+    
     public static void draw()
     {
     	if(needUpdate)
@@ -103,7 +116,7 @@ public class VertexData
     	
     	float width = (!(scrS.aspect < inputAspect)) ? scrS.h * inputAspect : scrS.w;
     	float height = (scrS.aspect < inputAspect) ? scrS.w / inputAspect : scrS.h;
-    	    	
+    	
     	for(int i = 0; i != 4; i ++)
     	{
     		int idx = (i * 4) + (rotate * 16);
@@ -115,6 +128,12 @@ public class VertexData
     	}
     	
     	glBufferData(GL_ARRAY_BUFFER, BUFFERSIZE, vertexBuffer.position(0), GL_STATIC_DRAW);
+    	
+    	// Calculate the position of the upper left pixel of the screen
+    	imageArea.left = (int)(scrS.w - width) / 2;
+    	imageArea.top = (int)(scrS.h - height) / 2;
+    	imageArea.right = imageArea.left + (int)width;
+    	imageArea.bottom = imageArea.top + (int)height;
     }
     
     private static float getBestImageAspect(Size aImageSize, boolean aInvert)

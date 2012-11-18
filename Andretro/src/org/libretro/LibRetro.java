@@ -13,6 +13,7 @@ public final class LibRetro
 	public static final int  RETRO_DEVICE_KEYBOARD = 3;
 	public static final int  RETRO_DEVICE_LIGHTGUN = 4;
 	public static final int  RETRO_DEVICE_ANALOG = 5;
+	public static final int  RETRO_DEVICE_POINTER = 6;
 
 	public static final int  RETRO_DEVICE_JOYPAD_MULTITAP = ((1 << 8) | RETRO_DEVICE_JOYPAD);
 	public static final int  RETRO_DEVICE_LIGHTGUN_SUPER_SCOPE = ((1 << 8) | RETRO_DEVICE_LIGHTGUN);
@@ -275,6 +276,10 @@ public final class LibRetro
     	
     	public final int[] keyboard = new int[RETROK_LAST];
     	public final int[] buttons = new int[8];
+    	
+    	public short touchX;
+    	public short touchY;
+    	public boolean touched;
     	
     	public final short[] audio = new short[48000];
     	public int audioSamples;
