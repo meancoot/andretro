@@ -272,6 +272,7 @@ JNIFUNC(jboolean, loadLibrary)(JNIARGS, jstring path, jstring systemDir)
     {
         module = new Library(libname);
         systemDirectory = strdup(JavaChars(aEnv, systemDir));
+        chdir(systemDirectory);
         return true;
     }
     catch(...)
